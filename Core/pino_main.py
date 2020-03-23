@@ -2,7 +2,6 @@
 
 from Hardware.v1 import HardwareV1
 
-
 class Pinobot():
     def __init__(self):
         self.hardware = HardwareV1()
