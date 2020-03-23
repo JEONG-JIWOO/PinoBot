@@ -12,7 +12,7 @@ import pyaudio
 def py_error_handler(filename, line, function, err, fmt):
     pass
 
-class SqbDialogFlow():
+class PinoDialogFlow():
 
     """
     A. Initializing DialogFlow Connection Module
@@ -93,7 +93,7 @@ class SqbDialogFlow():
         formatter = logging.Formatter('[%(levelname)s] (%(asctime)s : %(filename)s:%(lineno)d) > %(message)s')
 
         # 2.2 set file logger 
-        self.log_file = logging.FileHandler(filename = '/home/pi/catkin_ws/src/Squarebot/log/DialogFlowlog.log', 
+        self.log_file = logging.FileHandler(filename = '/home/pi/PinoBot/log/DialogFlowlog.log', 
                                             mode='w',
                                             encoding='utf-8')
         self.log_file.setFormatter(formatter)
