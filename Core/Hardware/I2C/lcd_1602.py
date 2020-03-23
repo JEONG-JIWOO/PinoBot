@@ -16,23 +16,38 @@ class LCD1602():
         #self.F = FontGen()
 
     def __del__(self):
-        #self.lcd.clear() # clear LCD display
-        #self.lcd.noDisplay()
+        self.lcd.clear() # clear LCD display
+        self.lcd.noDisplay()
         pass
 
     def send_msg(self,msg):
-        self.lcd.clear()
-        self.lcd.setCursor(0,0)
-        if len(msg) > 16:
+        
+        if len(msg) < 17: # only, line 0
+            self.fast_clear(0)
+            self.lcd.setCursor(0,0)
+            self.lcd.print(msg)
+
+        else : # line1 and line2
             line1 = msg[0:16]
             line2 = msg[16:]
-
+            
+            self.fast_clear(0)
+            self.lcd.setCursor(0,0)
             self.lcd.print(line1)
+
+            self.fast_clear(1)
             self.lcd.setCursor(0,1)
-            self.lcd.print(line2)
-        else :
-            self.lcd.print(msg)
-    
+            self.lcd.print(line2)    
+        
+    def fast_clear(self,line):
+        # lcd.clear() is too slow, make alternate fuction
+        if line == 0:
+            self.lcd.setCursor(0,0)    
+            self.lcd.print("                ")
+        elif line == 0:
+            self.lcd.setCursor(0,1)    
+            self.lcd.print("                ")
+
     """
     def send_hangul(self,msg):
         self.lcd.clear()
@@ -59,8 +74,8 @@ class LCD1602():
 def example():
     LCD = LCD1602(0x27)
 
-    LCD.send_hangul("잘 보였으면 ")
-    time.sleep(2)
+    #LCD.send_hangul("잘 보였으면 ")
+    #time.sleep(2)
     LCD.send_msg("Ok, just use english")
     time.sleep(2)
     
