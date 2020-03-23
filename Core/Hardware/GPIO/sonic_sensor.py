@@ -43,14 +43,14 @@ class HC_SR04():
         while GPIO.input(self.ECHO_Pin) == 0:
             pulse_start = time.time()
             if ((pulse_start - measure_start)*1000000) >= self.TIMEOUT :
-                return -1
+                return 150
     
         # 4. measure time for last pulse.
         measure_start = time.time()
         while GPIO.input(self.ECHO_Pin) == 1:
             pulse_end = time.time()
             if ((pulse_end - pulse_start)*1000000) >=  self.TIMEOUT:
-                return -1
+                return 150
 
         # 5. change time to distance
         self.distance = ( (pulse_end - pulse_start) * 17001) # 1000000/2 / 29.41
