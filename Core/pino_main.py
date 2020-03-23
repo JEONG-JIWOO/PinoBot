@@ -4,14 +4,24 @@ from Hardware.v1 import HardwareV1
 
 class Pinobot():
     def __init__(self):
-        self.hardware = HardwareV1()
-        #self.hardware.write(text="init hardware")
+        self.HardWare = HardwareV1()
+        self.HardWare.write(text="init hardware v1")
         pass
     
     def boot(self):
         pass
     
     def main_loop(self):
-        pass
+        distance = self.HardWare.read_sonic()
 
-a = Pinobot()
+        text = str(round(distance))
+        self.HardWare.write(text=text)
+
+
+
+def test():
+    a = Pinobot()
+    while True:
+        a.main_loop()
+
+test()
