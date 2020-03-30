@@ -19,7 +19,8 @@ class PinoDialogFlow():
     """
     def __init__(self, DFLOW_PROJECT_ID, 
                        DFLOW_LANGUAGE_CODE , 
-                       GOOGLE_APPLICATION_CREDENTIALS):
+                       GOOGLE_APPLICATION_CREDENTIALS,
+                       TIME_OUT = 5):
 
         # 1. store Cloud Connection Settings as Private
         self._GOOGLE_APPLICATION_CREDENTIALS = GOOGLE_APPLICATION_CREDENTIALS 
@@ -30,10 +31,10 @@ class PinoDialogFlow():
         # 2. set private variables
         self._SAMPLE_RATE = 16000 
         self._CHUNK_SIZE = 2048
-        self._MAX_RECORD_SECONDS = 5       
+        self._MAX_RECORD_SECONDS = TIME_OUT       
 
         # 3. set Logger, use Python Logging Module
-        self.set_logger()
+        self._set_logger(path = "/home/pi/PinoBot/log/DialogFlowlog.log")
 
         # 4. set nomal variables
         self.gcloud_dict = {1: 'nomal',
@@ -53,8 +54,8 @@ class PinoDialogFlow():
         self.audio = None
 
         # 5. init settings
-        self.find_soundcard()
-        self.init_pyaudio()
+        self._find_soundcard()
+        self._init_pyaudio()
 
     def __del__(self):
         if self.audio is not None:
@@ -62,7 +63,7 @@ class PinoDialogFlow():
             self.asound.snd_lib_error_set_handler(None) # set back handler as Default
 
 
-    def find_soundcard(self):
+    def _find_soundcard(self):
         # 1. Remove alsa messages
         ERROR_HANDLER_FUNC = CFUNCTYPE(None, c_char_p, c_int, c_char_p, c_int, c_char_p)
         c_error_handler = ERROR_HANDLER_FUNC(py_error_handler)
@@ -86,14 +87,14 @@ class PinoDialogFlow():
     """
     A.1 Initializing Logger
     """
-    def set_logger(self):
+    def _set_logger(self,path):
         # 2.1 set logger and formatter
         self.log = logging.getLogger("DialogFlow")
         self.log.setLevel(logging.DEBUG)
         formatter = logging.Formatter('[%(levelname)s] (%(asctime)s : %(filename)s:%(lineno)d) > %(message)s')
 
         # 2.2 set file logger 
-        self.log_file = logging.FileHandler(filename = '/home/pi/PinoBot/log/DialogFlowlog.log', 
+        self.log_file = logging.FileHandler(filename = path, 
                                             mode='w',
                                             encoding='utf-8')
         self.log_file.setFormatter(formatter)
@@ -111,7 +112,7 @@ class PinoDialogFlow():
     """
     A.1 Initializing pyuadion
     """
-    def init_pyaudio(self):
+    def _init_pyaudio(self):
         if self.audio is not None:
             self.audio.terminate()
             self.asound.snd_lib_error_set_handler(None) # set back handler as Default
@@ -172,7 +173,7 @@ class PinoDialogFlow():
             self.log.error("Invalid Argument Send")
             return None
         except Exception as GCLOUD_ERROR:  # Gcloud Error
-            self.find_error(GCLOUD_ERROR)
+            self._find_error(GCLOUD_ERROR)
             return None
             
         # 4. log Response , [to be deleted]
@@ -180,7 +181,7 @@ class PinoDialogFlow():
         #self.log.info(response.query_result.intent_detection_confidence)
         #self.log.info(response.query_result.fulfillment_text)
         self.dflow_response = response
-        return response.query_result.fulfillment_text
+        return response
 
     # [WIP] , VOLUME setting fuctionm, using amixer command 
     def setVolume(self):
@@ -193,16 +194,27 @@ class PinoDialogFlow():
         https://github.com/GoogleCloudPlatform/python-docs-samples/blob/master/dialogflow/cloud-client/detect_intent_stream.py
         https://cloud.google.com/dialogflow/docs/reference/rpc/google.cloud.dialogflow.v2
 
-    D. Send [AUDIO STREAM] and return answer [Text]
+
+    D. Send [AUDIO STREAM] and return answer [AUDIO_BINARY]
+
+    Main feature Fuctions, 
+
+    1. Start timeout-audio-stream with generator
+    2. Generator keep sending audio stream to Google Server.
+    3. If talking is end or, timeout happen, stop generator and wait for response.
+    4. Get respose and check is it valid
+    5. return two response
+        "stt_response" is [STT] result of talking,
+        "chatbot_response" is [DialogFlow chatbot] result.
 
     D.1 Request Generator.
     """
-    def request_generator_stream(self,audio,audio_q=None):
+    def _request_generator(self,audio):
         """
         Args: audio(Pyaudio object) : base pyaudio class for recording
-              audio_q(Queue) : [NOT USED], only used Debuging, to save stream file as .wav 
         """
-        # 1. Config request parametoers
+
+        # 1.1 Config request parametoers
         session_path = self.session_client.session_path(
             project=self._project_id, session=self._session_id
         )
@@ -213,132 +225,140 @@ class PinoDialogFlow():
             single_utterance=False
         )
 
-        # [NEW], add output_audio config, to synthesis voice and save it
+        # 1.2 [NEW], request voice synthesis 
+        # Reference: https://cloud.google.com/dialogflow/docs/detect-intent-tts?hl=ko
         output_audio_config = dialogflow.types.OutputAudioConfig(
             audio_encoding=dialogflow.enums.OutputAudioEncoding
-            .OUTPUT_AUDIO_ENCODING_LINEAR_16) #https://cloud.google.com/dialogflow/docs/detect-intent-tts?hl=ko
-
+            .OUTPUT_AUDIO_ENCODING_LINEAR_16) 
+    
+        # 1.3 Make Quary
+        # Reference: https://cloud.google.com/dialogflow/docs/reference/rpc/google.cloud.dialogflow.v2#google.cloud.dialogflow.v2.QueryInput
         query_input = dialogflow.types.QueryInput(
             audio_config=input_audio_config
-        ) # https://cloud.google.com/dialogflow/docs/reference/rpc/google.cloud.dialogflow.v2#google.cloud.dialogflow.v2.QueryInput
-        
-        # 2. Make Initial Request
+        ) 
+
+        # 1.4 Make Initial Request
+        # https://cloud.google.com/dialogflow/docs/reference/rpc/google.cloud.dialogflow.v2#google.cloud.dialogflow.v2.StreamingDetectIntentRequest
         initial_request =  dialogflow.types.StreamingDetectIntentRequest(
             session=session_path,
             query_input=query_input,
             output_audio_config=output_audio_config # [NEW], add for voice synthesis
-        ) # https://cloud.google.com/dialogflow/docs/reference/rpc/google.cloud.dialogflow.v2#google.cloud.dialogflow.v2.StreamingDetectIntentRequest
-        yield initial_request
+        ) 
+        yield initial_request # Return Initial Request.
 
-        # 3. init recording
+        # 2.1 init recording
         # [NOTE] AUDIO CHANNEL should be=1. google STT can't recognize over 1
         stream = audio.open(format=pyaudio.paInt16, channels=1,
                     rate=self._SAMPLE_RATE , input=True,
                     frames_per_buffer=self._CHUNK_SIZE,input_device_index=self.sound_card)
         
-        # 4. start streaming,
+        # 2.2 start streaming,
         # if over self._MAX_RECORD_SECONDS or self.recording_state is False(OFF), stop streaming,
-
         for loop in range(0, int(self._SAMPLE_RATE / self._CHUNK_SIZE * self._MAX_RECORD_SECONDS)): 
             try:           
-                audio_chunk = stream.read(self._CHUNK_SIZE,  exception_on_overflow = False)
-                # audio_q.put(chunk) # For debug Recording as ./recording2.wave
+                audio_chunk = stream.read(self._CHUNK_SIZE,  exception_on_overflow = False)    
             except IOError as e:
                 self.log.error(e)
                 break
             except Exception as GCLOUD_ERROR:  # Gcloud Error
-                self.find_error(GCLOUD_ERROR)
+                self._find_error(GCLOUD_ERROR)
                 break
 
             else :
-                #self.log.info("send request!")
                 yield dialogflow.types.StreamingDetectIntentRequest(
-                     session=session_path,
-                     query_input=query_input,
-                     input_audio=audio_chunk)
+                    session=session_path,
+                    query_input=query_input,
+                    input_audio=audio_chunk,
+                    output_audio_config=output_audio_config)
             if self.recording_state is False :
                 break
 
-        # 5. stop streaming,
+        #  5. if Generator End stop streaming,
         stream.stop_stream()
         stream.close()
         
     """
-    D. Send [AUDIO STREAM] and return answer [Text]
-
-    D.2 Main S2T Process
+    D.2 Start STREAM, 
+    [NOTE] This fuction ends, when Stream started!
     """
-
-    def start_audio_stream(self): 
-        # EXPERIMENTAL: This method interface might change in the future.
+    def start_stream(self): 
+        # GOOGLE EXPERIMENTAL: This method interface might change in the future.
         # https://github.com/GoogleCloudPlatform/python-docs-samples/blob/3444bf44054965a523aafbf256dd597e265d0480/dialogflow/cloud-client/mic_stream_audio_response.py
         
-        # 1. check Session Exsist
+        # check Session Exsist
         if self._session_id is None: # if not, exit fuction
             self.log.error("Session is not opened ignore command")
-            return -1
+            return None
 
-        # 2. init generator and start Recording
-        requests = self.request_generator_stream(self.audio)
+        # 2.4 init generator and start Recording
+        requests = self._request_generator(self.audio)
         self.responses = self.session_client.streaming_detect_intent(requests)
-        return self.responses
+        return self.responses # return iteratable response object, 
     
-    def get_audio_response(self):
-        # 5. Wait for response
+    """
+    D.3 KEEP stream AND wait For Response, 
+    This fuction should called after start stream to get response. 
+    or you can write your owen response fuction 
+    """    
+    def get_response(self):
+        # 3. Wait for response
         while True: 
             try:
-                #self.raise_error(2)
                 item = next(self.responses) # receive Response
                 self.log.info("get Response...")
 
-                if item.recognition_result.is_final : # If STT is done
+                # 4.1 If STT Process is done
+                # this response not include chatbot result, just STT result(talkers question) 
+                if item.recognition_result.is_final : 
                     self.recording_state = False # stop request generator
-                    self.stt_response = item # save stt response
-                    
-                elif len(item.query_result.fulfillment_text) > 0: # If dialog Flow send answer
+                    self.stt_response = item # save at "stt_response"
+                
+                # 4.2 If dialogflow send answer
+                # after stt is done, dialogflow send chatbot_result(robot's answer) to response
+                elif len(item.query_result.fulfillment_text) > 0: # if answer valid
                     self.log.info("done! ") 
-                    self.dflow_response = item # save dflow response
+                    self.dflow_response = item # save dialogflow response
                     break
-
-            except StopIteration: # Close loop, before Final call, Warning
+            
+            # Close loop, before Final call
+            # Error hander, usually called when user don't talk anything 
+            except StopIteration: 
                 self.stt_response = None
                 self.dflow_response = None
                 self.log.error("i can't get result by some reason")
                 break
 
             except Exception as GCLOUD_ERROR:  # Gcloud Error
-                self.find_error(GCLOUD_ERROR)
+                self._find_error(GCLOUD_ERROR)
                 self.asound.snd_lib_error_set_handler(None) # set back handler as Default
                 break
     
-        # 6. return Result        
+        # 5. return Result        
         time.sleep(0.05) # wait for turn off Stream
-        stt_result = ''
-        if self.stt_response is not None:
-            stt_result = self.stt_response.recognition_result.transcript
+        if self.stt_response is not None and self.dflow_response is not None:
+            if self.dflow_response.output_audio is not None:
+                print('Audio content in [dflow_response.output_audio]')
+            
+            return self.stt_response, self. chatbot_response
+        
+        return None,None
 
-        chatbot_result = ''
-        if self.dflow_response is not None:
-            chatbot_result = self.dflow_response.query_result.fulfillment_text
-
-        if self.dflow_response.output_audio is not None:
-            print('Audio content in [dflow_response.output_audio]')
-
-        #self.log.info("exit program")
-        return stt_result, chatbot_result
     """
     E. Send [EVENT] and return answer [AUDIO]
-    """
+    
+    Send Specific Custom Event to Dialogflow server
+    and get response and save it.
 
+    """
     def send_event(self,event_name):
         pass
 
 
-
     """
+
     F. Google Error message handler
     """
-    def find_error(self,GCLOUD_ERROR):
+    def _find_error(self,GCLOUD_ERROR):
         import google.api_core.exceptions as E
         
         #  0: 'fail prediction',
@@ -392,138 +412,41 @@ class PinoDialogFlow():
             raise E.ResourceExhausted('as')
     """
 
+"""
+example code for test
 
- 
-""" 
-def TTD_code_1():
+"""
+def example():
+
+    # 1. Set google dialogflow project config
     DIALOGFLOW_PROJECT_ID = 'a2-bwogyf'
     DIALOGFLOW_LANGUAGE_CODE = 'ko'
-    GOOGLE_APPLICATION_CREDENTIALS = '/home/pi/Squarebot/Keys/a2-bwogyf-c40e46d0dc2b.json'
+    GOOGLE_APPLICATION_CREDENTIALS = '/home/pi/PinoBot/Keys/a2-bwogyf-c40e46d0dc2b.json'
+    TIME_OUT = 7
 
-    Gbot = SqbDialogFlow(DIALOGFLOW_PROJECT_ID,
+    # 2. init and connect dialogflow project
+    Gbot = PinoDialogFlow(DIALOGFLOW_PROJECT_ID,
                          DIALOGFLOW_LANGUAGE_CODE,
-                         GOOGLE_APPLICATION_CREDENTIALS)
-
+                         GOOGLE_APPLICATION_CREDENTIALS,
+                         TIME_OUT)
     Gbot.open_session()
-    Gbot.send_audio_stream()
 
+    # 3. sent text and get Response
+    text_response = Gbot.send_text("안녕하세요")
+    print("[Q] : %s "%text_response.query_result.query_text)
+    print("[A] : accuracy:%0.3f | %s "%(text_response.query_result.intent_detection_confidence,
+                                        text_response.query_result.fulfillment_text))
 
+    # 4. send voice and get voice response
+    Gbot.start_stream()
+    print("Streaming started, say something timeout, %d seconds"%TIME_OUT)
+    stt_response, chatbot_response = Gbot.get_response()
+
+    print("[Q] : %s "%stt_response.recognition_result.transcript)
+    print("[A] : accuracy:%0.3f | %s "%(chatbot_response.query_result.intent_detection_confidence,
+                                        chatbot_response.query_result.fulfillment_text))
+    # [WIP]
+    # play audio_binary file..
 
 if __name__ == "__main__":
-    TTD_code_1()
-
-
-[OLD TEST CODE]
-def example_T2T():
-    DIALOGFLOW_PROJECT_ID = 'a2-bwogyf'
-    DIALOGFLOW_LANGUAGE_CODE = 'ko'
-    GOOGLE_APPLICATION_CREDENTIALS = '/home/pi/Squarebot/Keys/a2-bwogyf-c40e46d0dc2b.json'
-
-    Gbot = SqbDialogFlow(DIALOGFLOW_PROJECT_ID,
-                         DIALOGFLOW_LANGUAGE_CODE,
-                         GOOGLE_APPLICATION_CREDENTIALS)
-
-    Gbot.open_session()
-    answer = Gbot.send_text('이름')
-    print(answer)
-
-def example_A2T():
-    DIALOGFLOW_PROJECT_ID = 'a2-bwogyf'
-    DIALOGFLOW_LANGUAGE_CODE = 'ko'
-    GOOGLE_APPLICATION_CREDENTIALS = '/home/pi/Squarebot/Keys/a2-bwogyf-c40e46d0dc2b.json'
-
-    Gbot = SqbDialogFlow(DIALOGFLOW_PROJECT_ID,
-                         DIALOGFLOW_LANGUAGE_CODE,
-                         GOOGLE_APPLICATION_CREDENTIALS)
-
-    Gbot.open_session()
-    answer = Gbot.send_audio_file('~/Squarebot/hello.wav')
-    print(answer)
-"""
-
-"""
-    def send_audio_stream(self): 
-        # EXPERIMENTAL: This method interface might change in the future.
-        # https://github.com/GoogleCloudPlatform/python-docs-samples/blob/3444bf44054965a523aafbf256dd597e265d0480/dialogflow/cloud-client/mic_stream_audio_response.py
-        
-        # 1. check Session Exsist
-        if self._session_id is None: # if not, exit fuction
-            self.log.error("Session is not opened ignore command")
-            return -1
-
-        self.log.info("init pyaudio")
-        # 2. Remove alsa messages
-        ERROR_HANDLER_FUNC = CFUNCTYPE(None, c_char_p, c_int, c_char_p, c_int, c_char_p)
-        c_error_handler = ERROR_HANDLER_FUNC(py_error_handler)
-        asound = cdll.LoadLibrary('libasound.so')
-        asound.snd_lib_error_set_handler(c_error_handler)
-        
-        # 3. init pyaudio
-        audio = pyaudio.PyAudio()
-
-        # 4. init generator and start Recording
-        #audio_q =None #Queue()
-        requests = self.request_generator_stream(audio)
-        responses = self.session_client.streaming_detect_intent(requests)
-        self.log.info("Start Streaming...")
-
-        # 5. Wait for response
-        while True: 
-            try:
-                #self.raise_error(2)
-                item = next(responses) # receive Response
-                self.log.info("get Response...")
-
-                if item.recognition_result.is_final : # If STT is done
-                    self.recording_state = False # stop request generator
-                    self.stt_response = item # save stt response
-                    
-                elif len(item.query_result.fulfillment_text) > 0: # If dialog Flow send answer
-                    self.log.info("done! ") 
-                    self.dflow_response = item # save dflow response
-                    break
-
-            except StopIteration: # Close loop, before Final call, Warning
-                self.stt_response = None
-                self.dflow_response = None
-                self.log.error("i can't get result by some reason")
-                return None
-            except Exception as GCLOUD_ERROR:  # Gcloud Error
-                self.find_error(GCLOUD_ERROR)
-                asound.snd_lib_error_set_handler(None) # set back handler as Default
-                return None
-            
-        # 6. return Result
-        try :
-            self.log.info('STT Result: "{}"'.format(self.stt_response.recognition_result.transcript) )
-            self.log.info('Dflow Answer: {}'.format(self.dflow_response.query_result.fulfillment_text))
-        except AttributeError :
-            self.log.warning("STT return value is None")
-        except Exception as e: # Critical Unknown Error
-            self.log.critical(e)
-            asound.snd_lib_error_set_handler(None) # set back handler as Default
-            return -1
-        
-        time.sleep(0.05) # wait for turn off Stream
-        audio.terminate()
-        asound.snd_lib_error_set_handler(None) # set back handler as Default
-
-        self.log.info("exit program")
-        return self.dflow_response
-
-        
-        [ DEBUG Recording ]
-        import wave
-        waveFile = wave.open("./recording2.wav", 'wb')
-        waveFile.setnchannels(1)
-        waveFile.setsampwidth(audio.get_sample_size(pyaudio.paInt16))
-        waveFile.setframerate(16000)
-
-        frames = []
-        while audio_q.qsize():
-            frames.append(audio_q.get())
-        
-        waveFile.writeframes(b''.join(frames))
-        waveFile.close()
-        """
-        
+    example()
