@@ -326,6 +326,14 @@ class PinoDialogFlow():
 
         #self.log.info("exit program")
         return stt_result, chatbot_result
+    """
+    E. Send [EVENT] and return answer [AUDIO]
+    """
+
+    def send_event(self,event_name):
+        pass
+
+
 
     """
     F. Google Error message handler
