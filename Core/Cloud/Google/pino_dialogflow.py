@@ -212,6 +212,12 @@ class PinoDialogFlow():
             sample_rate_hertz=self._SAMPLE_RATE,
             single_utterance=False
         )
+
+        # [NEW], add output_audio config, to synthesis voice and save it
+        output_audio_config = dialogflow.types.OutputAudioConfig(
+            audio_encoding=dialogflow.enums.OutputAudioEncoding
+            .OUTPUT_AUDIO_ENCODING_LINEAR_16) #https://cloud.google.com/dialogflow/docs/detect-intent-tts?hl=ko
+
         query_input = dialogflow.types.QueryInput(
             audio_config=input_audio_config
         ) # https://cloud.google.com/dialogflow/docs/reference/rpc/google.cloud.dialogflow.v2#google.cloud.dialogflow.v2.QueryInput
@@ -219,7 +225,8 @@ class PinoDialogFlow():
         # 2. Make Initial Request
         initial_request =  dialogflow.types.StreamingDetectIntentRequest(
             session=session_path,
-            query_input=query_input
+            query_input=query_input,
+            output_audio_config=output_audio_config # [NEW], add for voice synthesis
         ) # https://cloud.google.com/dialogflow/docs/reference/rpc/google.cloud.dialogflow.v2#google.cloud.dialogflow.v2.StreamingDetectIntentRequest
         yield initial_request
 
@@ -303,7 +310,7 @@ class PinoDialogFlow():
                 self.find_error(GCLOUD_ERROR)
                 self.asound.snd_lib_error_set_handler(None) # set back handler as Default
                 break
-            
+    
         # 6. return Result        
         time.sleep(0.05) # wait for turn off Stream
         stt_result = ''
@@ -314,11 +321,14 @@ class PinoDialogFlow():
         if self.dflow_response is not None:
             chatbot_result = self.dflow_response.query_result.fulfillment_text
 
+        if self.dflow_response.output_audio is not None:
+            print('Audio content in [dflow_response.output_audio]')
+
         #self.log.info("exit program")
         return stt_result, chatbot_result
 
     """
-    E. Google Error message handler
+    F. Google Error message handler
     """
     def find_error(self,GCLOUD_ERROR):
         import google.api_core.exceptions as E
