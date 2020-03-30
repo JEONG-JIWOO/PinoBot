@@ -339,7 +339,7 @@ class PinoDialogFlow():
             if self.dflow_response.output_audio is not None:
                 print('Audio content in [dflow_response.output_audio]')
             
-            return self.stt_response, self. chatbot_response
+            return self.stt_response, self.dflow_response 
         
         return None,None
 
