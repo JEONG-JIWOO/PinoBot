@@ -301,6 +301,10 @@ class PinoDialogFlow():
     or you can write your owen response fuction 
     """    
     def get_response(self):
+        if self._session_id is None: # if not, exit fuction
+            self.log.error("Session is not opened ignore command")
+            return None, None
+
         # 3. Wait for response
         while True: 
             try:
@@ -351,6 +355,11 @@ class PinoDialogFlow():
 
     """
     def send_event(self,event_name):
+        if self._session_id is None: # if not, exit fuction
+            self.log.error("Session is not opened ignore command")
+            return None
+
+        self.session_client.WebhookResponse()
         pass
 
 
