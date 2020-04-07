@@ -7,6 +7,7 @@ import logging
 
 from ctypes import *
 import pyaudio
+import wave
 #from multiprocessing import JoinableQueue , Process , Queue , TimeoutError
 
 def py_error_handler(filename, line, function, err, fmt):
@@ -25,7 +26,8 @@ class PinoDialogFlow():
         # 1. store Cloud Connection Settings as Private
         self._GOOGLE_APPLICATION_CREDENTIALS = GOOGLE_APPLICATION_CREDENTIALS 
         self._project_id = DFLOW_PROJECT_ID
-        self._session_id = None         
+        self._session_id = None
+        self._session_path = None
         self.lang_code = DFLOW_LANGUAGE_CODE
         
         # 2. set private variables
@@ -51,6 +53,7 @@ class PinoDialogFlow():
         self.recording_state = False
         self.stt_response = None
         self.dflow_response = None
+        self.tts_response = None
         self.audio = None
 
         # 5. init settings
@@ -136,7 +139,7 @@ class PinoDialogFlow():
 
     """
     def open_session(self):
-        if self._session_id is not None:
+        if self._session_path is not None:
             self.log.warning( "old_session %s exsists, Ignore and open New Session"%self._session_id)
         
         # set session id as [timestamp + project id]
@@ -145,7 +148,7 @@ class PinoDialogFlow():
         from google.oauth2 import service_account
         credentials = service_account.Credentials.from_service_account_file(self._GOOGLE_APPLICATION_CREDENTIALS)
         self.session_client = dialogflow.SessionsClient(credentials = credentials)
-        self._session = self.session_client.session_path(self._project_id, self._session_id)
+        self._session_path = self.session_client.session_path(self._project_id, self._session_id)
         self.log.info("Open New Session, SID [%s]" % self._session_id)
 
     """
@@ -157,17 +160,24 @@ class PinoDialogFlow():
         Args: text_msg (str): Text message to Send
         """
         # 1. check Session Exsist
-        if self._session_id is None: # if not, exit fuction
+        if self._session_path is None: # if not, exit fuction
             self.log.error("Session is not opened ignore command")
             return None
-        
+
+
         # 2. make Quary
         text_input = dialogflow.types.TextInput(text=text_msg, language_code=self.lang_code)
+        output_audio_config = dialogflow.types.OutputAudioConfig(
+            audio_encoding=dialogflow.enums.OutputAudioEncoding
+                .OUTPUT_AUDIO_ENCODING_LINEAR_16,
+            sample_rate_hertz=self._SAMPLE_RATE
+        )
         query_input = dialogflow.types.QueryInput(text=text_input)
-        
+
         # 3. send Quary
         try:
-            response = self.session_client.detect_intent(session=self._session, query_input=query_input)
+            response = self.session_client.detect_intent(session=self._session_path, query_input=query_input,
+                                                         output_audio_config=output_audio_config)
         
         except InvalidArgument:  # quary error
             self.log.error("Invalid Argument Send")
@@ -181,6 +191,7 @@ class PinoDialogFlow():
         #self.log.info(response.query_result.intent_detection_confidence)
         #self.log.info(response.query_result.fulfillment_text)
         self.dflow_response = response
+        self.tts_response = response
         return response
 
     # [WIP] , VOLUME setting fuctionm, using amixer command 
@@ -216,9 +227,6 @@ class PinoDialogFlow():
         """
 
         # 1.1 Config request parametoers
-        session_path = self.session_client.session_path(
-            project=self._project_id, session=self._session_id
-        )
         input_audio_config = dialogflow.types.InputAudioConfig(
             audio_encoding=enums.AudioEncoding.AUDIO_ENCODING_LINEAR_16,
             language_code=self.lang_code,
@@ -230,8 +238,9 @@ class PinoDialogFlow():
         # Reference: https://cloud.google.com/dialogflow/docs/detect-intent-tts?hl=ko
         output_audio_config = dialogflow.types.OutputAudioConfig(
             audio_encoding=dialogflow.enums.OutputAudioEncoding
-            .OUTPUT_AUDIO_ENCODING_LINEAR_16) 
-    
+            .OUTPUT_AUDIO_ENCODING_LINEAR_16,
+            sample_rate_hertz=self._SAMPLE_RATE
+        )
         # 1.3 Make Quary
         # Reference: https://cloud.google.com/dialogflow/docs/reference/rpc/google.cloud.dialogflow.v2#google.cloud.dialogflow.v2.QueryInput
         query_input = dialogflow.types.QueryInput(
@@ -240,8 +249,8 @@ class PinoDialogFlow():
 
         # 1.4 Make Initial Request
         # https://cloud.google.com/dialogflow/docs/reference/rpc/google.cloud.dialogflow.v2#google.cloud.dialogflow.v2.StreamingDetectIntentRequest
-        initial_request =  dialogflow.types.StreamingDetectIntentRequest(
-            session=session_path,
+        initial_request = dialogflow.types.StreamingDetectIntentRequest(
+            session=self._session_path,
             query_input=query_input,
             output_audio_config=output_audio_config # [NEW], add for voice synthesis
         ) 
@@ -268,7 +277,7 @@ class PinoDialogFlow():
 
             else :
                 yield dialogflow.types.StreamingDetectIntentRequest(
-                    session=session_path,
+                    session=self._session_path,
                     query_input=query_input,
                     input_audio=audio_chunk,
                     output_audio_config=output_audio_config)
@@ -288,7 +297,7 @@ class PinoDialogFlow():
         # https://github.com/GoogleCloudPlatform/python-docs-samples/blob/3444bf44054965a523aafbf256dd597e265d0480/dialogflow/cloud-client/mic_stream_audio_response.py
         
         # check Session Exsist
-        if self._session_id is None: # if not, exit fuction
+        if self._session_path is None: # if not, exit fuction
             self.log.error("Session is not opened ignore command")
             return None
 
@@ -303,7 +312,7 @@ class PinoDialogFlow():
     or you can write your owen response fuction 
     """    
     def get_response(self):
-        if self._session_id is None: # if not, exit fuction
+        if self._session_path is None: # if not, exit fuction
             self.log.error("Session is not opened ignore command")
             return None, None
 
@@ -324,6 +333,13 @@ class PinoDialogFlow():
                 elif len(item.query_result.fulfillment_text) > 0: # if answer valid
                     self.log.info("done! ") 
                     self.dflow_response = item # save dialogflow response
+
+                    # [NEW] , TO get TTS response, we need to get 1 More response.
+                    try:
+                        self.tts_response = next(self.responses)
+                    except:
+                        self.log.error("no tts response,")
+                        self.tts_response = None
                     break
             
             # Close loop, before Final call
@@ -342,12 +358,30 @@ class PinoDialogFlow():
         # 5. return Result        
         time.sleep(0.05) # wait for turn off Stream
         if self.stt_response is not None and self.dflow_response is not None:
-            if self.dflow_response.output_audio is not None:
-                print('Audio content in [dflow_response.output_audio]')
-            
-            return self.stt_response, self.dflow_response 
+            return self.stt_response, self.dflow_response
         
         return None,None
+
+    def play_audio(self):
+        if self.tts_response.output_audio is not None:
+            with open("./1.wav","wb") as f:
+                f.write(self.tts_response.output_audio)
+            time.sleep(0.01)
+            wav_data = wave.open("./1.wav","rb")
+
+            stream = self.audio.open(
+                format=pyaudio.paInt16,
+                channels=1,
+                rate=self._SAMPLE_RATE,
+                output=True
+            )
+
+            data = wav_data.readframes(self._CHUNK_SIZE)
+            while len(data) > 1:
+                stream.write(data)
+                data = wav_data.readframes(self._CHUNK_SIZE)
+            stream.stop_stream()
+            stream.close()
 
     """
     E. Send [EVENT] and return answer [AUDIO]
@@ -357,7 +391,7 @@ class PinoDialogFlow():
 
     """
     def send_event(self,event_name):
-        if self._session_id is None: # if not, exit fuction
+        if self._session_path is None: # if not, exit fuction
             self.log.error("Session is not opened ignore command")
             return None
 
@@ -430,9 +464,9 @@ example code for test
 def example():
 
     # 1. Set google dialogflow project config
-    DIALOGFLOW_PROJECT_ID = 'a2-bwogyf'
+    DIALOGFLOW_PROJECT_ID = 'squarebot01-yauqxo'
     DIALOGFLOW_LANGUAGE_CODE = 'ko'
-    GOOGLE_APPLICATION_CREDENTIALS = '/home/pi/PinoBot/Keys/a2-bwogyf-c40e46d0dc2b.json'
+    GOOGLE_APPLICATION_CREDENTIALS = '/home/pi/PinoBot/Keys/squarebot01-yauqxo-149c5cb80866.json'
     TIME_OUT = 7
 
     # 2. init and connect dialogflow project
@@ -448,6 +482,7 @@ def example():
     print("[Q] : %s "%text_response.query_result.query_text)
     print("[A] : accuracy:%0.3f | %s "%(text_response.query_result.intent_detection_confidence,
                                         text_response.query_result.fulfillment_text))
+    Gbot.play_audio()
 
     # 4. send voice and get voice response
     Gbot.start_stream()
@@ -461,6 +496,7 @@ def example():
         print("rec error")
     # [WIP]
     # play audio_binary file..
+    Gbot.play_audio()
 
 if __name__ == "__main__":
     example()
