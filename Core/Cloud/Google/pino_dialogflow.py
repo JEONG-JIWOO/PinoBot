@@ -571,7 +571,7 @@ def example():
     Gbot.open_session()
 
     # 3. sent text and get Response
-    print("Start!")
+    print("\n\n Start!")
     text_response = Gbot.send_text("안녕하세요")
     print("[Q] : %s "%text_response.query_result.query_text)
     print("[A] : accuracy:%0.3f | %s "%(text_response.query_result.intent_detection_confidence,
