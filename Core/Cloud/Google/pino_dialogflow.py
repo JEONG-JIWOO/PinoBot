@@ -209,9 +209,10 @@ class PinoDialogFlow():
 
     D.1 Request Generator.
     """
-    def _request_generator(self,audio):
+    def _request_generator(self):
         """
-        Args: audio(Pyaudio object) : base pyaudio class for recording
+        Args: None
+            [deleted] # audio(Pyaudio object) : base pyaudio class for recording
         """
 
         # 1.1 Config request parametoers
@@ -248,12 +249,13 @@ class PinoDialogFlow():
 
         # 2.1 init recording
         # [NOTE] AUDIO CHANNEL should be=1. google STT can't recognize over 1
-        stream = audio.open(format=pyaudio.paInt16, channels=1,
+        stream = self.audio.open(format=pyaudio.paInt16, channels=1,
                     rate=self._SAMPLE_RATE , input=True,
-                    frames_per_buffer=self._CHUNK_SIZE,input_device_index=self.sound_card)
+                    frames_per_buffer=self._CHUNK_SIZE, input_device_index=self.sound_card)
         
         # 2.2 start streaming,
         # if over self._MAX_RECORD_SECONDS or self.recording_state is False(OFF), stop streaming,
+        self.recording_state = True
         for loop in range(0, int(self._SAMPLE_RATE / self._CHUNK_SIZE * self._MAX_RECORD_SECONDS)): 
             try:           
                 audio_chunk = stream.read(self._CHUNK_SIZE,  exception_on_overflow = False)    
@@ -291,7 +293,7 @@ class PinoDialogFlow():
             return None
 
         # 2.4 init generator and start Recording
-        requests = self._request_generator(self.audio)
+        requests = self._request_generator()
         self.responses = self.session_client.streaming_detect_intent(requests)
         return self.responses # return iteratable response object, 
     
@@ -441,6 +443,7 @@ def example():
     Gbot.open_session()
 
     # 3. sent text and get Response
+    print("Start!")
     text_response = Gbot.send_text("안녕하세요")
     print("[Q] : %s "%text_response.query_result.query_text)
     print("[A] : accuracy:%0.3f | %s "%(text_response.query_result.intent_detection_confidence,
@@ -450,10 +453,12 @@ def example():
     Gbot.start_stream()
     print("Streaming started, say something timeout, %d seconds"%TIME_OUT)
     stt_response, chatbot_response = Gbot.get_response()
-
-    print("[Q] : %s "%stt_response.recognition_result.transcript)
-    print("[A] : accuracy:%0.3f | %s "%(chatbot_response.query_result.intent_detection_confidence,
-                                        chatbot_response.query_result.fulfillment_text))
+    if stt_response is not None and chatbot_response is not None:
+        print("[Q] : %s "%stt_response.recognition_result.transcript)
+        print("[A] : accuracy:%0.3f | %s "%(chatbot_response.query_result.intent_detection_confidence,
+                                            chatbot_response.query_result.fulfillment_text))
+    else :
+        print("rec error")
     # [WIP]
     # play audio_binary file..
 
