@@ -219,6 +219,8 @@ class PinoDialogFlow():
 
     """
     def open_session(self):
+
+        self.log.info("Start Open Session")
         if self._session_path is not None:
             self.log.warning( "old_session %s exsists, Ignore and open New Session"%self._session_id)
         
@@ -435,7 +437,7 @@ class PinoDialogFlow():
         if self.stt_response is not None and self.dflow_response is not None:
             return self.stt_response, self.dflow_response
         
-        return None,None
+        return None, None
 
     """
        E. play audio file stored in self.tts_response.output_audio
@@ -578,6 +580,7 @@ def example():
                                         text_response.query_result.fulfillment_text))
     Gbot.play_audio()
 
+    """
     # 4. send voice and get voice response
     Gbot.start_stream()
     print("Streaming started, say something timeout, %d seconds"%TIME_OUT)
@@ -591,6 +594,22 @@ def example():
     # [WIP]
     # play audio_binary file..
     Gbot.play_audio()
+    """
+
+    cnt = 0
+    while True:
+        time.sleep(5)
+        cnt += 5
+        print('%d seconds went. '%cnt)
+        if cnt % 2400 == 0:
+            try :
+                text_response = Gbot.send_text("안녕하세요")
+                print("[Q] : %s " % text_response.query_result.query_text)
+                print("[A] : accuracy:%0.3f | %s " % (text_response.query_result.intent_detection_confidence,
+                                                      text_response.query_result.fulfillment_text))
+            except :
+                print("session Error")
+
 
 if __name__ == "__main__":
     example()
