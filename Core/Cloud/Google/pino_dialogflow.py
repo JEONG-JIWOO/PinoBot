@@ -1,22 +1,97 @@
 #!/usr/bin/env python3.7
 import dialogflow_v2 as dialogflow
 from dialogflow_v2  import enums
-from google.api_core.exceptions import InvalidArgument , GoogleAPIError
+from google.api_core.exceptions import InvalidArgument
 import time
 import logging
 
 from ctypes import *
 import pyaudio
 import wave
-#from multiprocessing import JoinableQueue , Process , Queue , TimeoutError
 
 def py_error_handler(filename, line, function, err, fmt):
     pass
 
 class PinoDialogFlow():
+    """
+    Summary of Class
+
+    A. Initializing parts.
+
+        A.1. Variables used in class
+            self._GOOGLE_APPLICATION_CREDENTIALS  --  path of GoogleCloud key json file
+            self._project_id                      --  DialogFlow Project ID
+            self._session_id                      --  session id of this class
+            self._session_path                    --  session object
+            self.lang_code                        --  language cod of DialogFlow Project, Default, ko
+
+            self._SAMPLE_RATE = 16000             --  Sampleing Rate in Hz
+            self._CHUNK_SIZE = 2048               --  Chuck size in byte
+            self._MAX_RECORD_SECONDS              --  STT timeout, in Seconds
+            self.gcloud_dict =                    --  GoogleCloud Error Code
+            {        1: 'nomal',
+                     0: 'fail prediction',
+                    -1: 'Internet Error',
+                    -2: 'google server error',
+                    -3: 'over use Error',
+                    -4: 'authorization Error',
+                    -5: 'code bug',
+                    -6: 'critical'
+            }
+
+            self.gcloud_state = 1                 --  Current GoogleCloud state
+            self.recording_state = False          --  used for interrupt and stop Recording
+            self.stt_response                     --  Final STT result
+            self.dflow_response                   --  Chatbot result [ not include audio file! ]
+            self.tts_response                     --  TTS result
+            self.audio                            --  Pyaudio Object
+
+        A.2 Delete, free fuction
+            def __del__(self):
+
+        A.3 Initializing Logger
+            def _set_logger(self,path):
+
+        A.4 Initializing pyuadio
+            def _init_pyaudio(self):
+
+
+    B. Open DialogFlow Session
+        def open_session(self):
+
+    C. Send [TEXT] and return answer [Text]
+        def send_text(self, text_msg):
+
+    D. Send [AUDIO STREAM] and return answer [AUDIO_BINARY]
+
+        D.1 Request Generator
+            def _request_generator(self):
+
+        D.2 Start STREAM
+            def start_stream(self):
+
+        D.3 KEEP stream AND wait For Response,
+            def get_response(self):
+
+
+    E. play audio file stored in self.tts_response.output_audio
+
+        E.1 play audio                                                          --[WIP]
+            def play_audio(self):
+        E.2 set volume                                                          --[WIP]
+            def set_volume(self):
+
+
+    F. Send [EVENT] and return answer [AUDIO]
+        def send_event(self,Event):                                             --[WIP]
+
+    G. Google Error message handler
+        def _find_error(self,GCLOUD_ERROR):
 
     """
-    A. Initializing DialogFlow Connection Module
+
+    """
+    A.1 Initializing DialogFlow Connection Module
     """
     def __init__(self, DFLOW_PROJECT_ID, 
                        DFLOW_LANGUAGE_CODE , 
@@ -35,10 +110,7 @@ class PinoDialogFlow():
         self._CHUNK_SIZE = 2048
         self._MAX_RECORD_SECONDS = TIME_OUT       
 
-        # 3. set Logger, use Python Logging Module
-        self._set_logger(path = "/home/pi/PinoBot/log/DialogFlowlog.log")
-
-        # 4. set nomal variables
+        # 3. set nomal variables
         self.gcloud_dict = {1: 'nomal',
                              0: 'fail prediction',
                             -1: 'Internet Error',
@@ -49,23 +121,31 @@ class PinoDialogFlow():
                             -6: 'critical'
         }
         self.gcloud_state = 1
-
         self.recording_state = False
         self.stt_response = None
         self.dflow_response = None
         self.tts_response = None
         self.audio = None
 
+        # 4. set Logger, use Python Logging Module
+        self._set_logger(path = "/home/pi/PinoBot/log/DialogFlowlog.log")
+
         # 5. init settings
         self._find_soundcard()
         self._init_pyaudio()
 
+    """
+    A.2 Delete and Free Object
+    
+    """
     def __del__(self):
         if self.audio is not None:
             self.audio.terminate()
             self.asound.snd_lib_error_set_handler(None) # set back handler as Default
 
-
+    """
+    A.2 find Sound card index by name
+    """
     def _find_soundcard(self):
         # 1. Remove alsa messages
         ERROR_HANDLER_FUNC = CFUNCTYPE(None, c_char_p, c_int, c_char_p, c_int, c_char_p)
@@ -88,7 +168,7 @@ class PinoDialogFlow():
         audio.terminate()
 
     """
-    A.1 Initializing Logger
+    A.3 Initializing Logger
     """
     def _set_logger(self,path):
         # 2.1 set logger and formatter
@@ -113,7 +193,7 @@ class PinoDialogFlow():
 
 
     """
-    A.1 Initializing pyuadion
+    A.4 Initializing pyuadio
     """
     def _init_pyaudio(self):
         if self.audio is not None:
@@ -193,11 +273,6 @@ class PinoDialogFlow():
         self.dflow_response = response
         self.tts_response = response
         return response
-
-    # [WIP] , VOLUME setting fuctionm, using amixer command 
-    def setVolume(self):
-        pass
-        # amixer -c 1 cset iface=MIXER,name="ADC1 PGA gain" 20
 
     """
     Reference Source : 
@@ -362,13 +437,23 @@ class PinoDialogFlow():
         
         return None,None
 
+    """
+       E. play audio file stored in self.tts_response.output_audio
+    """
+
+    """
+        E.1 play audio
+    """
     def play_audio(self):
         if self.tts_response.output_audio is not None:
+
+            # [WIP] find alternative solution without using file system
             with open("./1.wav","wb") as f:
                 f.write(self.tts_response.output_audio)
             time.sleep(0.01)
             wav_data = wave.open("./1.wav","rb")
 
+            # Open play stream. Formats are fixed,
             stream = self.audio.open(
                 format=pyaudio.paInt16,
                 channels=1,
@@ -376,17 +461,26 @@ class PinoDialogFlow():
                 output=True
             )
 
+            # Play wav file.
             data = wav_data.readframes(self._CHUNK_SIZE)
             while len(data) > 1:
                 stream.write(data)
                 data = wav_data.readframes(self._CHUNK_SIZE)
             stream.stop_stream()
             stream.close()
+    """
+        E.2 set volume
+        [WIP] , VOLUME setting fuctionm, using amixer command
+    """
+    def set_volume(self):
+        pass
+        # amixer -c 1 cset iface=MIXER,name="ADC1 PGA gain" 20
+
 
     """
-    E. Send [EVENT] and return answer [AUDIO]
+    F. Send [EVENT] and return answer [AUDIO]
     
-    Send Specific Custom Event to Dialogflow server
+    [WIP] Send Specific Custom Event to Dialogflow server
     and get response and save it.
 
     """
@@ -401,7 +495,7 @@ class PinoDialogFlow():
 
     """
 
-    F. Google Error message handler
+    G. Google Error message handler
     """
     def _find_error(self,GCLOUD_ERROR):
         import google.api_core.exceptions as E
