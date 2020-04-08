@@ -219,19 +219,23 @@ class PinoDialogFlow():
 
     """
     def open_session(self):
-
         self.log.info("Start Open Session")
         if self._session_path is not None:
             self.log.warning( "old_session %s exsists, Ignore and open New Session"%self._session_id)
         
         # set session id as [timestamp + project id]
-        self._session_id = self._project_id
-
+        self._session_id = self._project_id +time.asctime()
         from google.oauth2 import service_account
         credentials = service_account.Credentials.from_service_account_file(self._GOOGLE_APPLICATION_CREDENTIALS)
-        self.session_client = dialogflow.SessionsClient(credentials = credentials)
-        self._session_path = self.session_client.session_path(self._project_id, self._session_id)
+        try:
+            self.session_client = dialogflow.SessionsClient(credentials = credentials)
+            self._session_path = self.session_client.session_path(self._project_id, self._session_id)
+            self.gcloud_state = 1
+        except Exception as GCLOUD_ERROR:
+            self._find_error(GCLOUD_ERROR)
+
         self.log.info("Open New Session, SID [%s]" % self._session_id)
+        return self.gcloud_state
 
     """
     C. Send [TEXT] and return answer [Text]
@@ -267,11 +271,7 @@ class PinoDialogFlow():
         except Exception as GCLOUD_ERROR:  # Gcloud Error
             self._find_error(GCLOUD_ERROR)
             return None
-            
-        # 4. log Response , [to be deleted]
-        #self.log.info(response.query_result.query_text)
-        #self.log.info(response.query_result.intent_detection_confidence)
-        #self.log.info(response.query_result.fulfillment_text)
+
         self.dflow_response = response
         self.tts_response = response
         return response
@@ -499,7 +499,7 @@ class PinoDialogFlow():
 
     G. Google Error message handler
     """
-    def _find_error(self,GCLOUD_ERROR):
+    def _find_error(self, GCLOUD_ERROR):
         import google.api_core.exceptions as E
         
         #  0: 'fail prediction',
@@ -580,7 +580,6 @@ def example():
                                         text_response.query_result.fulfillment_text))
     Gbot.play_audio()
 
-    """
     # 4. send voice and get voice response
     Gbot.start_stream()
     print("Streaming started, say something timeout, %d seconds"%TIME_OUT)
@@ -594,8 +593,8 @@ def example():
     # [WIP]
     # play audio_binary file..
     Gbot.play_audio()
-    """
 
+   # 5. session Tester,
     cnt = 0
     while True:
         time.sleep(5)
