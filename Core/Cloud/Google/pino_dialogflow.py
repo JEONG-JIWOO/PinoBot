@@ -83,7 +83,7 @@ class PinoDialogFlow():
 
 
     F. Send [EVENT] and return answer [AUDIO]
-        def send_event(self,Event):                                             --[WIP]
+        def send_event(self,event_name,parameters):
 
     G. Google Error message handler
         def _find_error(self,GCLOUD_ERROR):
@@ -486,14 +486,52 @@ class PinoDialogFlow():
     and get response and save it.
 
     """
-    def send_event(self,event_name):
-        if self._session_path is None: # if not, exit fuction
+    def send_event(self,event_name, parameters = None):
+        """
+        Args: event_name (str): event name to call
+              parameters (dict): dialogflow parameter in dictionary
+        """
+        # 1. check Session Exsist
+        if self._session_path is None:  # if not, exit fuction
             self.log.error("Session is not opened ignore command")
             return None
 
-        self.session_client.WebhookResponse()
-        pass
+        # 2. make Quary
 
+        if parameters is None :
+            event_input = dialogflow.types.EventInput(name=event_name,
+                                                      language_code=self.lang_code)
+        else :
+            from google.protobuf import struct_pb2
+            for key in parameters.keys():
+                p = struct_pb2.Struct()
+                p[key] = parameters[key]
+            event_input = dialogflow.types.EventInput(name=event_name,
+                                                      language_code=self.lang_code,
+                                                      parameters=p)
+
+
+        output_audio_config = dialogflow.types.OutputAudioConfig(
+            audio_encoding=dialogflow.enums.OutputAudioEncoding.OUTPUT_AUDIO_ENCODING_LINEAR_16,
+            sample_rate_hertz=self._SAMPLE_RATE
+        )
+        query_input = dialogflow.types.QueryInput(event=event_input)
+
+        # 3. send Quary
+        try:
+            response = self.session_client.detect_intent(session=self._session_path, query_input=query_input,
+                                                         output_audio_config=output_audio_config)
+
+        except InvalidArgument:  # quary error
+            self.log.error("Invalid Argument Send")
+            return None
+        except Exception as GCLOUD_ERROR:  # Gcloud Error
+            self._find_error(GCLOUD_ERROR)
+            return None
+
+        self.dflow_response = response
+        self.tts_response = response
+        return response
 
     """
 
@@ -572,6 +610,7 @@ def example():
                          TIME_OUT)
     Gbot.open_session()
 
+
     # 3. sent text and get Response
     print("\n\n Start!")
     text_response = Gbot.send_text("안녕하세요")
@@ -594,7 +633,14 @@ def example():
     # play audio_binary file..
     Gbot.play_audio()
 
-   # 5. session Tester,
+    # 5. send Event with parameters
+    print("\n\n Start!")
+    text_response = Gbot.send_event("Wall_Event",{'Wall_time':50})
+    print("[Q] : %s " % text_response.query_result.query_text)
+    print("[A] : accuracy:%0.3f | %s " % (text_response.query_result.intent_detection_confidence,
+                                          text_response.query_result.fulfillment_text))
+
+   # 6. session Tester,
     cnt = 0
     while True:
         time.sleep(5)
