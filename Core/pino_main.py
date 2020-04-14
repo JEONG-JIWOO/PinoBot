@@ -4,6 +4,8 @@
 #from Cloud.Google import pino_dialogflow
 import enum , time, random
 from threading import Lock, Thread
+from Cloud.google import pino_dialogflow
+from Hardware import v1
 
 class STATE(enum.Enum):
     BOOT = 0
@@ -24,10 +26,23 @@ class PinoBot():
         self.sensor_state = 0  # -1 : facing object over self.wall_threshold time
                                #  0 : no object
                                #  1 : measure object
-        self.HardWare = None
+        self.HardWare = v1.HardwareV1()
 
         # 2. init cloud
 
+        # [TEMP CODE]
+        DIALOGFLOW_PROJECT_ID = 'squarebot01-yauqxo'
+        DIALOGFLOW_LANGUAGE_CODE = 'ko'
+        GOOGLE_APPLICATION_CREDENTIALS = '/home/pi/PinoBot/Keys/squarebot01-yauqxo-149c5cb80866.json'
+        TIME_OUT = 7
+        # /[TEMP CODE]
+
+
+        # 2. init and connect dialogflow project
+        self.cloud = PinoDialogFlow(DIALOGFLOW_PROJECT_ID,
+                         DIALOGFLOW_LANGUAGE_CODE,
+                         GOOGLE_APPLICATION_CREDENTIALS,
+                         TIME_OUT)
         
         # 3. do some boot process
         self.boot_process()
@@ -73,24 +88,20 @@ class PinoBot():
         """
 
         # 3. check wifi connection, if failed, try to connect 3 times and if failed, show [WIFI ERROR]
-        
-        # 4. check cloud connection, if failed, try to connect 3 times and if failed, show [CLOUD ERROR] 
-        """
-        DIALOGFLOW_PROJECT_ID = 'a2-bwogyf'
-        DIALOGFLOW_LANGUAGE_CODE = 'ko'
-        GOOGLE_APPLICATION_CREDENTIALS = '/home/pi/PinoBot/Keys/a2-bwogyf-c40e46d0dc2b.json'
 
-        self.Cloud = pino_dialogflow.PinoDialogFlow(DIALOGFLOW_PROJECT_ID,
-                                                    DIALOGFLOW_LANGUAGE_CODE,
-                                                    GOOGLE_APPLICATION_CREDENTIALS)
-        
-        """   
-        
+
+        # 4. check cloud connection, if failed, try to connect 3 times and if failed, show [CLOUD ERROR] \
+        self.cloud.open_session()
+        text_response = self.cloud.send_text("안녕하세요")
+        if text_response.query_result.query_text is not None:
+            print("cloud is all fine") # [TEMP CODE]
+
+
         # 5. if all completed. show [READY]" message
-        
+
+
         self.sensor_t = Thread(target=self.sensor_thread)
         self.sensor_t.start()
-
         self.state = STATE.IDLE
 
     def sensor_thread(self):
@@ -103,9 +114,8 @@ class PinoBot():
             T_LIMIT = self.wall_threshold_time 
         
         while True:
-            with  self.lock:
-                #distance = self.HardWare.read_sonic()
-                distance = random.uniform(12,19)
+            with self.lock:
+                distance = self.HardWare.read_sonic()
                 print("d: %0.2f"%distance)
 
                 # 1. onject  [out -> in]
@@ -129,23 +139,29 @@ class PinoBot():
             time.sleep(0.5)
 
     def stream_voice(self):
-        """
-        [WIP] voice recognization code
-        """
-        time.sleep(6)
-        stt_response = None
-        chatbot_response = None
-        return stt_response, chatbot_response
+        self.cloud.start_stream()
+        print("Streaming started, say something timeout, %d seconds"%self.TIME_OUT) # [TEMP CODE]
+
+        stt_response, chatbot_response = self.cloud.get_response()
+
+        if stt_response is None :
+            return -1
+        elif len(stt_response.query_result.fulfillment_text) == 0:
+            return 0
+        elif len(chatbot_response.query_result.fulfillment_text) > 0 :
+            return 1
+        else :
+            return -2
 
     def send_event(self,Event):
-        """
-        [WIP] Cloud event send code
-        """
-        time.sleep(1)
-        response = None
-        return response
+        event_response = self.cloud.send_event(Event)
+        if len(event_response.query_result.fulfillment_text) > 0:
+            return True
+        else:
+            print("rec error")
+            return False
 
-    def do_action(self,action):
+    def do_action(self,response):
         """
         [WIP] do some actions..
 
@@ -162,8 +178,11 @@ class PinoBot():
         # 0. BOOT 
         if self.state == STATE.BOOT:
             print("BOOT ON")
-            action = self.send_event("BOOT")
-            self.do_action(action)            
+
+            if self.send_event("BOOT") :
+                #self.do_action()
+                print("boot action!")
+                self.cloud.play(audio)
             self.state = STATE.IDLE
 
 
@@ -173,28 +192,28 @@ class PinoBot():
             print("IDLE")
 
             sensor_state = -2
-            with  self.lock:
+            with self.lock:
                 sensor_state = self.sensor_state
             
             # 1.2 change state and do action
             if sensor_state == 1:
                 self.state = STATE.VOICE_REC
-                print("[GO] VOICE REC")
 
             elif sensor_state == 0:
-                action = self.send_event("IDLE")
-                self.do_action(action)
+                # action = self.send_event("IDLE")
+                # self.do_action(action)
+                pass
 
             elif sensor_state == -1:
                 self.state = STATE.WALL_FACE
-                print("[GO] WALL FACE")
 
         # 2. WALL_FACE
         elif self.state == STATE.WALL_FACE :
             # 2.1 do wall face action 
             print("WALL FACE")
-            action = self.send_event("WALL_FACE")
-            self.do_action(action)
+            if self.send_event("WALL_FACE"):
+                self.cloud.play(audio)
+                #self.do_action(action)
             
             # 2.2 Get sonsor state with thread Lock
             sensor_state = -2
@@ -208,18 +227,21 @@ class PinoBot():
         # 3. VOICE_REC
         elif self.state == STATE.VOICE_REC:
             # 3.1 do stream voice and, get [STT] and [CHATBOT] response
-            stt , chatbot = self.stream_voice()
-            
+            state = self.stream_voice()
+
             # 3.2 fail to recognize user voice
-            if stt == None:
+            if state == 0:
                 print("NO HEAR")
-                action = self.send_event("NOT_HEAR")
-                self.do_action(action)
+                if self.send_event("NOT_HEAR"):
+                    self.cloud.play(audio)
+
+                # self.do_action(action)
 
             # 3.3 sucess and get chatbot response
-            else :
+            elif state == 1 :
+                self.cloud.play(audio)
                 print(" DO SOTHING ")
-                self.do_action(chatbot)
+                #self.do_action(chatbot)
 
             # 3.4 back to idle            
             self.state = STATE.IDLE
