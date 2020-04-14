@@ -635,10 +635,10 @@ def example():
 
     # 5. send Event with parameters
     print("\n\n Start!")
-    text_response = Gbot.send_event("Wall_Event",{'Wall_time':50})
-    print("[Q] : %s " % text_response.query_result.query_text)
-    print("[A] : accuracy:%0.3f | %s " % (text_response.query_result.intent_detection_confidence,
-                                          text_response.query_result.fulfillment_text))
+    event_response = Gbot.send_event("Wall_Event",{'Wall_time':50})
+    print("[Q] : %s " % event_response.query_result.query_text)
+    print("[A] : accuracy:%0.3f | %s " % (event_response.query_result.intent_detection_confidence,
+                                          event_response.query_result.fulfillment_text))
 
    # 6. session Tester,
     cnt = 0
