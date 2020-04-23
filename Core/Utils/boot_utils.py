@@ -2,7 +2,7 @@ import configparser
 
 
 class BootUtils():
-    def __init__(self):
+    def __init__(self,hardware):
         self.config_path = "/home/pi/PinoBot/config.ini"
         self.boot_log = None
         self.new_config = None
@@ -76,6 +76,10 @@ class BootUtils():
         pass
 
 def test():
-    d = BootUtils()
+    from Core.Hardware import v1
+    HardWare = v1.HardwareV1()
+
+    d = BootUtils(HardWare)
+    print("tested")
 
 test()
