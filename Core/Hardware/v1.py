@@ -19,9 +19,9 @@ I2C-1 : Address[] : character LCD module
 """
 import logging
 
-from Hardware.SPI import apa_102
-from Hardware.GPIO import switch , sonic_sensor
-from Hardware.I2C import pca_9685, lcd_1602
+from Core.Hardware.SPI import apa_102
+from Core.Hardware.GPIO import switch , sonic_sensor
+from Core.Hardware.I2C import pca_9685, lcd_1602
 
 #from queue import Queue
 # spi, i2c raspi-config
@@ -30,8 +30,8 @@ class HardwareV1():
     def __init__(self):
 
         self.set_logger()
-        self.SW = switch.Switch("GPIO17")
         self.SonicSensor = sonic_sensor.HC_SR04()
+        self.SW = switch.Switch("GPIO17")
         self.LED = apa_102.APA102(num_led=2)
         self.LCD = lcd_1602.LCD1602(0x27)
         self.SERVO = pca_9685.PCA9685(0x20)

@@ -1,7 +1,7 @@
 import smbus
 import time
-from Hardware.I2C.fontgen import FontGen
-from Hardware.I2C.RPi_I2C_driver import lcd
+from Core.Hardware.I2C.fontgen import FontGen
+from Core.Hardware.I2C.RPi_I2C_driver import lcd
 """
 https://github.com/sterlingbeason/LCD-1602-I2C
 
