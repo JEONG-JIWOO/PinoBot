@@ -1,6 +1,7 @@
 import configparser
 import requests
 import subprocess, time
+import tqdm
 
 class BootLoader():
     def __init__(self):
@@ -15,40 +16,44 @@ class BootLoader():
     # 1. main boot loading process
     def main(self):
         #  1. BootUp
-        #  2. Check Hardware
-        #  3. Check Network with Google
-        response = requests.get('https://status.cloud.google.com/', timeout=2.50)
-        if response.status_code == 200:  # if internet ok.
-            print("Network Connected")
-            pass
-        else :
-            #  3.2 Check wifi driver state.
-            wpa_cli = subprocess.check_output('wpa_cli -V', shell=True).decode('utf-8')
-            print(wpa_cli)
 
-            if "Interactive" not in wpa_cli:
-                #  3.2.1 , wpa_supplicant.conf error
-                print("[E1] wpa_sup plicant.conf error")
+        #  2. Check Hardware
+        self.load_hardware()
+
+        #  3. Check Network with Google
+        try:
+            response = requests.get('https://status.cloud.google.com/', timeout=2.50)
+            if response.status_code != 200:  # if internet not ok.
+               raise NameError
+
+        except:
+            #  3.1 Check wifi driver state.
+            try:
+                wpa_cli = subprocess.check_output('wpa_cli -i wlan0 status', shell=True).decode('utf-8')
+            except:
+                #  3.1.1 , wpa_supplicant.conf error
+                print("[E1] wpa_supp1licant.conf error")
                 # self.hardware.write(text="[E1] wifi setting file is wrong")
                 return -1
-
             else :
-                # 3.2.2, wpa_supplicant.conf is fine
-                # re-configure wifi
-                subprocess.check_output('wpa_cli wlan0 reconfigure', shell=True).decode('utf-8')
-                time.sleep(1)
-                subprocess.check_output('wpa_cli scan', shell=True).decode('utf-8')
-                print("Reset WIFI, wait for 10sec")
-                time.sleep(10)
+                # 3.1.2, wpa_supplicant.conf is fine  re-set wifi
+                try:
+                    subprocess.check_output(['sudo sh ./Core/Utils/wifiReset.sh'], shell=True).decode('utf-8')
+                    print("reset wifi")
+                    for i in tqdm.trange(30):
+                        time.sleep(1)
+                        # self.hardware.write(text="")
 
-                response = requests.get('https://status.cloud.google.com/', timeout=2.50)
-                if response.status_code != 200:  # if internet ok.
-                    print("[E2] wifi not found, or password wrong")
+                    response = requests.get('https://status.cloud.google.com/', timeout=2.50)
+                    if response.status_code != 200:  # if internet ok.
+                        raise NameError
+                except:
+                    print("[E2] wifi name, password wrong")
+                    # self.hardware.write(text="Reboot please")
                     return -1
-                else :
-                    print("Wifi re-connected,")
 
-
+        #  3.2. Network is connected
+        print("Network Connected")
         self.config_read()
 
     def load_hardware(self):
