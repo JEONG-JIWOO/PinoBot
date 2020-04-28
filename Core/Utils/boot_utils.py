@@ -1,33 +1,63 @@
 import configparser
+import requests
+import subprocess, time
 
-
-class BootUtils():
-    def __init__(self,hardware):
+class BootLoader():
+    def __init__(self):
         self.config_path = "/home/pi/PinoBot/config.ini"
         self.boot_log = None
         self.new_config = None
-        self.boot_init(None,None)
-        self.config_set_default()
 
-    def boot_init(self,hardware,cloud):
-        # 1. check new config exsists.
+        self.hardware = None
+        self.main()
+
+
+    # 1. main boot loading process
+    def main(self):
+        #  1. BootUp
+        #  2. Check Hardware
+        #  3. Check Network with Google
+        response = requests.get('https://status.cloud.google.com/', timeout=2.50)
+        if response.status_code == 200:  # if internet ok.
+            pass
+        else :
+            #  3.2 Check wifi driver state.
+            wpa_cli = subprocess.check_output('wpa_cli -V', shell=True).decode('utf-8')
+            print(wpa_cli)
+
+            if "Interactive" not in wpa_cli:
+                #  3.2.1 , wpa_supplicant.conf error
+                print("[E1] wpa_sup plicant.conf error")
+                # self.hardware.write(text="[E1] wifi setting file is wrong")
+                return -1
+
+            else :
+                # 3.2.2, wpa_supplicant.conf is fine
+                # re-configure wifi
+                subprocess.check_output('wpa_cli wlan0 reconfigure', shell=True).decode('utf-8')
+                time.sleep(1)
+                subprocess.check_output('wpa_cli scan', shell=True).decode('utf-8')
+                print("Reset WIFI, wait for 10sec")
+                time.sleep(10)
+
+                response = requests.get('https://status.cloud.google.com/', timeout=2.50)
+                if response.status_code != 200:  # if internet ok.
+                    print("[E2] wifi not found, or password wrong")
+                    return -1
+                else :
+                    print("Wifi re-connected,")
+
+
         self.config_read()
 
-        if self.new_config is None :
-            # there are no new setting, just do with traditional settings.
+    def load_hardware(self):
+        from Core.Hardware import v1
+        pass
 
-            # 1. check hardware
-            self.hardware_check(hardware)
+    def load_cloud(self):
+        from Core.Cloud.google import pino_dialogflow
+        pass
 
-            # 2. check wifi.
-            self.wifi_check()
-
-            # 3. check cloud
-            self.cloud_check(cloud)
-
-
-        else :
-            pass
 
 
     def config_set_default(self):
@@ -55,19 +85,6 @@ class BootUtils():
         self.new_config = None
 
 
-
-    def wifi_new_connect(self):
-        pass
-
-    def wifi_check(self):
-        pass
-
-    def cloud_check(self, Cloud):
-        pass
-
-    def hardware_check(self, Hardware):
-        pass
-
     def get_file(self):
         # 1. import new config file. if exists
 
@@ -76,10 +93,10 @@ class BootUtils():
         pass
 
 def test():
-    from Core.Hardware import v1
-    HardWare = v1.HardwareV1()
-
-    d = BootUtils(HardWare)
+    #from Core.Hardware import v1
+    #from Core.Cloud.google import pino_dialogflow
+    d = BootLoader()
     print("tested")
+
 
 test()
