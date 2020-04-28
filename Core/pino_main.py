@@ -1,7 +1,7 @@
 #!/usr/bin/env python3.7
 
 #from Hardware.v1 import HardwareV1
-#from Cloud.Google import pino_dialogflow
+from Cloud.Google import pino_dialogflow
 import enum , time, random
 from threading import Lock, Thread
 
@@ -24,7 +24,7 @@ class PinoBot():
         self.sensor_state = 0  # -1 : facing object over self.wall_threshold time
                                #  0 : no object
                                #  1 : measure object
-        self.HardWare = v1.HardwareV1()
+        #self.HardWare = v1.HardwareV1()
 
         # 2. init cloud
 
@@ -37,28 +37,13 @@ class PinoBot():
 
 
         # 2. init and connect dialogflow project
-        self.cloud = PinoDialogFlow(DIALOGFLOW_PROJECT_ID,
-                         DIALOGFLOW_LANGUAGE_CODE,
-                         GOOGLE_APPLICATION_CREDENTIALS,
-                         TIME_OUT)
+        #self.cloud = PinoDialogFlow(DIALOGFLOW_PROJECT_ID,
+        #                 DIALOGFLOW_LANGUAGE_CODE,
+        #                 GOOGLE_APPLICATION_CREDENTIALS,
+        #                 TIME_OUT)
         
         # 3. do some boot process
         self.boot_process()
-        pass
-
-    def ini_parser(self):
-        """
-        [WIP] write ini pareser, 
-        
-        ini component:
-        1. google key path and name,
-        2. dialogflow project name, 
-        3. wifi name and password
-        4. volume,
-        5. motor index
-
-        """
-        
         pass
 
     def boot_process(self):

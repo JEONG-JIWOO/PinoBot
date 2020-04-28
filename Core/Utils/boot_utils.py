@@ -10,8 +10,12 @@ class BootLoader():
         self.new_config = None
 
         self.hardware = None
-        self.main()
+        self.cloud = None
 
+
+    def open(self):
+        self.main()
+        return self.hardware , self.cloud
 
     # 1. main boot loading process
     def main(self):
@@ -29,10 +33,10 @@ class BootLoader():
         except:
             #  3.1 Check wifi driver state.
             try:
-                wpa_cli = subprocess.check_output('wpa_cli -i wlan0 status', shell=True).decode('utf-8')
+                 subprocess.check_output('wpa_cli -i wlan0 status', shell=True).decode('utf-8')
             except:
                 #  3.1.1 , wpa_supplicant.conf error
-                print("[E1] wpa_supp1licant.conf error")
+                print("[E21] wpa_supp1licant.conf error")
                 # self.hardware.write(text="[E1] wifi setting file is wrong")
                 return -1
             else :
@@ -48,22 +52,45 @@ class BootLoader():
                     if response.status_code != 200:  # if internet ok.
                         raise NameError
                 except:
-                    print("[E2] wifi name, password wrong")
+                    print("[E22] wifi name, password wrong")
                     # self.hardware.write(text="Reboot please")
                     return -1
 
         #  3.2. Network is connected
         print("Network Connected")
-        self.config_read()
+
+
+        # 4. load Configure file
+        self.load_config()
+
+        # 5. load cloud.
+        self.load_cloud()
+
+        return 0
+
 
     def load_hardware(self):
-        #from Core.Hardware import v1
-        pass
+        from Core.Hardware import v1
+        self.hardware = v1.HardwareV1()
+
+        # TODO
+        """
+        Use, i2cdetect, and parse answer, detect i2c state.
+        try:
+            i2c = subprocess.check_output('i2cdetct -y 1', shell=True).decode('utf-8')
+        except:
+            print("[E10] hardware ERROR")
+        """
+        return 0
 
     def load_cloud(self):
+        # TODO
         #from Core.Cloud.google import pino_dialogflow
         pass
 
+    def load_config(self):
+        # TODO
+        pass
 
     def config_set_default(self):
         config = configparser.ConfigParser()
@@ -78,26 +105,9 @@ class BootLoader():
         with open(self.config_path,'w') as f:
             config.write(f)
 
-    def config_read(self):
-        """
-        [WIP]
-        read ini and save to object
-
-        """
-        self.new_config = None
-
-
-    def get_file(self):
-        # 1. import new config file. if exists
-
-        # 2. import new key file if exsits.
-
-        pass
-
 def test():
-    #from Core.Hardware import v1
-    #from Core.Cloud.google import pino_dialogflow
     d = BootLoader()
+    d.open()
     print("tested")
 
 
