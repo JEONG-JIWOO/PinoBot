@@ -201,7 +201,7 @@ class APA102:
     def show(self):
         """Sends the content of the pixel buffer to the strip.
 
-        Todo: More than 1024 LEDs requires more than one xfer operation.
+        To-do: More than 1024 LEDs requires more than one xfer operation.
         """
         self.clock_start_frame()
         # xfer2 kills the list, unfortunately. So it must be copied first

@@ -4,8 +4,6 @@
 #from Cloud.Google import pino_dialogflow
 import enum , time, random
 from threading import Lock, Thread
-from Cloud.google import pino_dialogflow
-from Hardware import v1
 
 class STATE(enum.Enum):
     BOOT = 0
@@ -75,6 +73,7 @@ class PinoBot():
         6. start sensor thread
 
         """
+
 
         # 1. parsing ini
         self.ini_parser()
