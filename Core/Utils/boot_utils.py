@@ -37,35 +37,37 @@ class BootLoader():
             except:
                 #  3.1.1 , wpa_supplicant.conf error
                 print("[E21] wpa_supp1licant.conf error")
-                # self.hardware.write(text="[E1] wifi setting file is wrong")
+                self.hardware.write(text="[E1] wifi setting is wrong")
                 return -1
             else :
                 # 3.1.2, wpa_supplicant.conf is fine  re-set wifi
                 try:
                     subprocess.check_output(['sudo sh ./Core/Utils/wifiReset.sh'], shell=True).decode('utf-8')
                     print("reset wifi")
-                    for i in tqdm.trange(30):
-                        time.sleep(1)
-                        # self.hardware.write(text="")
+                    cnt = 0
+                    for i in tqdm.trange(15):
+                        time.sleep(2)
+                        cnt +=1
+                        self.hardware.write(text= "="*cnt)
 
                     response = requests.get('https://status.cloud.google.com/', timeout=2.50)
                     if response.status_code != 200:  # if internet ok.
                         raise NameError
                 except:
                     print("[E22] wifi name, password wrong")
-                    # self.hardware.write(text="Reboot please")
+                    self.hardware.write(text="Reboot please")
                     return -1
 
         #  3.2. Network is connected
-        print("Network Connected")
-
+        print("Network OK!")
+        self.hardware.write(text="Network OK!")
 
         # 4. load Configure file
         self.load_config()
 
         # 5. load cloud.
         self.load_cloud()
-
+        time.sleep(5)
         return 0
 
 

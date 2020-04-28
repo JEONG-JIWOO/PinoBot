@@ -60,7 +60,7 @@ class HardwareV1():
         formatter = logging.Formatter('[%(levelname)s] (%(asctime)s : %(filename)s:%(lineno)d) > %(message)s')
 
         # 2.2 set file logger 
-        self.log_file = logging.FileHandler(filename = '/home/pi/PinoBot/log/HardwareV1.log', 
+        self.log_file = logging.FileHandler(filename = '/home/pi/Desktop/PinoBot/log/HardwareV1.log',
                                             mode='w',
                                             encoding='utf-8')
         self.log_file.setFormatter(formatter)
