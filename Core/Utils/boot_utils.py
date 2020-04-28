@@ -19,6 +19,7 @@ class BootLoader():
         #  3. Check Network with Google
         response = requests.get('https://status.cloud.google.com/', timeout=2.50)
         if response.status_code == 200:  # if internet ok.
+            print("Network Connected")
             pass
         else :
             #  3.2 Check wifi driver state.
@@ -51,20 +52,16 @@ class BootLoader():
         self.config_read()
 
     def load_hardware(self):
-        from Core.Hardware import v1
+        #from Core.Hardware import v1
         pass
 
     def load_cloud(self):
-        from Core.Cloud.google import pino_dialogflow
+        #from Core.Cloud.google import pino_dialogflow
         pass
-
 
 
     def config_set_default(self):
         config = configparser.ConfigParser()
-        config['WIFI'] = {'wifi_id':'iot_4',
-                          'wifi_password':'abcd1234'
-                          }
 
         config['GOOGLE CLOUD PROJECT'] = {'google_key':'squarebot01-yauqxo-149c5cb80866.json',
                                   'google_project':'squarebot01-yauqxo',
