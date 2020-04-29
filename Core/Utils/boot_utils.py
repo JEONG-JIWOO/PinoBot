@@ -6,9 +6,9 @@ import tqdm
 class BootLoader():
     def __init__(self):
         self.base_path = "/home/pi/Desktop/PinoBot"
-        self.config_path = self.base_path+"/config.ini"
+        self.config_path = self.base_path+"/config.ini"  # TODO : change path to /boot
         self.boot_log = None
-        self.new_config = None
+        self.config = None
 
         self.hardware = None
         self.cloud = None
@@ -27,8 +27,7 @@ class BootLoader():
 
         #  3. Check Network with Google
         try:
-            raise NameError  # [TEST]
-
+            #raise NameError  # [TEST]
             response = requests.get('https://status.cloud.google.com/', timeout=2.50)
             if response.status_code != 200:  # if internet not ok.
                raise NameError
@@ -77,6 +76,11 @@ class BootLoader():
 
         # 5. load cloud.
         self.load_cloud()
+
+        if self.cloud is not None and self.hardware is not None:
+            print("Boot Finish")
+            self.hardware.write(text="BOOT FINISH")
+
         time.sleep(5)
         return 0
 
@@ -96,17 +100,25 @@ class BootLoader():
         return 0
 
     def load_config(self):
-        # TODO
+        import os
+        if not os.path.isfile(self.config_path):
+            self.config_set_default()
 
-        pass
+        self.config = configparser.ConfigParser()
+        self.config.read_file(open(self.config_path))
 
     def load_cloud(self):
         # TODO
+
+        if self.config is None:
+            return -1
+
         from Core.Cloud.Google import pino_dialogflow
-
-        pass
-
-
+        print()
+        self.cloud = pino_dialogflow.PinoDialogFlow(self.config['GOOGLE CLOUD PROJECT']['google_project'],
+                              self.config['GOOGLE CLOUD PROJECT']['language'],
+                              self.config['GOOGLE CLOUD PROJECT']['google_key'],
+                              self.config['GOOGLE CLOUD PROJECT']['time_out'])
 
     def config_set_default(self):
         config = configparser.ConfigParser()

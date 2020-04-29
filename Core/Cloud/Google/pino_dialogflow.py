@@ -128,7 +128,7 @@ class PinoDialogFlow():
         self.audio = None
 
         # 4. set Logger, use Python Logging Module
-        self._set_logger(path = "/home/pi/PinoBot/log/DialogFlowlog.log")
+        self._set_logger(path = "/home/pi/Desktop/PinoBot/log/DialogFlow.log")
 
         # 5. init settings
         self._find_soundcard()
