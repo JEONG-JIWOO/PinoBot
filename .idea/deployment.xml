@@ -1,7 +1,14 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project version="4">
-  <component name="PublishConfigData" autoUpload="Always" serverName="pi@192.168.43.147:22" showNewOnSourceInSync="false" showNewOnTargetInSync="false">
+  <component name="PublishConfigData" autoUpload="Always" serverName="pi@183.101.66.105:22" showNewOnSourceInSync="false" showNewOnTargetInSync="false">
     <serverData>
+      <paths name="pi@183.101.66.105:22">
+        <serverdata>
+          <mappings>
+            <mapping deploy="/home/pi/Desktop/PinoBot" local="$PROJECT_DIR$" />
+          </mappings>
+        </serverdata>
+      </paths>
       <paths name="pi@192.168.43.147:22">
         <serverdata>
           <mappings>

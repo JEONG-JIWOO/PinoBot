@@ -91,6 +91,12 @@ class HardwareV1():
         if len(servo) == 3:
             pass
 
+    def write_text_line1(self,text=""):
+        self.LCD.send_msg_line1(text)
+
+    def write_text_line2(self,text=""):
+        self.LCD.send_msg_line2(text)
+
     def read_sw(self):
         return (self.SW.read_once())
     

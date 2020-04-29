@@ -26,6 +26,7 @@ class HC_SR04():
         self.distance = 0
 
     def __del__(self):
+        GPIO.setmode(GPIO.BCM)
         GPIO.cleanup((self.TRIG_Pin,self.ECHO_Pin))
     
     def measure_once(self):

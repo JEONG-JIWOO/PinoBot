@@ -23,22 +23,29 @@ class LCD1602():
     def send_msg(self,msg):
         
         if len(msg) < 17: # only, line 0
-            self.fast_clear(0)
-            self.lcd.setCursor(0,0)
-            self.lcd.print(msg)
+            self.send_msg_line1(msg)
 
         else : # line1 and line2
             line1 = msg[0:16]
             line2 = msg[16:]
             
-            self.fast_clear(0)
-            self.lcd.setCursor(0,0)
-            self.lcd.print(line1)
+            self.send_msg_line1(line1)
+            self.send_msg_line1(line2)
 
-            self.fast_clear(1)
-            self.lcd.setCursor(0,1)
-            self.lcd.print(line2)    
-        
+    def send_msg_line1(self,msg):
+        if len(msg) > 16:
+            msg = msg[0:16]
+        self.fast_clear(0)
+        self.lcd.setCursor(0, 0)
+        self.lcd.print(msg)
+
+    def send_msg_line2(self,msg):
+        if len(msg) > 16:
+            msg = msg[0:16]
+        self.fast_clear(1)
+        self.lcd.setCursor(0, 1)
+        self.lcd.print(msg)
+
     def fast_clear(self,line):
         # lcd.clear() is too slow, make alternate fuction
         if line == 0:
