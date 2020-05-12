@@ -34,7 +34,7 @@ class HardwareV1():
         self.SW = switch.Switch("GPIO17")
         self.LED = apa_102.APA102(num_led=2)
         self.LCD = lcd_1602.LCD1602(0x27)
-        self.SERVO = pca_9685.PCA9685(0x20)
+        self.SERVO = pca_9685.PinoPCA9685()
         self.setLED(0,[0,0,0])
         self.setLED(1,[0,0,0])
 
@@ -88,8 +88,13 @@ class HardwareV1():
             self.setLED(0,led[0:3])
             self.setLED(1,led[3:6])
 
-        if len(servo) == 3:
-            pass
+        if len(servo) == 2:
+            self.SERVO.send_angles(servo[0],servo[1])
+
+        elif len(servo) == 3:
+            self.SERVO.send_angles(8 ,servo[0])
+            self.SERVO.send_angles(9, servo[1])
+            self.SERVO.send_angles(10, servo[2])
 
     def write_text_line1(self,text=""):
         self.LCD.send_msg_line1(text)
