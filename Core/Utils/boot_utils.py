@@ -126,7 +126,6 @@ class BootLoader():
             return -1
 
         from Core.Cloud.Google import pino_dialogflow
-        print()
         self.cloud = pino_dialogflow.PinoDialogFlow(self.config['GOOGLE CLOUD PROJECT']['google_project'],
                               self.config['GOOGLE CLOUD PROJECT']['language'],
                               self.config['GOOGLE CLOUD PROJECT']['google_key'],
