@@ -4,6 +4,17 @@ import subprocess, time
 import tqdm
 
 class BootLoader():
+    """
+    [WIP]BOOT PROCESS
+    1. parsing ini
+    2. check hardware, i2c channel, and sonic sensor, if failed, show [HARDWARE ERROR]
+    3. check wifi connection, if failed, try to connect 3 times and if failed, show [WIFI ERROR]
+    4. check cloud connection, if failed, try to connect 3 times and if failed, show [CLOUD ERROR]
+    5. if all completed. show [READY]" message
+    6. start sensor thread
+
+    """
+
     def __init__(self):
         self.base_path = "/home/pi/Desktop/PinoBot"
         self.config_path = self.base_path+"/config.ini"  # TODO : change path to /boot
@@ -14,7 +25,7 @@ class BootLoader():
         self.cloud = None
 
 
-    def open(self):
+    def run(self):
         self.main()
         return self.hardware , self.cloud
 
@@ -90,7 +101,7 @@ class BootLoader():
             print("Boot Finish")
             self.hardware.write(text="Boot FINISH",led=[0,0,0],servo=[90,90,90])
 
-        time.sleep(5)
+        time.sleep(2)
         return 0
 
 
@@ -116,6 +127,8 @@ class BootLoader():
         if not os.path.isfile(self.config_path):
             self.config_set_default()
 
+        self.config_set_default()
+
         self.config = configparser.ConfigParser()
         self.config.read_file(open(self.config_path))
 
@@ -126,26 +139,42 @@ class BootLoader():
             return -1
 
         from Core.Cloud.Google import pino_dialogflow
-        self.cloud = pino_dialogflow.PinoDialogFlow(self.config['GOOGLE CLOUD PROJECT']['google_project'],
-                              self.config['GOOGLE CLOUD PROJECT']['language'],
-                              self.config['GOOGLE CLOUD PROJECT']['google_key'],
-                              self.config['GOOGLE CLOUD PROJECT']['time_out'])
+        self.cloud = pino_dialogflow.PinoDialogFlow(
+                                self.config['GOOGLE CLOUD PROJECT']['google_project'],
+                                self.config['GOOGLE CLOUD PROJECT']['language'],
+                                self.config['GOOGLE CLOUD PROJECT']['google_key'],
+                                int(self.config['GOOGLE CLOUD PROJECT']['time_out'])
+                                                    )
+        self.cloud.open_session()
+
+        print("\n\n TEST Start!")
+        text_response = self.cloud.send_text("안녕하세요")
+        print("[Q] : %s " % text_response.query_result.query_text)
+        print("[A] : accuracy:%0.3f | %s " % (
+                                              text_response.query_result.intent_detection_confidence,
+                                              text_response.query_result.fulfillment_text
+                                              ))
+        print("Cloud is Fine")
+
 
     def config_set_default(self):
         config = configparser.ConfigParser()
 
-        config['GOOGLE CLOUD PROJECT'] = {'google_key':'squarebot01-yauqxo-149c5cb80866.json',
-                                  'google_project':'squarebot01-yauqxo',
-                                    'language': 'ko',
-                                    'time_out':'7'
+        config['GOOGLE CLOUD PROJECT'] = {
+                                'google_key':'/home/pi/Desktop/PinoBot/Keys/a2-bwogyf-c40e46d0dc2b.json',
+                                'google_project':'a2-bwogyf',
+                                'language': 'ko',
+                                'time_out':'7'
                             }
-        config['MOTOR INDEX'] ={'number_of_motor':'3',
-                                'index_list':'1,5,10'}
+        config['MOTOR INDEX'] ={
+                                'number_of_motor':'3',
+                                'index_list':'1,5,10'
+        }
 
         with open(self.config_path,'w') as f:
             config.write(f)
 
 def test():
     d = BootLoader()
-    d.open()
+    d.run()
     print("tested")
