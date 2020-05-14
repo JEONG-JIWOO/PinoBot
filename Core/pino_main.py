@@ -1,9 +1,9 @@
 #!/usr/bin/env python3.7
 
-#from Hardware.v1 import HardwareV1
-from Cloud.Google import pino_dialogflow
 import enum , time, random
 from threading import Lock, Thread
+
+from Core.Utils.boot_utils import BootLoader
 
 class STATE(enum.Enum):
     BOOT = 0
@@ -16,116 +16,93 @@ class PinoBot():
         
         # 0. common variablev
         self.state = STATE.BOOT
-        self.lock = Lock()
+        self.lock = Lock()  # when control hardware, use. this LOCK
+
+
         # 1. init hareware and thread variable,
-        # be careful to use, without "LOCK", it can cause segemtation error
-        self.react_distance = 20
-        self.wall_threshold_time = 30
+        # be careful to use, without "LOCK", it can cause segmentation error
+
+        self.react_distance = 20  # [cm] if sonic sensor measure value below this. robot react
+        self.wall_threshold_time = 30  # [sec] if sonic sensor keep measure wall longer than this time
+                                       # robot goes to sleep mod
+
         self.sensor_state = 0  # -1 : facing object over self.wall_threshold time
                                #  0 : no object
                                #  1 : measure object
-        #self.HardWare = v1.HardwareV1()
 
-        # 2. init cloud
+        self.HardWare = None
+        self.cloud = None
 
-        # [TEMP CODE]
-        DIALOGFLOW_PROJECT_ID = 'squarebot01-yauqxo'
-        DIALOGFLOW_LANGUAGE_CODE = 'ko'
-        GOOGLE_APPLICATION_CREDENTIALS = '/home/pi/PinoBot/Keys/squarebot01-yauqxo-149c5cb80866.json'
-        TIME_OUT = 7
-        # /[TEMP CODE]
-
-
-        # 2. init and connect dialogflow project
-        #self.cloud = PinoDialogFlow(DIALOGFLOW_PROJECT_ID,
-        #                 DIALOGFLOW_LANGUAGE_CODE,
-        #                 GOOGLE_APPLICATION_CREDENTIALS,
-        #                 TIME_OUT)
-        
         # 3. do some boot process
         self.boot_process()
-        pass
 
     def boot_process(self):
-        
-        """
-        [WIP]BOOT PROCESS
-        1. parsing ini
-        2. check hardware, i2c channel, and sonic sensor, if failed, show [HARDWARE ERROR]
-        3. check wifi connection, if failed, try to connect 3 times and if failed, show [WIFI ERROR]
-        4. check cloud connection, if failed, try to connect 3 times and if failed, show [CLOUD ERROR] 
-        5. if all completed. show [READY]" message
-        6. start sensor thread
 
-        """
+        # 1. load boot loader
+        Boot = BootLoader()
+
+        # 2. do boot process.
+        self.HardWare ,self.cloud = Boot.run()
+        self.TIME_OUT = int(Boot.config['GOOGLE CLOUD PROJECT']['time_out'])
 
 
-        # 1. parsing ini
-        self.ini_parser()
-        
-        # 2. check hardware, i2c channel, and sonic sensor, if failed, show [HARDWARE ERROR]
-        """
-        try: 
-            self.HardWare = HardwareV1()
-        except Exception as e: 
-            print(e)
-        """
-
-        # 3. check wifi connection, if failed, try to connect 3 times and if failed, show [WIFI ERROR]
-
-
-        # 4. check cloud connection, if failed, try to connect 3 times and if failed, show [CLOUD ERROR] \
-        self.cloud.open_session()
-        text_response = self.cloud.send_text("안녕하세요")
-        if text_response.query_result.query_text is not None:
-            print("cloud is all fine") # [TEMP CODE]
-
-
-        # 5. if all completed. show [READY]" message
-
-
+        # 3. start sonic sensor thread
         self.sensor_t = Thread(target=self.sensor_thread)
         self.sensor_t.start()
         self.state = STATE.IDLE
+        return 0
 
     def sensor_thread(self):
-        d = 0
+        """
+        sensor measurement thread
+        which calls every 0.5 seconds
+        """
+
+        # 1. initializing
         s_state = 0
-        T_LIMIT = 0
+        d = 0
+        T_LIMIT = 10
+        detect_time = 0
 
         with  self.lock:
             d = self.react_distance
             T_LIMIT = self.wall_threshold_time 
-        
+
+        # 2. main loop
         while True:
+            time.sleep(0.5)  # check sonic sensor every 0.5 seconds
             with self.lock:
                 distance = self.HardWare.read_sonic()
                 print("d: %0.2f"%distance)
 
-                # 1. onject  [out -> in]
+                # 2.1. onject  [out -> in]
                 if distance < d and s_state == 0:
+                    print("object in")
                     s_state = 1
-                    detect_time_0 = time.time()
+                    detect_time = time.time()
 
-                # 2. object [in -> out]
+                # 2.2. object [in -> out]
                 elif distance > d and s_state == 1:
+                    print("object out")
                     s_state = 0
 
-                # 3. object [Measure WALL] is still in and over threathold time:
-                elif time.time() - detect_time_0 > T_LIMIT :
-                    s_state = -1
+                # 2.3. object [Measure WALL] is still in and over threathold time:
+                elif detect_time !=0  and time.time() - detect_time > T_LIMIT :
+                    print("wall in")
+                    s_state = 1-1
 
-                # 4. object [Escape WALL]
-                elif distance > d and s_state == -1: 
+                # 2.4. object [Escape WALL]
+                elif distance > d and s_state == -1:
+                    print("wall out")
                     s_state = 0
 
                 self.sensor_state = s_state
-            time.sleep(0.5)
+
 
     def stream_voice(self):
-        self.cloud.start_stream()
-        print("Streaming started, say something timeout, %d seconds"%self.TIME_OUT) # [TEMP CODE]
+        print("Streaming started, say something timeout, %d seconds" % self.TIME_OUT)  # [TEMP CODE]
 
+        self.cloud.start_stream()
         stt_response, chatbot_response = self.cloud.get_response()
 
         if stt_response is None :
@@ -139,7 +116,10 @@ class PinoBot():
 
     def send_event(self,Event):
         event_response = self.cloud.send_event(Event)
-        if len(event_response.query_result.fulfillment_text) > 0:
+        if event_response is None:
+            print("rec error")
+            return False
+        elif len(event_response.query_result.fulfillment_text) > 0:
             return True
         else:
             print("rec error")
@@ -157,78 +137,63 @@ class PinoBot():
         pass
     
     
-    def main_loop(self):    
-
+    def main_loop(self):
         # 0. BOOT 
         if self.state == STATE.BOOT:
             print("BOOT ON")
-
-            if self.send_event("BOOT") :
-                #self.do_action()
-                print("boot action!")
-                self.cloud.play(audio)
             self.state = STATE.IDLE
 
 
         # 1. IDLE
         elif self.state == STATE.IDLE :
-            # 1.1 Get sonsor state with thread Lock
             print("IDLE")
-
             sensor_state = -2
+
             with self.lock:
-                sensor_state = self.sensor_state
-            
-            # 1.2 change state and do action
-            if sensor_state == 1:
-                self.state = STATE.VOICE_REC
+                sensor_state = self.sensor_state  # 1.1 Get sensor state with thread Lock
 
-            elif sensor_state == 0:
-                # action = self.send_event("IDLE")
-                # self.do_action(action)
-                pass
-
-            elif sensor_state == -1:
-                self.state = STATE.WALL_FACE
+                if sensor_state == 1:  # 1.2 change state and do action
+                    self.state = STATE.VOICE_REC
+                elif sensor_state == 0:
+                    # action = self.send_event("IDLE")
+                    # self.do_action(action)
+                    pass
+                elif sensor_state == -1:
+                    self.state = STATE.WALL_FACE
 
         # 2. WALL_FACE
         elif self.state == STATE.WALL_FACE :
-            # 2.1 do wall face action 
             print("WALL FACE")
-            if self.send_event("WALL_FACE"):
-                self.cloud.play(audio)
+            if self.send_event("WALL_FACE"): # 2.1 do wall face action
+                #self.cloud.play(audio)
                 #self.do_action(action)
-            
-            # 2.2 Get sonsor state with thread Lock
+                pass
+
+            time.sleep(2)
             sensor_state = -2
-            with  self.lock:
+            with  self.lock:  # 2.2 Get sensor state with thread Lock
                 sensor_state = self.sensor_state
-            
-            if sensor_state == 0:
-                self.state = STATE.IDLE
-                print("[GO] IDLE")
+                if sensor_state == 0:
+                    self.state = STATE.IDLE
             
         # 3. VOICE_REC
         elif self.state == STATE.VOICE_REC:
-            # 3.1 do stream voice and, get [STT] and [CHATBOT] response
-            state = self.stream_voice()
+            with self.lock:
+                state = self.stream_voice()  # 3.1 do stream voice
 
-            # 3.2 fail to recognize user voice
-            if state == 0:
-                print("NO HEAR")
-                if self.send_event("NOT_HEAR"):
-                    self.cloud.play(audio)
+                if state == 0: # 3.2 fail to recognize user voice
+                    print("NO HEAR")
+                    if self.send_event("NOT_HEAR"):
+                        pass
+                        #self.cloud.play_audio()
+                    # self.do_action(action)
+                elif state == 1 : # 3.3 sucess and get chatbot response
+                    #self.cloud.play_audio()
+                    print(" DO SOTHING ")
+                    #self.do_action(chatbot)
 
-                # self.do_action(action)
-
-            # 3.3 sucess and get chatbot response
-            elif state == 1 :
-                self.cloud.play(audio)
-                print(" DO SOTHING ")
-                #self.do_action(chatbot)
-
-            # 3.4 back to idle            
-            self.state = STATE.IDLE
+                # 3.4 back to idle
+                self.state = STATE.IDLE
 
         
 def test():
