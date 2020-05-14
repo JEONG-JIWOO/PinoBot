@@ -400,15 +400,15 @@ class PinoDialogFlow():
                 self.log.info("get Response...")
 
                 # 4.1 If STT Process is done
-                # this response not include chatbot result, just STT result(talkers question) 
-                if item.recognition_result.is_final : 
+                # this response not include chatbot result, just STT result(talkers question)
+                if item.recognition_result.is_final :
                     self.recording_state = False # stop request generator
                     self.stt_response = item # save at "stt_response"
-                
+
                 # 4.2 If dialogflow send answer
                 # after stt is done, dialogflow send chatbot_result(robot's answer) to response
                 elif len(item.query_result.fulfillment_text) > 0: # if answer valid
-                    self.log.info("done! ") 
+                    self.log.info("done! ")
                     self.dflow_response = item # save dialogflow response
 
                     # [NEW] , TO get TTS response, we need to get 1 More response.
@@ -418,7 +418,7 @@ class PinoDialogFlow():
                         self.log.error("no tts response,")
                         self.tts_response = None
                     break
-            
+
             # Close loop, before Final call
             # Error hander, usually called when user don't talk anything 
             except StopIteration: 
@@ -431,7 +431,8 @@ class PinoDialogFlow():
                 self._find_error(GCLOUD_ERROR)
                 self.asound.snd_lib_error_set_handler(None) # set back handler as Default
                 break
-    
+
+
         # 5. return Result        
         time.sleep(0.05) # wait for turn off Stream
         if self.stt_response is not None and self.dflow_response is not None:
@@ -598,9 +599,9 @@ example code for test
 def example():
 
     # 1. Set google dialogflow project config
-    DIALOGFLOW_PROJECT_ID = 'squarebot01-yauqxo'
+    DIALOGFLOW_PROJECT_ID = 'a2-bwogyf'
     DIALOGFLOW_LANGUAGE_CODE = 'ko'
-    GOOGLE_APPLICATION_CREDENTIALS = '/home/pi/PinoBot/Keys/squarebot01-yauqxo-149c5cb80866.json'
+    GOOGLE_APPLICATION_CREDENTIALS = '/home/pi/Desktop/PinoBot/Keys/a2-bwogyf-c40e46d0dc2b.json'
     TIME_OUT = 7
 
     # 2. init and connect dialogflow project
@@ -617,7 +618,7 @@ def example():
     print("[Q] : %s "%text_response.query_result.query_text)
     print("[A] : accuracy:%0.3f | %s "%(text_response.query_result.intent_detection_confidence,
                                         text_response.query_result.fulfillment_text))
-    Gbot.play_audio()
+    #Gbot.play_audio()
 
     # 4. send voice and get voice response
     Gbot.start_stream()
@@ -631,7 +632,7 @@ def example():
         print("rec error")
     # [WIP]
     # play audio_binary file..
-    Gbot.play_audio()
+    #Gbot.play_audio()
 
     # 5. send Event with parameters
     print("\n\n Start!")
