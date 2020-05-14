@@ -22,7 +22,7 @@ class PinoBot():
         # 1. init hareware and thread variable,
         # be careful to use, without "LOCK", it can cause segmentation error
 
-        self.react_distance = 20  # [cm] if sonic sensor measure value below this. robot react
+        self.react_distance = 50  # [cm] if sonic sensor measure value below this. robot react
         self.wall_threshold_time = 30  # [sec] if sonic sensor keep measure wall longer than this time
                                        # robot goes to sleep mod
 
@@ -70,10 +70,10 @@ class PinoBot():
 
         # 2. main loop
         while True:
-            time.sleep(0.5)  # check sonic sensor every 0.5 seconds
+            time.sleep(0.1)  # check sonic sensor every 0.5 seconds
             with self.lock:
                 distance = self.HardWare.read_sonic()
-                print("d: %0.2f"%distance)
+                #print("d: %0.2f %d"%(distance, time.time() - detect_time))
 
                 # 2.1. onject  [out -> in]
                 if distance < d and s_state == 0:
@@ -87,9 +87,9 @@ class PinoBot():
                     s_state = 0
 
                 # 2.3. object [Measure WALL] is still in and over threathold time:
-                elif detect_time !=0  and time.time() - detect_time > T_LIMIT :
+                elif distance < d  and detect_time !=0  and time.time() - detect_time > T_LIMIT :
                     print("wall in")
-                    s_state = 1-1
+                    s_state = -1
 
                 # 2.4. object [Escape WALL]
                 elif distance > d and s_state == -1:
@@ -102,12 +102,15 @@ class PinoBot():
     def stream_voice(self):
         print("Streaming started, say something timeout, %d seconds" % self.TIME_OUT)  # [TEMP CODE]
 
+        self.HardWare.write(text="Call me?", led=[200, 200, 0], servo=[120, 120, 70])
         self.cloud.start_stream()
+
         stt_response, chatbot_response = self.cloud.get_response()
 
+        self.HardWare.write(text="I Heard !", led=[0, 0, 0], servo=[60, 60, 90])
         if stt_response is None :
             return -1
-        elif len(stt_response.query_result.fulfillment_text) == 0:
+        elif len(stt_response.recognition_result.transcript) == 0:
             return 0
         elif len(chatbot_response.query_result.fulfillment_text) > 0 :
             return 1
@@ -130,8 +133,9 @@ class PinoBot():
         [WIP] do some actions..
 
         """
-        with  self.lock:
-            """ control hardware"""    
+        self.cloud.play_audio()
+        with self.lock:
+            """ control hardware"""
             pass 
 
         pass
@@ -147,6 +151,7 @@ class PinoBot():
         # 1. IDLE
         elif self.state == STATE.IDLE :
             print("IDLE")
+            self.HardWare.write(text="waiting..", led=[0, 50, 50])
             sensor_state = -2
 
             with self.lock:
@@ -179,6 +184,7 @@ class PinoBot():
         # 3. VOICE_REC
         elif self.state == STATE.VOICE_REC:
             with self.lock:
+
                 state = self.stream_voice()  # 3.1 do stream voice
 
                 if state == 0: # 3.2 fail to recognize user voice
@@ -188,7 +194,7 @@ class PinoBot():
                         #self.cloud.play_audio()
                     # self.do_action(action)
                 elif state == 1 : # 3.3 sucess and get chatbot response
-                    #self.cloud.play_audio()
+                    self.cloud.play_audio()
                     print(" DO SOTHING ")
                     #self.do_action(chatbot)
 
