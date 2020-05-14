@@ -170,6 +170,7 @@ class PinoBot():
         elif self.state == STATE.WALL_FACE :
             print("WALL FACE")
             if self.send_event("WALL_FACE"): # 2.1 do wall face action
+                self.HardWare.write(text="sleeping..", led=[0, 0, 0])
                 #self.cloud.play(audio)
                 #self.do_action(action)
                 pass
@@ -206,5 +207,5 @@ def test():
     a = PinoBot()
     while True:
         a.main_loop()
-        time.sleep(0.5)
+        time.sleep(0.2)
 test()
