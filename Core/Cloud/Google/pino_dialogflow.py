@@ -80,7 +80,8 @@ class PinoDialogFlow():
             def play_audio(self):
         E.2 set volume                                                          --[WIP]
             def set_volume(self):
-
+        E.3 parse response
+            def parse_response(self):                                           --[WIP]
 
     F. Send [EVENT] and return answer [AUDIO]
         def send_event(self,event_name,parameters):
@@ -450,7 +451,7 @@ class PinoDialogFlow():
     def play_audio(self):
         if self.tts_response.output_audio is not None:
 
-            # [WIP] find alternative solution without using file system
+            # Todo [WIP] find alternative solution without using file system
             with open("./1.wav","wb") as f:
                 f.write(self.tts_response.output_audio)
             time.sleep(0.01)
@@ -473,11 +474,22 @@ class PinoDialogFlow():
             stream.close()
     """
         E.2 set volume
-        [WIP] , VOLUME setting fuctionm, using amixer command
+        [WIP] , VOLUME setting fuction, using amixer command
     """
     def set_volume(self):
         pass
         # amixer -c 1 cset iface=MIXER,name="ADC1 PGA gain" 20
+
+    """
+        E.3 parse response
+        [WIP] , parsing self.dflow_response and extract action
+    """
+    def parse_response(self):
+
+        if self.dflow_response is not None:
+            print("asd")
+        return None
+
 
 
     """

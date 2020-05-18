@@ -128,17 +128,23 @@ class PinoBot():
             print("rec error")
             return False
 
-    def do_action(self,response):
+    def do_action(self):
         """
         [WIP] do some actions..
 
         """
-        self.cloud.play_audio()
+        # TODO : Parse Action and paramater
+        actions = self.cloud.pares_response()
+
+        audio_t = Thread(target= self.cloud.play_audio())
+        #audio_t.start()
+
         with self.lock:
             """ control hardware"""
             pass 
 
-        pass
+        #if audio_t.is_alive():
+        #    audio_t.join()
     
     
     def main_loop(self):
@@ -146,7 +152,6 @@ class PinoBot():
         if self.state == STATE.BOOT:
             print("BOOT ON")
             self.state = STATE.IDLE
-
 
         # 1. IDLE
         elif self.state == STATE.IDLE :
@@ -160,9 +165,11 @@ class PinoBot():
                 if sensor_state == 1:  # 1.2 change state and do action
                     self.state = STATE.VOICE_REC
                 elif sensor_state == 0:
-                    # action = self.send_event("IDLE")
-                    # self.do_action(action)
+                    # TODO :Do idle action random
+                    #self.send_event("IDLE")
+                    #self.do_action()
                     pass
+
                 elif sensor_state == -1:
                     self.state = STATE.WALL_FACE
 
@@ -171,8 +178,7 @@ class PinoBot():
             print("WALL FACE")
             if self.send_event("WALL_FACE"): # 2.1 do wall face action
                 self.HardWare.write(text="sleeping..", led=[0, 0, 0])
-                #self.cloud.play(audio)
-                #self.do_action(action)
+                self.do_action()
                 pass
 
             time.sleep(2)
@@ -191,13 +197,12 @@ class PinoBot():
                 if state == 0: # 3.2 fail to recognize user voice
                     print("NO HEAR")
                     if self.send_event("NOT_HEAR"):
-                        pass
-                        #self.cloud.play_audio()
-                    # self.do_action(action)
+                        self.do_action()
+
                 elif state == 1 : # 3.3 sucess and get chatbot response
                     self.cloud.play_audio()
                     print(" DO SOTHING ")
-                    #self.do_action(chatbot)
+                    self.do_action()
 
                 # 3.4 back to idle
                 self.state = STATE.IDLE
