@@ -3,6 +3,8 @@ import requests
 import subprocess, time
 import logging
 from logging.handlers import RotatingFileHandler
+import sys
+sys.path.append("/home/pi/Desktop/PinoBot/Core")
 
 class BootLoader():
     """
@@ -37,74 +39,87 @@ class BootLoader():
         # 1. initializing logger
         self._set_logger(self.base_path+"/log/Boot.log")
 
+        net_status = 0
+
         # 2. Check Hardware
         try:
             self._load_hardware()
             self.log.info("Hardware init success")
         except :
-            self.log.Error("Hardware init Fail")
+            self.log.error("Hardware init Fail")
             return -1
 
         # 3. Check Network with Google
         try:
-            #raise NameError  # [TEST]
             response = requests.get('https://status.cloud.google.com/', timeout=2.50)
             if response.status_code != 200:  # if internet not ok.
                 self.log.warning("Internet Not Connected")
-                raise NameError
-
+                net_status = -1
+            else :
+                net_status =1
         except:
-            # 3.1 Check wifi driver state.
+            net_status = -1
+
+        for i in range(6): # try reconnect 5 times.
+            if  net_status > 0:  # if network connected, break
+                break
+            elif net_status <= -6: # if re connection failed over 5 times.
+                self.log.error("Internet Not Connected")
+                self.log.error("[E23] wifi name, password wrong")
+                self.hardware.write_text_line1(text="WIFI-ERROR")
+                self.hardware.write_text_line2(text="E22 NO-WIFI")
+                self.hardware.write(led=[255, 0, 100])  # PURPLE LED ON
+                return -1
+
             msg =""
             try:
-                # Todo : Run script without sudo
                 self.log.warning("Checking WIFI..")
-                msg = subprocess.check_output('sudo sh '+self.base_path+'/Core/Utils/wifiCheck.sh', shell=True).decode('utf-8')
+                msg = subprocess.check_output('sh '+self.base_path+'/Core/Utils/wifiCheck.sh', shell=True).decode('utf-8')
             except Exception as E:
                 #  3.1.1 , wpa_supplicant.conf error
-                self.log.Error(msg)
-                self.log.Error(E)
-                self.log.Error("[E21] wpa_supp1licant.conf error")
+                self.log.error(msg)
+                self.log.error(str(E))
+                self.log.error("[E21] wpa_supp1licant.conf error")
                 self.hardware.write_text_line1(text="BOOT-ERROR")
-                self.hardware.write_text_line2(text="E21 WIFI-SET-WRONG")
+                self.hardware.write_text_line2(text="E21 WIFI-WRONG")
                 self.hardware.write(led=[255, 0, 0]) # RED LED on
                 return -1  # Exit Program
 
             #  3.2 wpa_supplicant.conf is fine  re-set wifi
-            try:
-                # Run WIFI reset scripts      Todo : Run script without sudo
-                subprocess.check_output('sudo sh '+self.base_path+'/Core/Utils/wifiReset.sh', shell=True).decode('utf-8')
-                self.log.warning("Reset wifi....")
-                self.hardware.write_text_line1(text="WIFI RE-CONNECT")
-                self.hardware.write(led=[205, 140, 0])  # Orange LED on
-
-                cnt = 0  # wait 30 seconds to reconnect
-                for i in range(15):
-                    time.sleep(2)
-                    cnt += 1
-                    self.hardware.write_text_line2(text="=" * cnt)
-                    if cnt % 2 ==0:
-                        self.hardware.write(led=[205, 140, 0]) # Orange LED ON
-                    else :
-                        self.hardware.write(led=[30, 140, 0]) # GREEN LED ON
+            try:  # Run WIFI reset scripts
+                subprocess.check_output('sh '+self.base_path+'/Core/Utils/wifiReset.sh', shell=True).decode('utf-8')
             except Exception as E:
-                self.log.Error(E)
-                self.log.Error("[E22] Wifi Reconnect Error")
+                self.log.error(str(E))
+                self.log.error("[E22] Wifi Reconnect error")
                 self.hardware.write_text_line1(text="BOOT-ERROR")
                 self.hardware.write_text_line2(text="E22 WIFI-RECONNECT")
                 self.hardware.write(led=[255, 0, 0])  # RED LED on
                 return -1  # Exit Program
 
-            # 3.3 Check google cloud connection agaiun
-            finally:
+            self.log.warning("Reset wifi....")
+            self.hardware.write_text_line1(text="WIFI RECONNECT-"+str(-net_status))
+            self.hardware.write(led=[205, 140, 0])  # Orange LED on
+
+            cnt = 0  # wait 30 seconds to reconnect
+            for i in range(15):
+                time.sleep(2)
+                cnt += 1
+                self.hardware.write_text_line2(text="=" * cnt)
+                if cnt % 2 ==0:
+                    self.hardware.write(led=[205, 140, 0]) # Orange LED ON
+                else :
+                    self.hardware.write(led=[30, 140, 0]) # GREEN LED ON
+
+            # 3.3 Check google cloud connection again
+            try:
                 response = requests.get('https://status.cloud.google.com/', timeout=2.50)
-                if response.status_code != 200:  # if internet Not ok.
-                    self.log.Error("Internet Not Connected")
-                    self.log.Error("[E23] wifi name, password wrong")
-                    self.hardware.write_text_line1(text="WIFI-ERROR")
-                    self.hardware.write_text_line2(text="E22 NO-WIFI")
-                    self.hardware.write(led=[255, 0, 100]) # PURPLE LED ON
-                    return -1  # Exit Program
+            except :  # 3.3.1 if error occur
+                net_status -= 1
+            else :    # 3.3.2 No error, but not connected,
+                if response.status_code != 200:  # check status code.
+                    net_status -= 1
+                else: # 3.3.3 Connected!
+                    net_status = 1
 
         # 4. Network is connected
         self.log.info("Network OK!")
@@ -129,7 +144,7 @@ class BootLoader():
 
         # 7. Copy Media file
         if self._boot_copy() == -1:
-            self.log.warning("Media folder copy Error")
+            self.log.warning("Media folder copy error")
 
         # 8. if boot Final Check ok.
         if self.cloud is not None and self.hardware is not None:
@@ -138,7 +153,7 @@ class BootLoader():
             time.sleep(2)
             return 0
         else :
-            self.log.Error("Final Error")
+            self.log.error("Final error")
             return -1
 
     """
@@ -156,9 +171,9 @@ class BootLoader():
             from Hardware import v1
             self.hardware = v1.HardwareV1()
             self.hardware.write(text="BootUp",led=[50,50,50],servo=[50,50,30])
-        except Exception as E :
-            self.log.Error("Hardware init Error")
-            self.log.Error(E)
+        except Exception as E:
+            self.log.error(str(E))
+            self.log.error("Hardware init error")
             return -1
         else :
             return 0
@@ -179,7 +194,7 @@ class BootLoader():
             int(self.config['SENSOR']['sensor_timeout'])
         except :
             self._set_config_default()
-            self.log.Error("Load config file Fail, reset config file to Default")
+            self.log.error("Load config file Fail, reset config file to Default")
             return -1
         else :
             return 0
@@ -206,8 +221,9 @@ class BootLoader():
             self.log.info("Cloud test response %s"%text_response.query_result.query_text)
 
         except Exception as E:
+            self.log.error(str(E))
             self._set_config_default()
-            self.log.Error("Cloud Init Fail, reset config file to Default")
+            self.log.error("Cloud Init Fail, reset config file to Default")
             return -1
 
     """
@@ -268,9 +284,10 @@ class BootLoader():
         if not os.path.isdir(self.base_path+"/media"):  # if media folder not exist.
             try:
                 os.mkdir(self.base_path+"/media")  # try to make media folder.
+
             except Exception as E: # if fail, write media message
-                self.log.Error("make media folder error")
-                self.log.Error("E")
+                self.log.error(str(E))
+                self.log.error("make media folder error")
                 return -1
 
         # 2. copy media file.
@@ -302,3 +319,6 @@ def test():
     d = BootLoader()
     d.run()
     print("tested")
+
+if __name__ == '__main__':
+    test()
