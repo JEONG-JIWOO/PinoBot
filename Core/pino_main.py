@@ -211,4 +211,7 @@ def test():
     while True:
         a.main_loop()
         time.sleep(0.2)
-test()
+
+
+if __name__ == '__main__':
+    test()
