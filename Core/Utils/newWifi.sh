@@ -1,5 +1,7 @@
 #! /bin/sh
 
+# [NOT USED]
+
 MYID=$1
 MYPW=$2
 echo id=$MYID

@@ -9,6 +9,7 @@ from ctypes import *
 import pyaudio
 import wave
 
+# PortAudio Error Message Handler
 def py_error_handler(filename, line, function, err, fmt):
     pass
 
@@ -478,6 +479,7 @@ class PinoDialogFlow():
     """
     def set_volume(self):
         pass
+        # TODO
         # amixer -c 1 cset iface=MIXER,name="ADC1 PGA gain" 20
 
     """
@@ -487,6 +489,9 @@ class PinoDialogFlow():
     def parse_response(self):
 
         if self.dflow_response is not None:
+            # TODO
+            # Parsing Dialogflow Actions
+
             print("asd")
         return None
 

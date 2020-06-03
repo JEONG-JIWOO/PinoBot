@@ -3,7 +3,7 @@
 import enum , time, random
 from threading import Lock, Thread
 
-from Core.Utils.boot_utils import BootLoader
+from Utils.boot_utils import BootLoader
 
 class STATE(enum.Enum):
     BOOT = 0
@@ -44,7 +44,6 @@ class PinoBot():
         # 2. do boot process.
         self.HardWare ,self.cloud = Boot.run()
         self.TIME_OUT = int(Boot.config['GOOGLE CLOUD PROJECT']['time_out'])
-
 
         # 3. start sonic sensor thread
         self.sensor_t = Thread(target=self.sensor_thread)
@@ -134,7 +133,7 @@ class PinoBot():
 
         """
         # TODO : Parse Action and paramater
-        actions = self.cloud.pares_response()
+        actions = self.cloud.parse_response()
 
         audio_t = Thread(target= self.cloud.play_audio())
         #audio_t.start()
@@ -200,7 +199,6 @@ class PinoBot():
                         self.do_action()
 
                 elif state == 1 : # 3.3 sucess and get chatbot response
-                    self.cloud.play_audio()
                     print(" DO SOTHING ")
                     self.do_action()
 

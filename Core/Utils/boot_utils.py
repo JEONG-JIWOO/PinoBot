@@ -26,7 +26,10 @@ class BootLoader():
 
 
     def run(self):
-        self.main()
+        if self.main() == -1:
+            import sys
+            sys.exit()
+
         return self.hardware , self.cloud
 
     # 1. main boot loading process
@@ -92,10 +95,20 @@ class BootLoader():
         time.sleep(1)
 
         # 4. load Configure file
-        self.load_config()
+        if self.load_config() == -1:
+            self.hardware.write_text_line1(text="Set File ERROR")
+            self.hardware.write_text_line2(text="E31 Wrong Config")
+            self.hardware.write(led=[240, 0, 0], servo=[90, 90, 90])
+            time.sleep(2)
+            return -1
 
         # 5. load cloud.
-        self.load_cloud()
+        if self.load_cloud() == -1:
+            self.hardware.write_text_line1(text="Set File ERROR")
+            self.hardware.write_text_line2(text="E31 Wrong Config")
+            self.hardware.write(led=[240, 0, 0], servo=[90, 90, 90])
+            time.sleep(2)
+            return -1
 
         if self.cloud is not None and self.hardware is not None:
             print("Boot Finish")
@@ -104,13 +117,10 @@ class BootLoader():
         time.sleep(2)
         return 0
 
-
     def load_hardware(self):
-        from Core.Hardware import v1
+        from Hardware import v1
         self.hardware = v1.HardwareV1()
         self.hardware.write(text="BootUp",led=[50,50,50],servo=[50,50,30])
-
-
         # TODO
         """
         Use, i2cdetect, and parse answer, detect i2c state.
@@ -119,7 +129,6 @@ class BootLoader():
         except:
             print("[E10] hardware ERROR")
         """
-
         return 0
 
     def load_config(self):
@@ -127,10 +136,18 @@ class BootLoader():
         if not os.path.isfile(self.config_path):
             self.config_set_default()
 
-        self.config_set_default()
+        try:
+            self.config = configparser.ConfigParser()
+            self.config.read_file(open(self.config_path))
+            int(self.config['GOOGLE CLOUD PROJECT']['time_out'])
+            int(self.config['SENSOR']['sonic_distance'])
+            int(self.config['SENSOR']['sensor_timeout'])
+        except :
+            self.config_set_default()
+            return -1
+        else :
+            return 0
 
-        self.config = configparser.ConfigParser()
-        self.config.read_file(open(self.config_path))
 
     def load_cloud(self):
         # TODO
@@ -138,7 +155,7 @@ class BootLoader():
         if self.config is None:
             return -1
 
-        from Core.Cloud.Google import pino_dialogflow
+        from Cloud.Google import pino_dialogflow
         self.cloud = pino_dialogflow.PinoDialogFlow(
                                 self.config['GOOGLE CLOUD PROJECT']['google_project'],
                                 self.config['GOOGLE CLOUD PROJECT']['language'],
@@ -164,15 +181,38 @@ class BootLoader():
                                 'google_key':'/home/pi/Desktop/PinoBot/Keys/a2-bwogyf-c40e46d0dc2b.json',
                                 'google_project':'a2-bwogyf',
                                 'language': 'ko',
-                                'time_out':'7'
+                                'time_out': '7'
                             }
         config['MOTOR INDEX'] ={
                                 'number_of_motor':'3',
                                 'index_list':'1,5,10'
         }
+        config['SENSOR'] = {
+                            'sonic_distance': '20',
+                            'sensor_timeout': '50'
+        }
 
         with open(self.config_path,'w') as f:
             config.write(f)
+
+    def boot_copy(self):
+        import os , shutil
+        if os.path.isdir("/boot/media"):
+            files = [ f for f in os.listdir('/boot/media/')if os.path.isfile(f) ]
+            for file in files:
+                print(file)
+
+                if os.path.isfile("/home/pi/Desktop/Pinobot/media/"+file):
+                    try:   # if file exsist, remove old file
+                        os.remove("/home/pi/Desktop/Pinobot/media/" + file)
+                    except:
+                        pass # TODO : Error loger
+                else :
+                    try :  # copy
+                        shutil.copyfile("/boot/media/"+file,"/home/pi/Desktop/Pinobot/media/"+file)
+                    except :
+                        pass # TODO : Error loger
+
 
 def test():
     d = BootLoader()

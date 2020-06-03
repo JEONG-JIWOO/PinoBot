@@ -19,9 +19,9 @@ I2C-1 : Address[] : character LCD module
 """
 import logging
 
-from Core.Hardware.SPI import apa_102
-from Core.Hardware.GPIO import switch , sonic_sensor
-from Core.Hardware.I2C import pca_9685, lcd_1602
+from Hardware.SPI import apa_102
+from Hardware.GPIO import switch , sonic_sensor
+from Hardware.I2C import pca_9685, lcd_1602
 
 #from queue import Queue
 # spi, i2c raspi-config
