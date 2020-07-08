@@ -19,22 +19,32 @@ I2C-1 : Address[] : character LCD module
 """
 import logging
 
+from Hardware.I2C import servo
 from Hardware.SPI import apa_102
-from Hardware.GPIO import switch , sonic_sensor
-from Hardware.I2C import pca_9685, lcd_1602
+from Hardware import PinoGPIO , PinoUart
 
 #from queue import Queue
 # spi, i2c raspi-config
 
 class HardwareV1():
     def __init__(self):
+        # 1. Static Variables
 
-        self.set_logger()
-        self.SonicSensor = sonic_sensor.HC_SR04()
-        self.SW = switch.Switch("GPIO17")
+        # 2. variables
+
+        # 3. Objects
+
+        # 3.1 logs
+        self.log = self.set_logger()
+
+        self.SERVO = servo.SERVO()
+
         self.LED = apa_102.APA102(num_led=2)
-        self.LCD = lcd_1602.LCD1602(0x27)
-        self.SERVO = pca_9685.PinoPCA9685()
+
+        self.GPIO = PinoGPIO.Pino_GPIO()
+
+        self.UART = PinoUart.Pino_UART(port= "COM0", baud_rate = 115200)
+
         self.setLED(0,[0,0,0])
         self.setLED(1,[0,0,0])
 
@@ -47,7 +57,6 @@ class HardwareV1():
         self.LED.set_pixel(i, int(colors[0]), int(colors[1]), int(colors[2]))
         self.LED.show()
     
- 
 
 
     """
@@ -55,24 +64,25 @@ class HardwareV1():
     """
     def set_logger(self):
         # 2.1 set logger and formatter
-        self.log = logging.getLogger("Hardware_V1")
-        self.log.setLevel(logging.DEBUG)
+        log = logging.getLogger("Hardware_V1")
+        log.setLevel(logging.DEBUG)
         formatter = logging.Formatter('[%(levelname)s] (%(asctime)s : %(filename)s:%(lineno)d) > %(message)s')
 
         # 2.2 set file logger 
-        self.log_file = logging.FileHandler(filename = '/home/pi/Desktop/PinoBot/log/HardwareV1.log',
+        log_file = logging.FileHandler(filename = '/home/pi/Desktop/PinoBot/log/HardwareV1.log',
                                             mode='w',
                                             encoding='utf-8')
-        self.log_file.setFormatter(formatter)
-        self.log.addHandler(self.log_file)
+        log_file.setFormatter(formatter)
+        log.addHandler(log_file)
 
         # 2.3 set consol logger
-        self.log_consol = logging.StreamHandler()
-        self.log_consol.setFormatter(formatter)
-        self.log.addHandler(self.log_consol)
+        log_consol = logging.StreamHandler()
+        log_consol.setFormatter(formatter)
+        log.addHandler(log_consol)
 
         # 2.4 logger Done.
-        self.log.info("Start Hardware Module")
+        log.info("Start Hardware Module")
+        return log
 
     def write(self, text ="", led = [], servo = []):
         
@@ -95,12 +105,6 @@ class HardwareV1():
             self.SERVO.send_angles(8 ,servo[0])
             self.SERVO.send_angles(9, servo[1])
             self.SERVO.send_angles(10, servo[2])
-
-    def write_text_line1(self,text=""):
-        self.LCD.send_msg_line1(text)
-
-    def write_text_line2(self,text=""):
-        self.LCD.send_msg_line2(text)
 
     def read_sw(self):
         return (self.SW.read_once())
