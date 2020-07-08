@@ -49,6 +49,10 @@ class BootLoader():
             self.log.error("Hardware init Fail")
             return -1
 
+        self.hardware.write_text_line1(text="Version 0_9_01")
+        time.sleep(3)
+        self.hardware.write_text_line1(text="")
+
         # 3. Check Network with Google
         try:
             response = requests.get('https://status.cloud.google.com/', timeout=2.50)

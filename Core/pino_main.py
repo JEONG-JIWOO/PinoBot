@@ -155,8 +155,11 @@ class PinoBot():
         # 1. IDLE
         elif self.state == STATE.IDLE :
             print("IDLE")
-            self.HardWare.write(text="waiting..", led=[0, 50, 50])
+            self.HardWare.write(text="waiting..", led=[0, 0, 0, 0, 0, 0, 0, 0])
+            time.sleep(1)
+            self.HardWare.write(text="waiting..", led=[180, 180, 180, 180, 180, 180, 180, 180])
             sensor_state = -2
+            time.sleep(1)
 
             with self.lock:
                 sensor_state = self.sensor_state  # 1.1 Get sensor state with thread Lock
