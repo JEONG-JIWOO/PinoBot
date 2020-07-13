@@ -1,8 +1,14 @@
-import serial
-import time
+from board import SCL, SDA
+import busio
+import adafruit_ssd1306
 
-class Pino_UART():
+# pip3 install adafruit-circuitpython-ssd1306
+# https://github.com/adafruit/Adafruit_CircuitPython_SSD1306
+
+class OLED():
     def __init__(self,port="COM0",baud_rate = 115200):
+
+
         # 1. Static Variables
         self.port = port
         self.baud = baud_rate
@@ -40,7 +46,7 @@ class Pino_UART():
         try:
             self.serial = serial.Serial(self.port, self.baud, timeout=0)
         except Exception as E:
-            self.last_exception = repr(E)
+            self.last_exception = str(E)
             return -1
 
     def write(self,data):
@@ -49,31 +55,9 @@ class Pino_UART():
             self.serial.write(str(data))
         # 2. Fail to send data
         except Exception as E :
-            self.last_exception = repr(E)
+            self.last_exception = str(E)
             self.reset()
             return -1
         # 3. Success to send data
         else :
             return 0
-
-    def read(self):
-        # Reference :
-        # https://stackoverflow.com/questions/17553543/pyserial-non-blocking-read-loop
-
-        # 1. if received some data
-        if self.serial.inWaiting() > 0:
-            # 1.1 try to read receive data
-            try :
-                data_str = self.serial.read(self.serial.inWaiting()).decode('ascii')
-            # 1.2 Fail to read
-            except Exception as E:
-                self.last_exception = repr(E)
-                self.reset()
-                return None
-            # 1.3 Success to read
-            else :
-                return data_str
-
-        # 2. no data
-        else :
-            return ""
