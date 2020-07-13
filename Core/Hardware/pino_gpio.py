@@ -18,6 +18,7 @@ class Pino_GPIO():
 
         # 2. variables
         self.distance = 0   # [cm] Measured distance
+        self.sw_flag = False
         self.volume = 0     # 0 ~ 9 relative Speaker Volume
         self.last_reset_time = 0
         self.last_exception = ""
@@ -40,11 +41,12 @@ class Pino_GPIO():
         if (time.time() - self.last_reset_time) < 60:
             return 0
 
+        print("start to Reset GPIO")
         # 2. if self.GPIO exists..
         if self.GPIO is not None:
-            self.GPIO.cleanup()  # Close serial
+            self.GPIO.cleanup()  # Close gpio
             time.sleep(0.01)     # Wait a moment
-            del self.GPIO      # Deconstruct serial Object
+            del self.GPIO      # Deconstruct gpio Object
 
         # 3. refresh last reset time
         self.last_reset_time = time.time()
@@ -53,17 +55,17 @@ class Pino_GPIO():
         try:
             # 4.1 init GPIO
             self.GPIO = RPi.GPIO
-            self.GPIO.cleanup((self.TRIG_Pin,self.ECHO_Pin))
             self.GPIO.setmode(self.GPIO.BCM)
             # 4.2 init GPIO PINS
             self.GPIO.setup(self.SW_Pin  , self.GPIO.IN , pull_up_down=self.GPIO.PUD_DOWN)
-            self.GPIO.setup(self.TRIG_Pin, self.GPIO.OUT, pull_up_down=self.GPIO.PUD_DOWN)
+            self.GPIO.setup(self.TRIG_Pin, self.GPIO.OUT)
+
             self.GPIO.setup(self.ECHO_Pin, self.GPIO.IN , pull_up_down=self.GPIO.PUD_DOWN)
             # 4.3 init GPIO interrupt
             self.GPIO.add_event_detect(self.SW_Pin, self.GPIO.RISING, callback=self._sw_callback)
 
         except Exception as E:
-            self.last_exception = str(E)
+            self.last_exception = "reset() ," +repr(E)
             return -1
 
     # Public Functions
@@ -96,7 +98,8 @@ class Pino_GPIO():
             self.distance = ( (pulse_end - pulse_start) * 17001) # 1000000/2 / 29.41
 
         except Exception as E:  # if Error occurs
-            self.last_exception = str(E)  # save error Message
+            self.last_exception = "read_sonic_sensor() ," +repr(E)  # save error Message
+            print(self.last_exception)
             self.reset()  # reset gpio
             return -1
 
@@ -105,12 +108,15 @@ class Pino_GPIO():
 
     # Private Functions
     def _sw_callback(self,channel):
-        # Volume Switch Interrupt Function
-        # Volume changes circular 0 -> 1 -> 2 ..... -> 9 -> 0
-        if self.volume > 9:
-            self.volume = 0
-        else :
-            self.volume +=1
+        # change sw_flag to True
+        if not self.sw_flag:
+            self.sw_flag = True
+            # Volume Switch Interrupt Function
+            # Volume changes circular 0 -> 1 -> 2 ..... -> 9 -> 0
+            if self.volume > 9:
+                self.volume = 0
+            else :
+                self.volume +=1
 
 
 # Test Code
@@ -121,6 +127,9 @@ def test():
         distance = sensor.read_sonic_sensor()
         if distance > 0:
             print(distance)
+        if sensor.sw_flag :
+            print(sensor.volume)
+            sensor.sw_flag = False
 
 if __name__ == '__main__':
     test()
