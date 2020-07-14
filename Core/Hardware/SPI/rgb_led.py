@@ -24,9 +24,15 @@ class RGB_LED():
 
     def __del__(self):
         if self.spi_bus is not None:
-            del self.spi_bus
+            try:
+                del self.spi_bus
+            except:
+                pass
         if self.cs is not None:
-            del self.cs
+            try:
+                del self.cs
+            except:
+                pass
 
     def reset(self):
         # 1. check last reset time,

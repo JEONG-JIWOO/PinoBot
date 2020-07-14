@@ -42,7 +42,10 @@ class SERVO():
 
     def __del__(self):
         self.pca.deinit()
-        del self.pca
+        try:
+            del self.pca
+        except:
+            pass
 
     def reset(self):
         # 1. check last reset time,

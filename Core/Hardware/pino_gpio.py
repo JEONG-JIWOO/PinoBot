@@ -33,7 +33,10 @@ class Pino_GPIO():
         # Free GPIO
         self.GPIO.setmode(self.GPIO.BCM)
         self.GPIO.cleanup((self.TRIG_Pin,self.ECHO_Pin))
-        del self.GPIO
+        try:
+            del self.GPIO
+        except:
+            pass
 
     def reset(self):
         # 1. check last reset time,
@@ -41,7 +44,6 @@ class Pino_GPIO():
         if (time.time() - self.last_reset_time) < 60:
             return 0
 
-        print("start to Reset GPIO")
         # 2. if self.GPIO exists..
         if self.GPIO is not None:
             self.GPIO.cleanup()  # Close gpio
