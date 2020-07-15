@@ -8,7 +8,10 @@ import time
 from adafruit_pca9685 import PCA9685
 from adafruit_motor import servo
 
-class SERVO():
+class SERVO:
+    """
+    A. con & deconstruct
+    """
     def __init__(self, i2c, num_motor = 8,
                  motor_enable = (1, 1, 1, 1, 1, 1, 1, 1),
                  motor_min_angle = (0, 0, 0, 0, 0, 0, 0, 0),
@@ -42,11 +45,15 @@ class SERVO():
 
     def __del__(self):
         self.pca.deinit()
+        # noinspection PyBroadException
         try:
             del self.pca
         except:
             pass
 
+    """
+    B. reset 
+    """
     def reset(self):
         # 1. check last reset time,
         #    only can reset after 1min after last reset
@@ -72,6 +79,11 @@ class SERVO():
             self.last_exception = "SERVO.reset()" + repr(E)
             return -1
 
+    """
+    C. Public Functions
+    """
+    # [C.1] make trajectory and send to servo
+    # TODO : Make this as Multi-threading Function, but should make stop
     def write(self,tar_angles,trj_time):
         # 1. check tar_angle is Valid
         #    1-1 len(tar_angles) == self.num_motor : VALID, pass
@@ -141,46 +153,33 @@ class SERVO():
         else:
             return 0
 
-
+    """
+    D. Private Functions
+    """
+    # [D.1] Draw Trajectory
     def _make_trj(self,cur_angle,tar_angle,trj_time):
         # linear trajectory
+        # TODO : F-curve trajectory
         n_thread = int(trj_time/self.control_time)
         trj = []
         for i in range(n_thread):
             trj.append(cur_angle + int( i*(tar_angle - cur_angle)/n_thread))
-        """
-        TO-DO, F-curve trajectory
-        
-        """
         return trj
 
 
-# class test_code
+"""
+Module TEST codes 
+"""
 def test():
     from board import SCL, SDA
     import busio
     i2c = busio.I2C(SCL, SDA)
-    B = SERVO(i2c)
+    servo_board = SERVO(i2c)
     time.sleep(2)
-    B.write([100,90,80,70,60,30,32],0.1)
-    B.write([0, 0, 0, 0, 0], 4)
-    B.write([180], 2)
-    B.write([1], 2)
+    servo_board.write([100, 90, 80, 70, 60, 30, 32], 0.1)
+    servo_board.write([0, 0, 0, 0, 0], 4)
+    servo_board.write([180], 2)
+    servo_board.write([1], 2)
 
 if __name__ == '__main__':
     test()
-
-
-"""
-1th Test Done
-
-1. ALL Feature Works
-2. No Error in Valid Input Test
-3. No Error in Invalid Input Test
-4. Error Handle on raise(error)
-
-TO-DO
-1. Multi Device Test
-2. invalid Init Test
-
-"""

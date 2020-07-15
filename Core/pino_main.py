@@ -2,7 +2,6 @@
 
 import enum , time, random
 from threading import Lock, Thread
-
 from Utils.boot_utils import BootLoader
 
 class STATE(enum.Enum):
@@ -217,4 +216,5 @@ def test():
 
 
 if __name__ == '__main__':
-    test()
+    pass
+    #test()

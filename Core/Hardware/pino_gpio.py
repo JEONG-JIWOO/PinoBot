@@ -7,7 +7,12 @@ https://m.blog.naver.com/PostView.nhn?blogId=chandong83&logNo=221155355360
 
 """
 
-class Pino_GPIO():
+
+# noinspection PyPep8Naming
+class Pino_GPIO:
+    """
+    A. con & deconstruct
+    """
     def __init__(self):
         # 1. Static Variables
         self.MAX_DISTANCE = 150  # [cm] Max Boundary distance
@@ -33,11 +38,14 @@ class Pino_GPIO():
         # Free GPIO
         self.GPIO.setmode(self.GPIO.BCM)
         self.GPIO.cleanup((self.TRIG_Pin,self.ECHO_Pin))
+        # noinspection PyBroadException
         try:
             del self.GPIO
-        except:
+        except :
             pass
-
+    """
+    B. reset 
+    """
     def reset(self):
         # 1. check last reset time,
         #    only can reset after 1min after last reset
@@ -64,13 +72,16 @@ class Pino_GPIO():
 
             self.GPIO.setup(self.ECHO_Pin, self.GPIO.IN , pull_up_down=self.GPIO.PUD_DOWN)
             # 4.3 init GPIO interrupt
-            self.GPIO.add_event_detect(self.SW_Pin, self.GPIO.RISING, callback=self._sw_callback)
+            self.GPIO.add_event_detect(self.SW_Pin, self.GPIO.RISING, callback=self.__sw_callback)
 
         except Exception as E:
             self.last_exception = "reset() ," +repr(E)
             return -1
 
-    # Public Functions
+    """
+    C. Public Functions
+    """
+    # [C.1] read ultra sonic sensor, and store at "self.distance"
     def read_sonic_sensor(self):
         try :
             # 1. send start signal to Trigger pin
@@ -79,7 +90,7 @@ class Pino_GPIO():
             self.GPIO.output(self.TRIG_Pin, False)
 
             # 2. receive response
-            measure_start = time.time()
+            measure_start: float = time.time()
             pulse_start = 0
             pulse_end = 0
 
@@ -90,7 +101,7 @@ class Pino_GPIO():
                     return 150
 
             # 4. measure time for last pulse.
-            measure_start = time.time()
+            # measure_start = time.time()
             while self.GPIO.input(self.ECHO_Pin) == 1:
                 pulse_end = time.time()
                 if ((pulse_end - pulse_start)*1000000) >=  self.TIMEOUT:
@@ -108,8 +119,11 @@ class Pino_GPIO():
         else :
             return self.distance
 
-    # Private Functions
-    def _sw_callback(self,channel):
+    """
+    D. Private Functions
+    """
+    # [D.1] switch interrupt callback
+    def __sw_callback(self):
         # change sw_flag to True
         if not self.sw_flag:
             self.sw_flag = True
@@ -120,8 +134,9 @@ class Pino_GPIO():
             else :
                 self.volume +=1
 
-
-# Test Code
+"""
+Module TEST codes 
+"""
 def test():
     sensor = Pino_GPIO()
     while 1:
