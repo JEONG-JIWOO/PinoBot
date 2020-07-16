@@ -25,8 +25,12 @@ class Pino_UART:
         self.reset()
 
     def __del__(self):
-        self.serial.close()
-        del self.serial
+        # noinspection PyBroadException
+        try:
+            self.serial.close()
+            del self.serial
+        except:
+            pass
 
     """
     B. reset 

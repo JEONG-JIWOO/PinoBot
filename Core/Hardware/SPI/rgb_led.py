@@ -95,7 +95,7 @@ class RGB_LED():
 
         # 2. Fail to send data
         except Exception as E :
-            self.last_exception = "RGB_LED.write(" + str(rgb_s) +str(b_persent) + "), " + repr(E)
+            self.last_exception = "RGB_LED.write(" + str(rgb_s) +","+str(b_persent) + "), " + repr(E)
             self.reset()
             return -1
         # 3. Success to send data

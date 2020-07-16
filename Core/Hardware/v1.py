@@ -21,7 +21,6 @@ from Core.Hardware.I2C import servo , oled
 from Core.Hardware import pino_gpio , pino_uart
 from Core.Hardware.SPI import rgb_led
 
-
 class HardwareV1:
     """
     A. con & deconstruct
@@ -49,7 +48,6 @@ class HardwareV1:
         # 4. Init Functions
         self.reset()
         self.__set_default()
-
 
     def __del__(self):
         for sub_modules in [self.SERVO, self.OLED , self.RGB_LED , self.SENSOR, self.I2C_BUS, self.SPI_BUS]:
