@@ -25,15 +25,17 @@ class HardwareV1:
     """
     A. con & deconstruct
     """
-    def __init__(self,ini):
+    def __init__(self,config,base_path):
         # 0. Argument
-        self.ini = ini
+        self.config = config
+        self.base_path = base_path
 
         # 1. Static Variables
 
         # 2. variables
         self.last_reset_time = 0
         self.last_exception = ""
+        self.version = "0.9.2"
 
         # 3. Objects
         self.I2C_BUS = None
@@ -79,29 +81,34 @@ class HardwareV1:
 
         # 4. re open GPIO
         try:
-            # 4.1 init I2C
-            from board import SCL, SDA
-            self.I2C_BUS = busio.I2C(SCL, SDA)
-            self.OLED = oled.OLED(self.I2C_BUS)
-            self.OLED.send_console(1,"Hardware init...   ")
-
-            self.SERVO = servo.SERVO(self.I2C_BUS)
-            time.sleep(0.3)
-            # 4.2 init SPI
-            self.SPI_BUS = busio.SPI(board.SCK, MOSI=board.MOSI, MISO=board.MISO)
-            self.RGB_LED = rgb_led.RGB_LED(self.SPI_BUS)
-
-            # 4.3 init GPIO
-            self.SENSOR = pino_gpio.Pino_GPIO()
-            self.OLED.send_console(2,"Hardware init...  \n" +
-                                     "Hardware reset..    ")
-
-            # 4.4 init Serial
-            self.UART = pino_uart.Pino_UART()
-
-            # 4.5 init log
+            # 4.1 init log
             self.log = self.__set_logger()
+
+            # 4.2 init I2C
+            from board import SCL, SDA
+            import ast
+            self.I2C_BUS = busio.I2C(SCL, SDA)
+            self.OLED = oled.OLED(self.I2C_BUS,self.base_path,
+                                  console_font_name=self.config['OLED']["console_font"],
+                                  main_font_name=self.config['OLED']["main_font"])
+
+            self.SERVO = servo.SERVO(self.I2C_BUS,
+                                     num_motor=int(self.config['MOTOR']['num_motor']),
+                                     motor_enable=ast.literal_eval(self.config['MOTOR']['motor_enable']),
+                                     motor_min_angle=ast.literal_eval(self.config['MOTOR']['motor_min_angle']),
+                                     motor_max_angle=ast.literal_eval(self.config['MOTOR']['motor_max_angle']),
+                                     motor_default_angle=ast.literal_eval(self.config['MOTOR']['motor_default_angle'])
+                                     )
             time.sleep(0.3)
+            # 4.3 init SPI
+            self.SPI_BUS = busio.SPI(board.SCK, MOSI=board.MOSI, MISO=board.MISO)
+            self.RGB_LED = rgb_led.RGB_LED(self.SPI_BUS,on=ast.literal_eval(self.config['LED']['ON']))
+
+            # 4.4 init GPIO
+            self.SENSOR = pino_gpio.Pino_GPIO()
+
+            # 4.5 init Serial
+            self.UART = pino_uart.Pino_UART(baud_rate=int(self.config['UART']['baud_rate']))
 
         except Exception as E:
             self.log.warning("HardwareV1.reset() , #4 remake .. " + repr(E))
@@ -113,7 +120,7 @@ class HardwareV1:
     # [C.1] write some actions to hardware
     def write(self, image = None, text =None,
                     led = None,
-                    servo_angle = None, servo_time = None,
+                    servo_angle = None, servo_time = 0.2,
                     serial_msg = None):
 
         try :
@@ -169,12 +176,16 @@ class HardwareV1:
 
     # [C.2] read data from hardware
     def read(self,sw_reset = False):
+        self.SENSOR.read_sonic_sensor()
         volume = self.SENSOR.volume
         distance = self.SENSOR.distance
         serial_msgs = self.UART.received_msg
 
         if sw_reset is True:
             self.SENSOR.sw_flag = False
+        if self.UART.received_msg != "":
+            self.UART.received_msg = ""
+
         return volume, distance, serial_msgs
 
     """
@@ -183,22 +194,19 @@ class HardwareV1:
     # [D.1] set hardware as default value
     # TODO : SET REAL VALUE.
     def __set_default(self):
-        self.OLED.send_console(3,"Hardware init...   \n"+
-                                 "Hardware reset..   \n"+
-                                 "Hardware Done!..   ")
-        self.RGB_LED.write([100,50,50,50,100,50])
+        #self.OLED.send_console(1,"Hardware Done!..   \n")
+        self.RGB_LED.write([20,20,20,20,20,20])
         self.SERVO.write([0,0,0,0,0],1)
 
     # [D.2] load logger
-    @staticmethod
-    def __set_logger():
+    def __set_logger(self):
         # 2.1 set logger and formatter
         log = logging.getLogger("Hardware_V1")
         log.setLevel(logging.DEBUG)
         formatter = logging.Formatter('[%(levelname)s] (%(asctime)s : %(filename)s:%(lineno)d) > %(message)s')
 
         # 2.2 set file logger
-        log_file = logging.FileHandler(filename = '/home/pi/Desktop/PinoBot/log/HardwareV11.log',
+        log_file = logging.FileHandler(filename = self.base_path+'log/HardwareV11.log',
                                             mode='w',
                                             encoding='utf-8')
         log_file.setFormatter(formatter)
@@ -213,18 +221,25 @@ class HardwareV1:
         log.info("Start Hardware Module")
         return log
 
+
 """
 Module TEST codes 
 """
 def test():
-    hardware = HardwareV1("")
+    import configparser
+    config = configparser.ConfigParser()
+    config.read_file(open("/home/pi/Desktop/PinoBot/config.ini"))
+
+    hardware = HardwareV1(config=config,base_path="/home/pi/Desktop/PinoBot/")
 
     # valid case
+    print("=====valid!=====")
     hardware.write(text="하이루",led=[0,0,100],servo_angle=[180,180,90],servo_time=2)
     hardware.write(image="test.jpg")
     hardware.write(text="아아")
     hardware.write(serial_msg="test_msg_logs")
 
+    print("=====Invalid!=====")
     # invalid case
     hardware.write(text = 1)
     hardware.write(led  = 1)

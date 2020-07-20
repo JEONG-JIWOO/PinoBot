@@ -6,7 +6,7 @@ class Pino_UART:
     """
     A. con & deconstruct
     """
-    def __init__(self,port="COM0",baud_rate = 115200):
+    def __init__(self,port="/dev/ttyAMA0",baud_rate = 115200):
         # 0. Argument
         self.port = port
         self.baud = baud_rate
@@ -52,7 +52,7 @@ class Pino_UART:
 
         # 4. re open Serial
         try:
-            self.serial = serial.Serial(self.port, self.baud, timeout=0)
+            self.serial = serial.Serial(self.port, self.baud, timeout =0, write_timeout=0.1)
         except Exception as E:
             self.last_exception = repr(E)
             return -1
@@ -64,7 +64,7 @@ class Pino_UART:
     def write(self,data):
         # 1. try to send
         try :
-            self.serial.write(str(data))
+            self.serial.write(str(data).encode())
         # 2. Fail to send data
         except Exception as E :
             self.last_exception = repr(E)
@@ -103,11 +103,10 @@ class Pino_UART:
 Module TEST codes 
 """
 def test():
-    """
-        TODO: write test code
-
-    """
-    pass
+    uart = Pino_UART()
+    uart.write("asdf")
+    uart.read()
+    print("R:",uart.received_msg)
 
 if __name__ == '__main__':
     test()
