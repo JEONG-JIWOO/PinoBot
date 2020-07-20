@@ -72,7 +72,7 @@ class Pino_GPIO:
 
             self.GPIO.setup(self.ECHO_Pin, self.GPIO.IN , pull_up_down=self.GPIO.PUD_DOWN)
             # 4.3 init GPIO interrupt
-            self.GPIO.add_event_detect(self.SW_Pin, self.GPIO.RISING, callback=self.__sw_callback)
+            self.GPIO.add_event_detect(self.SW_Pin, self.GPIO.RISING, callback=self.__sw_callback,)
 
         except Exception as E:
             self.last_exception = "reset() ," +repr(E)
@@ -123,7 +123,7 @@ class Pino_GPIO:
     D. Private Functions
     """
     # [D.1] switch interrupt callback
-    def __sw_callback(self):
+    def __sw_callback(self,channel):
         # change sw_flag to True
         if not self.sw_flag:
             self.sw_flag = True

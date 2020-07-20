@@ -10,21 +10,26 @@ class OLED:
     """
     A. con & deconstruct
     """
-    def __init__(self,i2c, font_name = "NanumBarunGothicBold.ttf"):
+    def __init__(self,i2c,base_path,console_font_name="",main_font_name=""):
         # 0. Argument
-        self.font_path ="/home/pi/Desktop/PinoBot/Core/Hardware/Fonts/"+font_name
+        self.base_path = base_path
+        self.console_font_name = console_font_name
+        self.main_font_name = main_font_name
         self.i2c = i2c
 
         # 1. Static Variables
         self.oled_size = (128, 64)
+        self.main_font_size =30
+        self.console_font_size = 12
 
         # 2. variables
         self.last_reset_time = 0
         self.last_exception = ""
+        self.console_msg = ""
 
         # 3. Objects
         self.oled = None
-        self.unicode_font = None
+        self.main_font = None
         self.console_font = None
         self.im = None
 
@@ -35,7 +40,7 @@ class OLED:
         # noinspection PyBroadException
         try:
             del self.oled  # Deconstruct Object
-            del self.unicode_font
+            del self.main_font
         except:
             pass
     """
@@ -51,7 +56,7 @@ class OLED:
         if self.oled is not None:
             try:
                 del self.oled     # Deconstruct Object
-                del self.unicode_font
+                del self.main_font
             except Exception as E:
                 self.last_exception = "OLED.reset(), # 2. del " + repr(E)
 
@@ -114,13 +119,19 @@ class OLED:
 
     # [C.3] show progress "step" , convert "msg" to image, and send to OLED
     # NOTE : Progress bar : YES,    text : Fixed size
-    def send_console(self, step, msgs):
+    def send_console(self, step, msgs, mode = "a"):
         # 1. make new image by font size
         im = Image.new("L", (128,64), 0)
         draw = ImageDraw.Draw(im)
 
+        if mode == "a":
+            self.console_msg += msgs
+            #print(self.console_msg)
+        else :
+            self.console_msg = msgs
+
         # 2. draw text to image
-        draw.text((18, 0), msgs, font=self.console_font, fill=255, spacing=2, align="left")
+        draw.text((18, 0), self.console_msg, font=self.console_font, fill=255, spacing=2, align="left")
         if step > 16:
             step = 16
         for i in range(step):
@@ -171,34 +182,38 @@ class OLED:
     # [D.1] load font by name, from directory
     def __load_font(self):
         # 1. try to load font from config file
+
         try :
-            self.unicode_font = ImageFont.truetype(self.font_path, 30)
-            self.console_font = ImageFont.truetype(self.font_path, 14)
+            self.main_font = ImageFont.truetype(self.base_path+"/Core/Hardware/Fonts/"+self.main_font_name,
+                                                self.main_font_size)
+            self.console_font = ImageFont.truetype(self.base_path+"/Core/Hardware/Fonts/"+self.console_font_name,
+                                                   self.console_font_size)
         except IOError :
             print("fail to load font, load [NanumBarunGothicBold] ")
         except Exception as E:
             self.last_exception = "OLED.load_font(), No IOError " + repr(E)
-            return -2
         else :
             return 0
 
         # 2. try to load font from pinobot Default Font
         try :
-            self.unicode_font = ImageFont.truetype(
-                                "/home/pi/Desktop/PinoBot/Core/Hardware/Fonts/NanumBarunGothicBold.ttf", 30)
+            self.main_font = ImageFont.truetype(
+                                self.base_path+"/Core/Hardware/Fonts/NanumBarunGothicBold.ttf",
+                                self.main_font_size)
             self.console_font = ImageFont.truetype(
-                "/home/pi/Desktop/PinoBot/Core/Hardware/Fonts/NanumBarunGothicBold.ttf", 14)
+                                self.base_path+"/Core/Hardware/Fonts/NanumBarunGothicBold.ttf",
+                                self.console_font_size)
         except IOError:
             print("fail to load font, load [system default] ")
         except Exception as E:
             self.last_exception = "OLED.load_font(), No IOError " + repr(E)
-            return -2
         else:
             return 0
 
         # 3. try to load font from System Default Font
         try:
-            self.unicode_font = ImageFont.load_default()
+            self.main_font = ImageFont.load_default()
+            self.console_font = ImageFont.load_default()
         except Exception as E:
             self.last_exception = "OLED.load_font(), No IOError " + repr(E)
             return -2
@@ -208,7 +223,7 @@ class OLED:
     # [D.2] load image form directory
     def __load_image(self, image_name):
         try :
-            path = "/home/pi/Desktop/PinoBot/media/image/"+image_name
+            path = self.base_path+"media/image/"+image_name
             image = Image.open(path)
             im = image.resize(self.oled_size)
             # 2. change to binary image and save it.
@@ -229,7 +244,7 @@ class OLED:
         max_text_weight = 0  # find MAX weight of lines
         max_text_height = 0  # find MAX height of lines
         for line in split_text:
-            size = self.unicode_font.getsize(line)
+            size = self.main_font.getsize(line)
             if size[0] > max_text_weight:
                 max_text_weight = size[0]
             if size[1] > max_text_height:
@@ -243,7 +258,7 @@ class OLED:
         draw = ImageDraw.Draw(im)
 
         # 4. draw text to image
-        draw.text((0, 0), unicode_text, font=self.unicode_font, fill=255, spacing=space, align="center")
+        draw.text((0, 0), unicode_text, font=self.main_font, fill=255, spacing=space, align="center")
 
         # 5. change to binary image and save it.
         im = im.resize(resize,resample=Image.LANCZOS)
@@ -253,7 +268,7 @@ class OLED:
     # [D.4] Draw progress line to image
     @staticmethod
     def __draw_line(draw, step):
-        length = 10
+        length = 12
         y0 = 4 * (15 - step) + 3
         y1 = y0
         x0 = 1
@@ -266,11 +281,10 @@ Module TEST codes
 """
 def test():
     i2c = board.I2C()
-    oled_board = OLED(i2c)
-    #A.send_text(" 힘쎄고 좋은아침! \n 내이름을 묻는다면 \n 나는 왈도 ")
-    #A.send_image("asdf.jpg")
-    print(oled_board.last_exception)
-
+    oled_board = OLED(i2c,
+                      "/home/pi/Desktop/PinoBot/",
+                      'NanumSquareEB.ttf',
+                      'NanumSquareEB.ttf')
 
     for i in range(15):
         oled_board.send_loading(ratio=7 * i, msg =" PrePare Boot\n \n WAIT..")
@@ -279,41 +293,27 @@ def test():
     time.sleep(1)
     oled_board.send_loading()
 
-    """
-    for i in range(15):
-        A.loading_scean(step=i)
-        time.sleep(0.02)
-    A.loading_scean(16)
-    """
-
     for i in range(15):
         if i < 5:
             if i % 2 == 0 :
-                oled_board.send_console(step=i,msgs=" loading A. ")
+                oled_board.send_console(step=i,msgs=" loading A")
             else :
-                oled_board.send_console(step=i, msgs=" loading A..")
+                oled_board.send_console(step=i, msgs=".")
             time.sleep(0.2)
         elif i < 10:
             if i % 2 == 0 :
-                oled_board.send_console(step=i, msgs=" loading A..Done! \n" +
-                                            " loading B. ")
+                oled_board.send_console(step=i, msgs="\n loading B")
             else :
-                oled_board.send_console(step=i, msgs=" loading A..Done! \n" +
-                                            " loading B..")
+                oled_board.send_console(step=i, msgs=".")
             time.sleep(0.2)
         elif i < 15:
             if i % 2 == 0 :
-                oled_board.send_console(step=i, msgs=" loading A..Done! \n" +
-                                            " loading B..Done! \n" +
-                                            " loading C. ")
+                oled_board.send_console(step=i, msgs="\n loading C")
             else :
-                oled_board.send_console(step=i, msgs=" loading A..Done! \n" +
-                                            " loading B..Done! \n" +
-                                            " loading C.. ")
+                oled_board.send_console(step=i, msgs=".")
 
             time.sleep(0.2)
-    oled_board.send_console(step=15, msgs=" loading A..Done! \n"+
-                                " loading B..Done! \n"+
-                                " loading C..Done! ")
+    oled_board.send_console(step=15, msgs="Total Done.",mode="w")
+
 if __name__ == '__main__':
     test()

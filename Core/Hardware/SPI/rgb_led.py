@@ -5,9 +5,10 @@ import digitalio
 from adafruit_bus_device.spi_device import SPIDevice
 
 class RGB_LED():
-    def __init__(self,spi):
+    def __init__(self,spi,on = True):
         # 0. arguments
         self.spi = spi
+        self.on = on
 
         # 1. Static Variables
 
@@ -59,6 +60,9 @@ class RGB_LED():
             return -1
 
     def write(self,rgb_s,b_persent=100):
+        if not self.on:
+            return 0
+
         try :
             # 1. calculate power and brightness
             power = int(b_persent * 31 / 100.0)

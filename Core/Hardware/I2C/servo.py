@@ -15,7 +15,8 @@ class SERVO:
     def __init__(self, i2c, num_motor = 8,
                  motor_enable = (1, 1, 1, 1, 1, 1, 1, 1),
                  motor_min_angle = (0, 0, 0, 0, 0, 0, 0, 0),
-                 motor_max_angle = (170, 170, 170, 170, 170, 170, 170, 170),):
+                 motor_max_angle = (170, 170, 170, 170, 170, 170, 170, 170),
+                 motor_default_angle =(0, 0, 0, 0, 0, 0, 0, 0)):
 
         # 0. arguments
         self.i2c = i2c
@@ -23,6 +24,7 @@ class SERVO:
         self.motor_enable = list(motor_enable)
         self.max_angle_limit = list(motor_max_angle)
         self.min_angle_limit = list(motor_min_angle)
+        self.motor_default_angle = list(motor_default_angle)
 
         # 1. Static Variables
         self.pwm_min = 580 # min pwm, sg-90 : -90,
@@ -153,6 +155,8 @@ class SERVO:
         else:
             return 0
 
+    def set_default(self):
+        self.write(self.motor_default_angle,1)
     """
     D. Private Functions
     """
