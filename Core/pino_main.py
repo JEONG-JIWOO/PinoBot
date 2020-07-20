@@ -2,7 +2,7 @@
 
 import enum , time, random
 from threading import Lock, Thread
-from Utils.boot_utils import BootLoader
+from Core.Utils.boot_utils import BootLoader
 
 class STATE(enum.Enum):
     BOOT = 0
@@ -12,27 +12,27 @@ class STATE(enum.Enum):
 
 class PinoBot():
     def __init__(self):
-        
-        # 0. common variablev
+        # 0. Argument
+
+        # 1. Static Variables
         self.state = STATE.BOOT
-        self.lock = Lock()  # when control hardware, use. this LOCK
 
-
-        # 1. init hareware and thread variable,
-        # be careful to use, without "LOCK", it can cause segmentation error
-
+        # 2. variables
         self.react_distance = 50  # [cm] if sonic sensor measure value below this. robot react
         self.wall_threshold_time = 30  # [sec] if sonic sensor keep measure wall longer than this time
                                        # robot goes to sleep mod
-
         self.sensor_state = 0  # -1 : facing object over self.wall_threshold time
                                #  0 : no object
                                #  1 : measure object
+        self.rcv_serial_msgs = ""
 
+        # 3. Objects
         self.HardWare = None
         self.cloud = None
+        self.lock = Lock()  # when control hardware, use. this LOCK
+        self.polling_thread = Thread(target=self.poll_thread)
 
-        # 3. do some boot process
+        # 4. Init Functions
         self.boot_process()
 
     def boot_process(self):
@@ -42,15 +42,14 @@ class PinoBot():
 
         # 2. do boot process.
         self.HardWare ,self.cloud = Boot.run()
-        self.TIME_OUT = int(Boot.config['GOOGLE CLOUD PROJECT']['time_out'])
+        self.TIME_OUT = int(Boot.config['GCloud']['time_out'])
 
         # 3. start sonic sensor thread
-        self.sensor_t = Thread(target=self.sensor_thread)
-        self.sensor_t.start()
+        self.polling_thread.start()
         self.state = STATE.IDLE
         return 0
 
-    def sensor_thread(self):
+    def poll_thread(self):
         """
         sensor measurement thread
         which calls every 0.5 seconds
@@ -67,10 +66,12 @@ class PinoBot():
             T_LIMIT = self.wall_threshold_time 
 
         # 2. main loop
+        cur_volume = 0
+
         while True:
-            time.sleep(0.1)  # check sonic sensor every 0.5 seconds
+            time.sleep(0.2)  # check sonic sensor every 0.5 seconds
             with self.lock:
-                distance = self.HardWare.read_sonic()
+                volume, distance, serial_msgs = self.HardWare.read()
                 #print("d: %0.2f %d"%(distance, time.time() - detect_time))
 
                 # 2.1. onject  [out -> in]
@@ -93,19 +94,27 @@ class PinoBot():
                 elif distance > d and s_state == -1:
                     print("wall out")
                     s_state = 0
-
                 self.sensor_state = s_state
+
+                if volume != cur_volume:
+                    print("change volume")
+                    cur_volume = volume
+
+                if serial_msgs != "":
+                    print("serial: ",serial_msgs)
+                    self.rcv_serial_msgs = serial_msgs
+
 
 
     def stream_voice(self):
         print("Streaming started, say something timeout, %d seconds" % self.TIME_OUT)  # [TEMP CODE]
 
-        self.HardWare.write(text="Call me?", led=[200, 200, 0], servo=[120, 120, 70])
+        self.HardWare.write(text="Call me?", led=[200, 200, 0], servo_angle=[120, 120, 70])
         self.cloud.start_stream()
 
         stt_response, chatbot_response = self.cloud.get_response()
 
-        self.HardWare.write(text="I Heard !", led=[0, 0, 0], servo=[60, 60, 90])
+        self.HardWare.write(text="I Heard !", led=[0, 0, 0], servo_angle=[60, 60, 90])
         if stt_response is None :
             return -1
         elif len(stt_response.recognition_result.transcript) == 0:
@@ -150,13 +159,13 @@ class PinoBot():
         if self.state == STATE.BOOT:
             print("BOOT ON")
             self.state = STATE.IDLE
-
+            self.HardWare.write(text="안녕?     \n 만나서 반가워")
         # 1. IDLE
         elif self.state == STATE.IDLE :
             print("IDLE")
-            self.HardWare.write(text="waiting..", led=[0, 0, 0, 0, 0, 0, 0, 0])
+            self.HardWare.write(text="노는중..", led=[0, 0, 0, 0, 0, 0])
             time.sleep(1)
-            self.HardWare.write(text="waiting..", led=[180, 180, 180, 180, 180, 180, 180, 180])
+            self.HardWare.write(text="노는중..", led=[40, 40, 40, 40, 40, 40])
             sensor_state = -2
             time.sleep(1)
 
@@ -178,7 +187,7 @@ class PinoBot():
         elif self.state == STATE.WALL_FACE :
             print("WALL FACE")
             if self.send_event("WALL_FACE"): # 2.1 do wall face action
-                self.HardWare.write(text="sleeping..", led=[0, 0, 0])
+                self.HardWare.write(text="something..\n make me blind", led=[0, 0, 0])
                 self.do_action()
                 pass
 
@@ -216,5 +225,4 @@ def test():
 
 
 if __name__ == '__main__':
-    pass
-    #test()
+    test()
