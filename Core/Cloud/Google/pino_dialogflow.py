@@ -393,7 +393,7 @@ class PinoDialogFlow():
     def get_response(self):
         if self._session_path is None: # if not, exit fuction
             self.log.error("Session is not opened ignore command")
-            return None, None
+            return None, None, None
 
         # 3. Wait for response
         while True: 
@@ -438,9 +438,9 @@ class PinoDialogFlow():
         # 5. return Result        
         time.sleep(0.05) # wait for turn off Stream
         if self.stt_response is not None and self.dflow_response is not None:
-            return self.stt_response, self.dflow_response
+            return self.stt_response, self.dflow_response , self.tts_response
         
-        return None, None
+        return None, None, None
 
     """
        E. play audio file stored in self.tts_response.output_audio
@@ -449,8 +449,8 @@ class PinoDialogFlow():
     """
         E.1 play audio
     """
-    def play_audio(self):
-        if self.tts_response.output_audio is not None:
+    def play_audio(self,tts_response):
+        if tts_response.output_audio is not None:
 
             # Todo [WIP] find alternative solution without using file system
             with open("./1.wav","wb") as f:
@@ -640,7 +640,7 @@ def example():
     # 4. send voice and get voice response
     Gbot.start_stream()
     print("Streaming started, say something timeout, %d seconds"%TIME_OUT)
-    stt_response, chatbot_response = Gbot.get_response()
+    stt_response, chatbot_response, tts = Gbot.get_response()
     if stt_response is not None and chatbot_response is not None:
         print("[Q] : %s "%stt_response.recognition_result.transcript)
         print("[A] : accuracy:%0.3f | %s "%(chatbot_response.query_result.intent_detection_confidence,
@@ -673,6 +673,30 @@ def example():
             except :
                 print("session Error")
 
+def exe2():
+    DIALOGFLOW_PROJECT_ID = 'squarebot01-yauqxo'
+    DIALOGFLOW_LANGUAGE_CODE = 'ko'
+    GOOGLE_APPLICATION_CREDENTIALS = '/home/pi/Desktop/PinoBot/Keys/squarebot01-yauqxo-8d211b1f1a85.json'
+    TIME_OUT = 7
+
+    # 2. init and connect dialogflow project
+    Gbot = PinoDialogFlow(DIALOGFLOW_PROJECT_ID,
+                         DIALOGFLOW_LANGUAGE_CODE,
+                         GOOGLE_APPLICATION_CREDENTIALS,
+                         TIME_OUT)
+    Gbot.open_session()
+    print("\n\n Start!")
+    text_response = Gbot.send_text("15분 뒤에 알려줘")
+    from google.protobuf.json_format import MessageToDict
+    a = MessageToDict(text_response.query_result)
+    print(a)
+    print("-"*30)
+    print(text_response.query_result.query_text.parameters)
+    print("[Q] : %s " % text_response.query_result.query_text)
+    print("[A] : accuracy:%0.3f | %s " % (text_response.query_result.intent_detection_confidence,
+                                          text_response.query_result.fulfillment_text))
+    # Gbot.play_audio()
+
 
 if __name__ == "__main__":
-    example()
+    exe2()
