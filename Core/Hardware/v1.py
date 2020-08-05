@@ -1,25 +1,17 @@
 #!/usr/bin/env python3.7
-
 """
-Hardware v1 control module
-based on gpiozero lib
+Write By Jiwoo Jeong
 
-wiring : 
-
-SW0 [ONBOARD] :GPIO17
-APA102 RGB LED : SPI interface, 
-
-I2C-1 : Address[] : PCA9685 PWM MODULE
-I2C-1 : Address[] : character LCD module
+PinoBot V1 Hardware Control Module
 
 """
 import logging , time
 import busio
 import board
 
-from Core.Hardware.I2C import servo , oled
-from Core.Hardware import pino_gpio , pino_uart
-from Core.Hardware.SPI import rgb_led
+from Core.Hardware.I2C import pino_servo , pino_oled
+from Core.Hardware import pino_sensor , pino_uart
+from Core.Hardware.SPI import pino_led
 
 class HardwareV1:
     """
@@ -39,17 +31,19 @@ class HardwareV1:
 
         # 3. Objects
         self.I2C_BUS = None
+        self.SPI_BUS = None
+
+        self.UART = None
         self.SERVO = None
         self.OLED = None
-        self.SPI_BUS = None
         self.RGB_LED = None
         self.SENSOR = None
-        self.UART = None
+
         self.log = None
 
         # 4. Init Functions
         self.reset()
-        self.__set_default()
+        #self.__set_default()
 
     def __del__(self):
         for sub_modules in [self.SERVO, self.OLED , self.RGB_LED , self.SENSOR, self.I2C_BUS, self.SPI_BUS]:
@@ -84,30 +78,26 @@ class HardwareV1:
             # 4.1 init log
             self.log = self.__set_logger()
 
-            # 4.2 init I2C
+            # 4.2 init bus
             from board import SCL, SDA
             import ast
             self.I2C_BUS = busio.I2C(SCL, SDA)
-            self.OLED = oled.OLED(self.I2C_BUS,self.base_path,
-                                  console_font_name=self.config['OLED']["console_font"],
-                                  main_font_name=self.config['OLED']["main_font"])
-
-            self.SERVO = servo.SERVO(self.I2C_BUS,
-                                     num_motor=int(self.config['MOTOR']['num_motor']),
-                                     motor_enable=ast.literal_eval(self.config['MOTOR']['motor_enable']),
-                                     motor_min_angle=ast.literal_eval(self.config['MOTOR']['motor_min_angle']),
-                                     motor_max_angle=ast.literal_eval(self.config['MOTOR']['motor_max_angle']),
-                                     motor_default_angle=ast.literal_eval(self.config['MOTOR']['motor_default_angle'])
-                                     )
-            time.sleep(0.3)
-            # 4.3 init SPI
             self.SPI_BUS = busio.SPI(board.SCK, MOSI=board.MOSI, MISO=board.MISO)
-            self.RGB_LED = rgb_led.RGB_LED(self.SPI_BUS,on=ast.literal_eval(self.config['LED']['ON']))
 
-            # 4.4 init GPIO
-            self.SENSOR = pino_gpio.Pino_GPIO()
+            # 4.3 init SubModules
+            self.OLED = pino_oled.Pino_OLED(self.I2C_BUS, self.base_path,
+                                            console_font_name=self.config['OLED']["console_font"],
+                                            main_font_name=self.config['OLED']["main_font"])
 
-            # 4.5 init Serial
+            self.SERVO = pino_servo.Pino_SERVO(self.I2C_BUS,
+                                               num_motor=int(self.config['MOTOR']['num_motor']),
+                                               motor_enable=ast.literal_eval(self.config['MOTOR']['motor_enable']),
+                                               motor_min_angle=ast.literal_eval(self.config['MOTOR']['motor_min_angle']),
+                                               motor_max_angle=ast.literal_eval(self.config['MOTOR']['motor_max_angle']),
+                                               motor_default_angle=ast.literal_eval(self.config['MOTOR']['motor_default_angle'])
+                                               )
+            self.RGB_LED = pino_led.Pino_LED(self.SPI_BUS, on=ast.literal_eval(self.config['LED']['ON']))
+            self.SENSOR = pino_sensor.Pino_SENSOR()
             self.UART = pino_uart.Pino_UART(baud_rate=int(self.config['UART']['baud_rate']))
 
         except Exception as E:
@@ -123,66 +113,66 @@ class HardwareV1:
                     servo_angle = None, servo_time = 0.2,
                     serial_msg = None):
 
-        try :
-            # 1. send image
-            if image is not None:
-                result = self.OLED.send_image(image)
-                if result == -1 and self.log is not None :  # if error occur, reset object
-                    self.log.error(self.OLED.last_exception)
-                    self.OLED.last_exception = ""
 
-            # 2. send text
-            if text is not None:
-                result = self.OLED.send_text(text)
-                if result == -1 and self.log is not None :  # if error occur, reset object
-                    self.log.error(self.OLED.last_exception)
-                    self.OLED.last_exception = ""
+        # 1. send image
+        if image is not None and isinstance(image, str):
+            result = self.OLED.send_image(image)
+            if result == -2 and self.log is not None :  # image file not Found.
+                self.log.warning(self.OLED.last_exception)
 
-            # 3. send led
-            if led is not None:
-                result = self.RGB_LED.write(led)
-                if result == -1 and self.log is not None :  # if error occur, reset object
-                    self.log.error(self.RGB_LED.last_exception)
-                    self.RGB_LED.last_exception = ""
+            elif result == -1 and self.log is not None :  # Critical Error
+                self.log.error(self.OLED.last_exception)  # Write Error Message
+                self.OLED.reset()  # reset OLED
 
-            # 4. send servo
-            if servo_angle is not None:
-                result = self.SERVO.write(servo_angle,servo_time)
-                if result == -1 and self.log is not None :  # if error occur, reset object
-                    self.log.error(self.SERVO.last_exception)
-                    self.SERVO.last_exception = ""
+        # 2. send text
+        if text is not None and isinstance(text, str):
+            result = self.OLED.send_text(text)
+            if result == -1 and self.log is not None :  # if error occur
+                self.log.error(self.OLED.last_exception)  # Write Error Message
+                self.OLED.reset()  # reset OLED
 
-            # 5. send serial msg
-            if serial_msg is not None:
-                result = self.UART.write(serial_msg)
-                if result == -1 and self.log is not None:  # if error occur, reset object
-                    self.log.error(self.UART.last_exception)
-                    self.UART.last_exception = ""
+        # 3. send led
+        if led is not None and isinstance(led, list):
+            result = self.RGB_LED.write(led)
+            if result == -1 and self.log is not None :  # if error occur
+                self.log.error(self.RGB_LED.last_exception)
+                self.RGB_LED.reset()  # reset OLED
 
-            # 6. check Error Logs
-            if self.log is not None :  # if error occur, reset object
-                for comp in [self.OLED,self.RGB_LED,self.SERVO, self.SENSOR]:
-                    if len(comp.last_exception) :
-                        self.log.error(comp.last_exception)
-                        comp.last_exception = ""
+        # 4. send servo
+        if servo_angle is not None and isinstance(servo_angle, list):
+            """
+            NOTE:
+            SERVO,write is block functions during "servo_time"
+            if you want to force stop, set self.SERVO.force_stop_flag = True
+            """
+            result = self.SERVO.write(servo_angle,servo_time)
+            if result == -1 and self.log is not None :  # if error occur
+                self.log.error(self.SERVO.last_exception)
+                self.SERVO.reset()
 
-        except Exception as E:  # if error occur, reset all object
-            self.log.warning("HardwareV1.write(), "+repr(E))
-            self.reset()
-            return -1
+        # 5. send serial msg
+        if serial_msg is not None and isinstance(serial_msg, str):
+            result = self.UART.write(serial_msg)
+            if result == -1 and self.log is not None:  # if error occur, reset object
+                self.log.error(self.UART.last_exception)
+                self.UART.reset()
 
-        else:
-            return 0
+        # 6. check sub_module Error Logs
+        if self.log is not None :  # if error occur, reset object
+            for sub_module in [self.OLED,self.RGB_LED,self.SERVO, self.SENSOR]:
+                if len(sub_module.last_exception) :
+                    self.log.error(sub_module.last_exception)
+                    sub_module.last_exception = ""
+
 
     # [C.2] read data from hardware
-    def read(self,sw_reset = False):
+    def read(self):
         self.SENSOR.read_sonic_sensor()
         volume = self.SENSOR.volume
         distance = self.SENSOR.distance
         serial_msgs = self.UART.received_msg
+        self.SENSOR.sw_flag = False
 
-        if sw_reset is True:
-            self.SENSOR.sw_flag = False
         if self.UART.received_msg != "":
             self.UART.received_msg = ""
 
@@ -206,7 +196,7 @@ class HardwareV1:
         formatter = logging.Formatter('[%(levelname)s] (%(asctime)s : %(filename)s:%(lineno)d) > %(message)s')
 
         # 2.2 set file logger
-        log_file = logging.FileHandler(filename = self.base_path+'log/HardwareV11.log',
+        log_file = logging.FileHandler(filename = self.base_path+'log/HardwareV1.log',
                                             mode='w',
                                             encoding='utf-8')
         log_file.setFormatter(formatter)
@@ -238,6 +228,7 @@ def test():
     hardware.write(image="test.jpg")
     hardware.write(text="아아")
     hardware.write(serial_msg="test_msg_logs")
+    print(hardware.read())
 
     print("=====Invalid!=====")
     # invalid case
@@ -245,6 +236,7 @@ def test():
     hardware.write(led  = 1)
     hardware.write(servo_angle = 1)
     hardware.write(serial_msg= 1)
+    print(hardware.read())
 
 if __name__ == '__main__':
     test()
