@@ -6,7 +6,7 @@ import time
 # pip3 install adafruit-circuitpython-ssd1306
 # https://github.com/adafruit/Adafruit_CircuitPython_SSD1306
 
-class OLED:
+class Pino_OLED:
     """
     A. con & deconstruct
     """
@@ -63,32 +63,39 @@ class OLED:
 
         # 3. refresh last reset time
         self.last_reset_time = time.time()
+        self.last_exception = ""
 
         # 4. re open Serial
         try:
             self.oled = adafruit_ssd1306.SSD1306_I2C(self.oled_size[0], self.oled_size[1], self.i2c)
             self.oled.fill(0)
             self.oled.show()
-            self.__load_font()
         except Exception as E:
             self.last_exception = "OLED.reset(), # 4. remake " + repr(E)
-            return -1
+
+        # 5. load fonts
+        try:
+            self.__load_font()
+        except Exception as E:
+            self.last_exception = "OLED.reset(), # 5. load font " + repr(E)
+
+        return 0
     """
     C. Public Functions
     """
     # [C.1] find image by "image_name', from directory, and send to OLED
     def send_image(self,image_name):
         # 1. load image
-        r = self.__load_image(image_name)
-        if r != 0:
-            return r
+        result = self.__load_image(image_name)
+        if result != 0:  # if result is not 0, Error in Find file
+            return result
         # 2. try to send
         try :
             self.oled.image(self.im)
             self.oled.show()
         # 3. Fail to send data
         except Exception as E :
-            self.last_exception = str(E)
+            self.last_exception = "OLED.send_image() " + repr(E)
             self.reset()
             return -1
         # 4. Success to send data
@@ -102,7 +109,7 @@ class OLED:
         try :
             self.__text_2_image(text)
         except Exception as E:
-            self.last_exception = "OLED.text_2_image()" + repr(E)
+            self.last_exception = "OLED.text_2_image() " + repr(E)
             return -1
         # 2. try to send
         try :
@@ -281,7 +288,7 @@ Module TEST codes
 """
 def test():
     i2c = board.I2C()
-    oled_board = OLED(i2c,
+    oled_board = Pino_OLED(i2c,
                       "/home/pi/Desktop/PinoBot/",
                       'NanumSquareEB.ttf',
                       'NanumSquareEB.ttf')
