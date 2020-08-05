@@ -22,7 +22,7 @@ echo -e "/n/n [step 2.1], install portAudio19 /n/n"
 sudo apt-get install portaudio19-dev
 
 echo -e "/n/n [step 2.2], install python3-dev /n/n"
-sudo apt-get installpython3-dev
+sudo apt-get install python3-dev
 
 echo -e "/n/n [step 2.3], install pyaudio /n/n"
 pip3 install pyaudio
