@@ -8,7 +8,7 @@ import time
 from adafruit_pca9685 import PCA9685
 from adafruit_motor import servo
 
-class SERVO:
+class Pino_SERVO:
     """
     A. con & deconstruct
     """
@@ -38,6 +38,7 @@ class SERVO:
         self.cur_angles = [0,0,0,0,0,0,0,0]
         self.last_reset_time = 0
         self.last_exception = ""
+        self.force_stop_flag = False
 
         # 3. Objects
         self.pca = None
@@ -69,6 +70,7 @@ class SERVO:
 
         # 3. refresh last reset time
         self.last_reset_time = time.time()
+        self.last_exception = ""
 
         # 4. re open Serial
         try:
@@ -134,17 +136,24 @@ class SERVO:
              [1, 2, 3, 4, 5, 6, 7, 8]
              ]
             """
+            # 4.1 run trajectory
             for j in range(len(trjs[0])):
+                # 4.2 start 50ms cycle
                 start_time = time.time()
                 for motor_n in range(len(run_motors_n)):
                     new_angle =  trjs[motor_n][j]
                     if self.cur_angles[motor_n] != new_angle:  # if motor angle is same as before, skip i2c comm
                         self.servos[motor_n].angle = new_angle
                         self.cur_angles[motor_n] = new_angle
-
-                wait_time = self.control_time - (time.time() - start_time) # calculate wait time
+                # 4.3 calculate wait time
+                wait_time = self.control_time - (time.time() - start_time)
                 time.sleep(wait_time) # sleep for few milliseconds, and makes all loop done, in exactly 20ms
 
+                # 4.4 check if force stop initiated,
+                if self.force_stop_flag:
+                    return 0
+
+            # 5. last fit to target angle
             for index in range(len(run_motors_n)):
                 self.servos[index].angle = tar_angles[index]
 
@@ -178,7 +187,7 @@ def test():
     from board import SCL, SDA
     import busio
     i2c = busio.I2C(SCL, SDA)
-    servo_board = SERVO(i2c)
+    servo_board = Pino_SERVO(i2c)
     time.sleep(2)
     servo_board.write([100, 90, 80, 70, 60, 30, 32], 0.1)
     servo_board.write([0, 0, 0, 0, 0], 4)

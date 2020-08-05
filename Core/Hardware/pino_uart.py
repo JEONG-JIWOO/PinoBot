@@ -49,6 +49,7 @@ class Pino_UART:
 
         # 3. refresh last reset time
         self.last_reset_time = time.time()
+        self.last_exception = ""
 
         # 4. re open Serial
         try:

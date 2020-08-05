@@ -9,7 +9,7 @@ https://m.blog.naver.com/PostView.nhn?blogId=chandong83&logNo=221155355360
 
 
 # noinspection PyPep8Naming
-class Pino_GPIO:
+class Pino_SENSOR:
     """
     A. con & deconstruct
     """
@@ -60,6 +60,7 @@ class Pino_GPIO:
 
         # 3. refresh last reset time
         self.last_reset_time = time.time()
+        self.last_exception = ""
 
         # 4. re open GPIO
         try:
@@ -138,7 +139,7 @@ class Pino_GPIO:
 Module TEST codes 
 """
 def test():
-    sensor = Pino_GPIO()
+    sensor = Pino_SENSOR()
     while 1:
         time.sleep(0.1)
         distance = sensor.read_sonic_sensor()

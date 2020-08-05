@@ -4,7 +4,7 @@ import board
 import digitalio
 from adafruit_bus_device.spi_device import SPIDevice
 
-class RGB_LED():
+class Pino_LED:
     def __init__(self,spi,on = True):
         # 0. arguments
         self.spi = spi
@@ -49,6 +49,8 @@ class RGB_LED():
 
         # 3. refresh last reset time
         self.last_reset_time = time.time()
+        self.last_exception = ""
+
         # 4. re-open cs,spi and turn-off led
         try:
             self.cs = digitalio.DigitalInOut(board.D18)
@@ -109,7 +111,7 @@ class RGB_LED():
 
 def test():
     comm_port = busio.SPI(board.SCK, MOSI=board.MOSI, MISO=board.MISO)
-    D = RGB_LED(comm_port)
+    D = Pino_LED(comm_port)
     time.sleep(1)
     D.write([0,0,100,0,100])
     time.sleep(1)
