@@ -3,13 +3,14 @@
 import time, random , queue
 
 from Core.Utils.pino_utils import Pino_Utils
-import ast
+import ast , datetime
+
 from google.protobuf.json_format import MessageToDict
 import threading
 
 class Task:
     def __init__(self, hardware, cloud, reserved_task):
-        self.type = "talk"
+        self.task_type = "talk"
         self.reserved_task = reserved_task
         self.cloud = cloud
         self.hardware = hardware
@@ -21,34 +22,44 @@ class Task:
         self.event_name = None
         self.event_parameter = None
 
+        self.fail_handler = True
+
     def __del__(self):
         del self.stt_response
         del self.chatbot_response
         del self.tts_response
 
     def run(self):
-
         # 1. select talk or event
-        if self.type == "talk":
+        if self.task_type == "talk":
             self.hear()
-        elif self.type == "event":
+        elif self.task_type == "event":
             self.event()
 
+        # TODO[1] : TEST
         # 2. check response in valid
-        self.check_response()
+        if self.check_response() < -1:
+            # if fail_handling is False, just show Error Message and quite task
+            if self.task_type == "talk":
+                self.hardware.write(text="Talk Fail", led = [150, 50, 0])
+            elif self.task_type == "event":
+                self.hardware.write(text="Event Fail\n%s"%self.event_name, led=[150, 50, 0])
+            return 0
+
+        # 3. Parse Response
         intent_name, pino_cmds ,dflow_parameters = self.parse_response()
 
-        # 3,1 start actuate in thread
+        # 4,1 start actuate in thread
         t1 = threading.Thread(target=self.run_cmds,args=(intent_name, pino_cmds))
         t1.start()
 
         time.sleep(5) #test code
 
-        # 3.2 start play saying
+        # 4.2 start play saying
         self.cloud.play_audio(self.tts_response)
         t1.join()
 
-        # 4. if there are future event, add it
+        # 5. if there are future event, add it
         self.add_future_event(intent_name, dflow_parameters)
 
         # TODO : if context exist, make loop
@@ -65,8 +76,11 @@ class Task:
 
     def event(self):
         if self.event_name is not None:
-            # TODO execute event
-            print("run event!")
+            # TODO[WIP] execute event
+            event_response = self.cloud.send_event(self.event_name,self.event_parameter)
+            self.stt_response = event_response
+            self.chatbot_response = event_response
+            self.tts_response = event_response
 
     def check_response(self):
         fail_response = None
@@ -87,6 +101,10 @@ class Task:
             state = -3
             fail_response = self.cloud.send_event("FAIL_NoMatchEvent")
 
+        # TODO[1] : TEST
+        if not self.fail_handler:
+            return state
+
         # 4. case Fail Event
         if state != 0 and fail_response is not None:
             # 4.1 Fail Event is Invalid , Due to Intent not existing
@@ -104,7 +122,7 @@ class Task:
             self.stt_response = fail_response
             self.chatbot_response = fail_response
             self.tts_response = fail_response
-            return -1
+
         return 0
 
 
@@ -133,8 +151,18 @@ class Task:
         elif "time" not in dflow_parameters.keys() or "PinoFutureEvent" not in dflow_parameters.keys():
             self.hardware.write(text="DFlow Error \n %s \n PinoFutureEvent" % intent_name, led=[150, 50, 0])
             return -1
+        elif "EVENT" not in dflow_parameters["PinoFutureEvent"].keys():
+            self.hardware.write(text="DFlow Error \n %s \n PinoFutureEvent" % intent_name, led=[150, 50, 0])
+            return -2
         else:
-            self.reserved_task.append([dflow_parameters['time'], dflow_parameters["PinoFutureEvent"]])
+            # TODO[1] : TEST
+            d = dflow_parameters["PinoFutureEvent"]["EVENT"]
+            event_time = datetime.datetime.strptime(dflow_parameters['time'], "%Y-%m-%dT%H:%M%S") # "2020-08-06T18:00:00+09:00"
+            event_name = d.pop["EVENT"]
+            event_parameter = None
+            if not d:
+                event_parameter = d
+            self.reserved_task.append([event_time,event_name,event_parameter])
             self.hardware.write(text="이벤트 예약 \n %s  "% intent_name, led=[50, 250, 0])
             print("future event added")
 
@@ -218,7 +246,7 @@ class PinoBot:
 
         self.sleep = {"state":False,                      # "Sleep_Mode" state, True or False
                       "enter_limit_time":60, # sec        # how much time sensor detect object, change to "Sleep_Mode"
-                      "task_ratio":0.01,                  # "Sleep_Mode_Task" in this random probability
+                      "task_probability":0.01,            # "Sleep_Mode_Task" in this random probability
                       "task_min_time" : 30,  # sec        # minimum "Sleep_Mode_Task" duration
                       "task_last_time":time.time() }# sec # last time when "Sleep_Mode_Task" occur
 
@@ -229,7 +257,7 @@ class PinoBot:
         self.wait = { "adaptive_loop_d" : 0.1,   # sec    # system loop wait time is adaptive, by this value
                       "adaptive_loop_limit":1,   # sec    # system loop wait time limit
                       "mode_cnt" : 0,          # count    # how many times wait mode occur continuously
-                      "task_ratio": 0.01,                 # "Wait_Mode_Task" in this random probability
+                      "task_probability":0.01,            # "Wait_Mode_Task" in this random probability
                       "task_min_time" : 30,      # sec    # minimum "Wait_Mode_Task" duration
                       "task_last_time":time.time()}# sec  # last time when "Wait_Mode_Task" occur
 
@@ -250,6 +278,16 @@ class PinoBot:
             self.main_loop_once()
             time.sleep(self.wait["adaptive_loop_d"])
             # except:
+
+    # TODO[1] : TEST
+    def add_task(self,task_type, event_name = None, event_parameter="",fail_handler = True):
+        new_task = Task(self.hardware,self.cloud,self.reserved_task)
+        new_task.task_type = task_type
+        new_task.fail_handler = fail_handler
+        if event_name is not None:
+            new_task.event_name = event_name
+            new_task.event_parameter = event_parameter
+        self.task_q.put(new_task)
 
     def main_loop_once(self):
 
@@ -287,13 +325,16 @@ class PinoBot:
             # if already in sleep mode
             if self.sleep['state'] and time.time() - self.sleep['task_last_time']> self.sleep['task_min_time']:
                 print("in sleep, add sleep event random 1%")
-                # TODO : add sleep task by probability
+                if random.random() <= self.sleep['task_probability']:
+                    # TODO[1] : TEST
+                    self.add_task("event","Sleep_Event",fail_handler=False)
 
-            # not sleep mode            elif time.time() - self.detect["first_time"] > self.sleep["enter_limit_time"]:
-
+            # not sleep mode
+            elif time.time() - self.detect["first_time"] > self.sleep["enter_limit_time"]:
                 self.sleep['state'] = True
                 print("now go to sleep mode,")
-                # TODO : add sleep move enter task
+                # TODO[1] : TEST
+                self.add_task("event", "Sleep_Enter_Event",fail_handler=False)
 
         else :
             # 2.4 object [ 0 -> 0 ] , wait mode
@@ -301,16 +342,28 @@ class PinoBot:
             # set adaptive wait duration
             if self.wait["adaptive_loop_d"] + 0.01 < self.wait["adaptive_loop_limit"]:
                 self.wait["adaptive_loop_d"] += 0.01
-            # TODO : add wait task by probability
+            if random.random() <= self.wait['task_probability']:
+                # TODO[1] : TEST
+                self.add_task("event", "Wait_Event", fail_handler=False)
         self.detect["pre_state"] = cur_sensor_state
 
         # 3. check Reserved Task list
-        print(self.reserved_task)
+        # TODO[1] : TEST
+        self.check_reserved_task()
 
         # 4. check Task Q
         if self.task_q.qsize()>0:
             next_task = self.task_q.get()
             next_task.run()
+
+    def check_reserved_task(self):
+        # TODO[1] : TEST
+        print(self.reserved_task)
+        for task in self.reserved_task:
+            reserve_time = task[0]
+            if datetime.datetime.now() < reserve_time:
+                self.add_task(task_type="event",event_name=task[1],event_parameter=task[2])
+                self.reserved_task.remove(task)
 
 def test2():
     Boot = Pino_Utils()
