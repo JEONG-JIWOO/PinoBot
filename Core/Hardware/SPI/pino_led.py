@@ -1,15 +1,10 @@
-import time
-import busio
-import board
-import digitalio
-from adafruit_bus_device.spi_device import SPIDevice
+import spidev , time
 
 class Pino_LED:
-    def __init__(self,spi,on = True):
+    def __init__(self,on = True):
         # 0. arguments
-        self.spi = spi
-        self.on = on
 
+        self.on = on
         # 1. Static Variables
 
         # 2. variables
@@ -24,16 +19,7 @@ class Pino_LED:
         self.reset()
 
     def __del__(self):
-        if self.spi_bus is not None:
-            try:
-                del self.spi_bus
-            except:
-                pass
-        if self.cs is not None:
-            try:
-                del self.cs
-            except:
-                pass
+        pass
 
     def reset(self):
         # 1. check last reset time,
@@ -42,10 +28,6 @@ class Pino_LED:
             return 0
 
         # 2. if spi, and cs exists..
-        if self.spi_bus is not None:
-            del self.spi_bus
-        if self.cs is not None:
-            del self.cs
 
         # 3. refresh last reset time
         self.last_reset_time = time.time()
@@ -53,8 +35,6 @@ class Pino_LED:
 
         # 4. re-open cs,spi and turn-off led
         try:
-            self.cs = digitalio.DigitalInOut(board.D18)
-            self.spi_bus  = SPIDevice(self.spi, self.cs)
             self.write([0,0,0,0,0,0])
 
         except Exception as E:
@@ -94,10 +74,12 @@ class Pino_LED:
                     leds[5] = rgb_s[index]
 
             # 4. start spi commm
-            with self.spi_bus as bus_device:
-                bus_device.write(bytes([0] * 4))    # FIRST 4byte is Empty.
-                bus_device.write(bytes(leds))       # Send DATA
-                bus_device.write(bytes([0xFF] * 4)) # LAst 4byte
+            spi = spidev.SpiDev()  # Init the SPI device
+            spi.open(0, 1)
+            spi.xfer2([0] * 4)
+            spi.xfer2(leds)
+            spi.xfer2([0xFF] * 4)
+            spi.close()
 
         # 2. Fail to send data
         except Exception as E :
@@ -110,8 +92,7 @@ class Pino_LED:
 
 
 def test():
-    comm_port = busio.SPI(board.SCK, MOSI=board.MOSI, MISO=board.MISO)
-    D = Pino_LED(comm_port)
+    D = Pino_LED()
     time.sleep(1)
     D.write([0,0,100,0,100])
     time.sleep(1)
@@ -122,15 +103,3 @@ def test():
 
 if __name__ == '__main__':
     test()
-
-
-
-"""
-    import spidev
-    spi = spidev.SpiDev()  # Init the SPI device
-    spi.open(0,1)
-    set_pixel(spi, [0, 200, 0])
-    spi.xfer2([0] * 4)
-    spi.xfer2(leds)
-    spi.xfer2([0xFF] * 4)
-"""
