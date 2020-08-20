@@ -13,7 +13,7 @@ import wave
 def py_error_handler(filename, line, function, err, fmt):
     pass
 
-class PinoDialogFlow():
+class PinoDialogFlow:
     """
     Summary of Class
 
@@ -128,6 +128,7 @@ class PinoDialogFlow():
         self.dflow_response = None
         self.tts_response = None
         self.audio = None
+        self.sound_card = 2
 
         # 4. set Logger, use Python Logging Module
         self._set_logger(path = "/home/pi/Desktop/PinoBot/log/DialogFlow.log")
@@ -141,15 +142,16 @@ class PinoDialogFlow():
     
     """
     def __del__(self):
-        if self.audio is not None:
-            self.audio.terminate()
-            self.asound.snd_lib_error_set_handler(None) # set back handler as Default
+        pass
+        #if self.audio is not None:
+            #self.asound.snd_lib_error_set_handler(None) # set back handler as Default
 
     """
     A.2 find Sound card index by name
     """
     def _find_soundcard(self):
         # 1. Remove alsa messages
+
         ERROR_HANDLER_FUNC = CFUNCTYPE(None, c_char_p, c_int, c_char_p, c_int, c_char_p)
         c_error_handler = ERROR_HANDLER_FUNC(py_error_handler)
         asound = cdll.LoadLibrary('libasound.so')
@@ -203,11 +205,12 @@ class PinoDialogFlow():
             self.asound.snd_lib_error_set_handler(None) # set back handler as Default
             
         # 1. Remove alsa messages
+
         ERROR_HANDLER_FUNC = CFUNCTYPE(None, c_char_p, c_int, c_char_p, c_int, c_char_p)
         c_error_handler = ERROR_HANDLER_FUNC(py_error_handler)
         self.asound = cdll.LoadLibrary('libasound.so')
         self.asound.snd_lib_error_set_handler(c_error_handler)
-        
+
         # 2. init pyaudio
         self.audio = pyaudio.PyAudio()
 
@@ -337,6 +340,7 @@ class PinoDialogFlow():
 
         # 2.1 init recording
         # [NOTE] AUDIO CHANNEL should be=1. google STT can't recognize over 1
+
         stream = self.audio.open(format=pyaudio.paInt16, channels=1,
                     rate=self._SAMPLE_RATE , input=True,
                     frames_per_buffer=self._CHUNK_SIZE, input_device_index=self.sound_card)
@@ -346,7 +350,8 @@ class PinoDialogFlow():
         self.recording_state = True
         for loop in range(0, int(self._SAMPLE_RATE / self._CHUNK_SIZE * self._MAX_RECORD_SECONDS)): 
             try:           
-                audio_chunk = stream.read(self._CHUNK_SIZE,  exception_on_overflow = False)    
+                audio_chunk = stream.read(self._CHUNK_SIZE,  exception_on_overflow = False)
+                # print(audio_chunk) debug, check chunks.
             except IOError as e:
                 self.log.error(e)
                 break
@@ -450,6 +455,8 @@ class PinoDialogFlow():
         E.1 play audio
     """
     def play_audio(self,tts_response):
+        if tts_response is None:
+            return 0
         if tts_response.output_audio is not None:
 
             # Todo [WIP] find alternative solution without using file system
@@ -613,7 +620,7 @@ class PinoDialogFlow():
 example code for test
 
 """
-def example():
+def test_p_d1():
 
     # 1. Set google dialogflow project config
     DIALOGFLOW_PROJECT_ID = 'a2-bwogyf'
@@ -635,7 +642,7 @@ def example():
     print("[Q] : %s "%text_response.query_result.query_text)
     print("[A] : accuracy:%0.3f | %s "%(text_response.query_result.intent_detection_confidence,
                                         text_response.query_result.fulfillment_text))
-    #Gbot.play_audio()
+    Gbot.play_audio(text_response)
 
     # 4. send voice and get voice response
     Gbot.start_stream()
@@ -649,7 +656,7 @@ def example():
         print("rec error")
     # [WIP]
     # play audio_binary file..
-    #Gbot.play_audio()
+    Gbot.play_audio(tts)
 
     # 5. send Event with parameters
     print("\n\n Start!")
@@ -673,7 +680,7 @@ def example():
             except :
                 print("session Error")
 
-def exe2():
+def test_p_d2():
     DIALOGFLOW_PROJECT_ID = 'squarebot01-yauqxo'
     DIALOGFLOW_LANGUAGE_CODE = 'ko'
     GOOGLE_APPLICATION_CREDENTIALS = '/home/pi/Desktop/PinoBot/Keys/squarebot01-yauqxo-8d211b1f1a85.json'
@@ -697,6 +704,5 @@ def exe2():
                                           text_response.query_result.fulfillment_text))
     # Gbot.play_audio()
 
-
 if __name__ == "__main__":
-    exe2()
+    test_p_d1()
