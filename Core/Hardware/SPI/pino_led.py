@@ -73,13 +73,13 @@ class Pino_LED:
                 elif index == 5:
                     leds[5] = rgb_s[index]
 
-            # 4. start spi commm
+            # 4. start spi comm
             spi = spidev.SpiDev()  # Init the SPI device
             spi.open(0, 1)
             spi.xfer2([0] * 4)
             spi.xfer2(leds)
             spi.xfer2([0xFF] * 4)
-            spi.close()
+            spi.close()            # free spi device
 
         # 2. Fail to send data
         except Exception as E :
