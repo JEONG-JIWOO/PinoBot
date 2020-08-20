@@ -72,6 +72,12 @@ class PinoBot:
 
     # TODO[1] : TEST
     def add_task(self,task_type, event_name = None, event_parameter="",fail_handler = True):
+        if event_parameter == "":
+            event_parameter = None
+        else :
+            #
+            print("TODO : Parse event parameter str to dict")
+            event_parameter = None
         self.task_q.put([task_type,event_name,event_parameter,fail_handler])
 
     def main_loop_once(self):
@@ -240,6 +246,7 @@ class PinoBot:
         return intent_name, pino_cmds, dflow_parameters
 
     def add_future_event(self, intent_name, dflow_parameters):
+        # TODO dflow_parameters are string, change to dict
         if intent_name == "Default Fallback Intent":
             return 0
         elif "time" not in dflow_parameters.keys() or "PinoFutureEvent" not in dflow_parameters.keys():
@@ -334,72 +341,8 @@ def test():
 
 
 
-class Bundle:
-    def __init__(self):
-        from Core.Cloud.Google import pino_dialogflow
-        DIALOGFLOW_PROJECT_ID = 'a2-bwogyf'
-        DIALOGFLOW_LANGUAGE_CODE = 'ko'
-        GOOGLE_APPLICATION_CREDENTIALS = '/home/pi/Desktop/PinoBot/Keys/a2-bwogyf-c40e46d0dc2b.json'
-        TIME_OUT = 7
-
-        # 2. init and connect dialogflow project
-        self.Gbot = pino_dialogflow.PinoDialogFlow(DIALOGFLOW_PROJECT_ID,
-                                              DIALOGFLOW_LANGUAGE_CODE,
-                                              GOOGLE_APPLICATION_CREDENTIALS,
-                                              TIME_OUT)
-        self.Gbot.open_session()
-
-    def stream(self):
-        text_response = self.Gbot.send_text("안녕하신가")
-        print(text_response.query_result.query_text)
-        print("start strean")
-        self.Gbot.start_stream()
-        stt_response, chatbot_response, tts = self.Gbot.get_response()
-        if stt_response is not None and chatbot_response is not None:
-            print("[Q] : %s " % stt_response.recognition_result.transcript)
-            print("[A] : accuracy:%0.3f | %s " % (chatbot_response.query_result.intent_detection_confidence,
-                                                  chatbot_response.query_result.fulfillment_text))
-        else:
-            print("rec error")
-
-
-def test_p_m1():
-    from Core.Cloud.Google import pino_dialogflow
-    #@p = Pino_Utils()
-    #h,c = p.boot()
-
-    DIALOGFLOW_PROJECT_ID = 'a2-bwogyf'
-    DIALOGFLOW_LANGUAGE_CODE = 'ko'
-    GOOGLE_APPLICATION_CREDENTIALS = '/home/pi/Desktop/PinoBot/Keys/a2-bwogyf-c40e46d0dc2b.json'
-    TIME_OUT = 7
-
-    # 2. init and connect dialogflow project
-    Gbot = pino_dialogflow.PinoDialogFlow(DIALOGFLOW_PROJECT_ID,
-                         DIALOGFLOW_LANGUAGE_CODE,
-                         GOOGLE_APPLICATION_CREDENTIALS,
-                         TIME_OUT)
-    Gbot.open_session()
-    Gbot.audio = pyaudio.PyAudio()
-    text_response = Gbot.send_text("안녕하신가")
-    print(text_response.query_result.query_text)
-    print("start strean")
-    Gbot.start_stream()
-    stt_response, chatbot_response, tts = Gbot.get_response()
-    if stt_response is not None and chatbot_response is not None:
-        print("[Q] : %s "%stt_response.recognition_result.transcript)
-        print("[A] : accuracy:%0.3f | %s "%(chatbot_response.query_result.intent_detection_confidence,
-                                            chatbot_response.query_result.fulfillment_text))
-    else :
-        print("rec error")
-
-def test_p_m6():
-    a = PinoBot()
-    a.test()
-
-
-
 if __name__ == '__main__':
-    test_p_m6()
+    test()
 
 
 """
@@ -467,6 +410,72 @@ def test_p_m2():
                                             chatbot_response.query_result.fulfillment_text))
     else :
         print("rec error")
+
+
+
+
+class Bundle:
+    def __init__(self):
+        from Core.Cloud.Google import pino_dialogflow
+        DIALOGFLOW_PROJECT_ID = 'a2-bwogyf'
+        DIALOGFLOW_LANGUAGE_CODE = 'ko'
+        GOOGLE_APPLICATION_CREDENTIALS = '/home/pi/Desktop/PinoBot/Keys/a2-bwogyf-c40e46d0dc2b.json'
+        TIME_OUT = 7
+
+        # 2. init and connect dialogflow project
+        self.Gbot = pino_dialogflow.PinoDialogFlow(DIALOGFLOW_PROJECT_ID,
+                                              DIALOGFLOW_LANGUAGE_CODE,
+                                              GOOGLE_APPLICATION_CREDENTIALS,
+                                              TIME_OUT)
+        self.Gbot.open_session()
+
+    def stream(self):
+        text_response = self.Gbot.send_text("안녕하신가")
+        print(text_response.query_result.query_text)
+        print("start strean")
+        self.Gbot.start_stream()
+        stt_response, chatbot_response, tts = self.Gbot.get_response()
+        if stt_response is not None and chatbot_response is not None:
+            print("[Q] : %s " % stt_response.recognition_result.transcript)
+            print("[A] : accuracy:%0.3f | %s " % (chatbot_response.query_result.intent_detection_confidence,
+                                                  chatbot_response.query_result.fulfillment_text))
+        else:
+            print("rec error")
+
+
+def test_p_m1():
+    from Core.Cloud.Google import pino_dialogflow
+    #@p = Pino_Utils()
+    #h,c = p.boot()
+
+    DIALOGFLOW_PROJECT_ID = 'a2-bwogyf'
+    DIALOGFLOW_LANGUAGE_CODE = 'ko'
+    GOOGLE_APPLICATION_CREDENTIALS = '/home/pi/Desktop/PinoBot/Keys/a2-bwogyf-c40e46d0dc2b.json'
+    TIME_OUT = 7
+
+    # 2. init and connect dialogflow project
+    Gbot = pino_dialogflow.PinoDialogFlow(DIALOGFLOW_PROJECT_ID,
+                         DIALOGFLOW_LANGUAGE_CODE,
+                         GOOGLE_APPLICATION_CREDENTIALS,
+                         TIME_OUT)
+    Gbot.open_session()
+    Gbot.audio = pyaudio.PyAudio()
+    text_response = Gbot.send_text("안녕하신가")
+    print(text_response.query_result.query_text)
+    print("start strean")
+    Gbot.start_stream()
+    stt_response, chatbot_response, tts = Gbot.get_response()
+    if stt_response is not None and chatbot_response is not None:
+        print("[Q] : %s "%stt_response.recognition_result.transcript)
+        print("[A] : accuracy:%0.3f | %s "%(chatbot_response.query_result.intent_detection_confidence,
+                                            chatbot_response.query_result.fulfillment_text))
+    else :
+        print("rec error")
+
+def test_p_m6():
+    a = PinoBot()
+    a.test()
+
 
 
 """
