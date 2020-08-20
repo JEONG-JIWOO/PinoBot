@@ -47,9 +47,9 @@ class Pino_SERVO:
         self.reset()
 
     def __del__(self):
-        self.pca.deinit()
         # noinspection PyBroadException
         try:
+            self.pca.deinit()
             del self.pca
         except:
             pass
@@ -189,7 +189,38 @@ def test():
     i2c = busio.I2C(SCL, SDA)
     servo_board = Pino_SERVO(i2c)
     time.sleep(2)
+
+    import pyaudio
     servo_board.write([100, 90, 80, 70, 60, 30, 32], 0.1)
+    audio = pyaudio.PyAudio()
+    stream = audio.open(format=pyaudio.paInt16, channels=1,
+                             rate=16000, input=True,
+                             frames_per_buffer=2048, input_device_index=2)
+
+    a = stream.read(2048, exception_on_overflow = False)
+    print(a)
+    stream.close()
+    import wave
+
+    wav_data = wave.open("./1.wav", "rb")
+
+    # Open play stream. Formats are fixed,
+    stream = audio.open(
+        format=pyaudio.paInt16,
+        channels=1,
+        rate=16000,
+        output=True
+    )
+
+    # Play wav file.
+    data = wav_data.readframes(2048)
+    while len(data) > 1:
+        stream.write(data)
+        data = wav_data.readframes(2048)
+    stream.stop_stream()
+    stream.close()
+    audio.terminate()
+
     servo_board.write([0, 0, 0, 0, 0], 4)
     servo_board.write([180], 2)
     servo_board.write([1], 2)
