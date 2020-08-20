@@ -6,7 +6,6 @@ PinoBot V1 Hardware Control Module
 
 """
 import logging , time
-import busio
 import board
 
 from Core.Hardware.I2C import pino_servo , pino_oled
@@ -31,7 +30,7 @@ class HardwareV1:
 
         # 3. Objects
         self.I2C_BUS = None
-        self.SPI_BUS = None
+        #self.SPI_BUS = None  for now, net used due to conflict with seeed-voicecard
 
         self.UART = None
         self.SERVO = None
@@ -46,12 +45,14 @@ class HardwareV1:
         #self.__set_default()
 
     def __del__(self):
-        for sub_modules in [self.SERVO, self.OLED , self.RGB_LED , self.SENSOR, self.I2C_BUS, self.SPI_BUS]:
+        for sub_modules in [self.SERVO, self.OLED , self.RGB_LED , self.SENSOR]:
             if sub_modules is not None:
                 try:
                     del sub_modules
                 except Exception as E:
                     self.log.warning("HardwareV1.del()," + repr(E))
+        self.I2C_BUS.deinit()
+        del self.I2C_BUS
 
     """
     B. reset 
@@ -63,7 +64,7 @@ class HardwareV1:
             return 0
 
         # 2. if object exists..
-        for sub_modules in [self.SERVO, self.OLED , self.RGB_LED , self.SENSOR, self.I2C_BUS, self.SPI_BUS]:
+        for sub_modules in [self.SERVO, self.OLED , self.RGB_LED , self.SENSOR, self.I2C_BUS]:
             if sub_modules is not None:
                 try:
                     del sub_modules
@@ -79,24 +80,24 @@ class HardwareV1:
             self.log = self.__set_logger()
 
             # 4.2 init bus
-            from board import SCL, SDA
             import ast
-            self.I2C_BUS = busio.I2C(SCL, SDA)
-            self.SPI_BUS = busio.SPI(board.SCK, MOSI=board.MOSI, MISO=board.MISO)
+            self.I2C_BUS = board.I2C()
 
             # 4.3 init SubModules
             self.OLED = pino_oled.Pino_OLED(self.I2C_BUS, self.base_path,
                                             console_font_name=self.config['OLED']["console_font"],
                                             main_font_name=self.config['OLED']["main_font"])
-
             self.SERVO = pino_servo.Pino_SERVO(self.I2C_BUS,
                                                num_motor=int(self.config['MOTOR']['num_motor']),
                                                motor_enable=ast.literal_eval(self.config['MOTOR']['motor_enable']),
-                                               motor_min_angle=ast.literal_eval(self.config['MOTOR']['motor_min_angle']),
-                                               motor_max_angle=ast.literal_eval(self.config['MOTOR']['motor_max_angle']),
-                                               motor_default_angle=ast.literal_eval(self.config['MOTOR']['motor_default_angle'])
+                                               motor_min_angle=ast.literal_eval(
+                                                   self.config['MOTOR']['motor_min_angle']),
+                                               motor_max_angle=ast.literal_eval(
+                                                   self.config['MOTOR']['motor_max_angle']),
+                                               motor_default_angle=ast.literal_eval(
+                                                   self.config['MOTOR']['motor_default_angle'])
                                                )
-            self.RGB_LED = pino_led.Pino_LED(self.SPI_BUS, on=ast.literal_eval(self.config['LED']['ON']))
+            self.RGB_LED = pino_led.Pino_LED(on=ast.literal_eval(self.config['LED']['ON'])) # rec error occur
             self.SENSOR = pino_sensor.Pino_SENSOR()
             self.UART = pino_uart.Pino_UART(baud_rate=int(self.config['UART']['baud_rate']))
 
