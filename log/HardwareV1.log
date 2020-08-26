@@ -1,2 +1,1 @@
-[INFO] (2020-07-14 21:55:19,411 : v1.py:136) > Start Hardware Module
-[ERROR] (2020-07-14 21:55:23,191 : v1.py:173) > OLED.load_image()FileNotFoundError(2, 'No such file or directory')
+[INFO] (2020-08-18 20:19:31,347 : v1.py:211) > Start Hardware Module

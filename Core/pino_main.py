@@ -2,13 +2,12 @@
 
 import time, random , queue
 
-from Core.Utils.pino_utils import Pino_Utils
+from Core.pino_init import Pino_Init
 import ast , datetime
 
 from google.protobuf.json_format import MessageToDict
 import threading
-import pyaudio
-from Core.Cloud.Google import pino_dialogflow
+
 
 class PinoBot:
     def __init__(self):
@@ -25,11 +24,11 @@ class PinoBot:
                       "task_last_time":time.time() }# sec # last time when "Sleep_Mode_Task" occur
 
         self.detect ={"pre_state":0,                      # last sensor state, 1: in , 0: out
-                      "distance":50, # cm                 # sonic sensor threshold to between 1 to 0
+                      "distance":30, # cm                 # sonic sensor threshold to between 1 to 0
                       "first_time":time.time() }  # sec   # first time sonic sensor detect object
 
-        self.wait = { "adaptive_loop_d" : 0.1,   # sec    # system loop wait time is adaptive, by this value
-                      "adaptive_loop_limit":1,   # sec    # system loop wait time limit
+        self.wait = { "adaptive_loop_d" : 0.05,   # sec    # system loop wait time is adaptive, by this value
+                      "adaptive_loop_limit":0.5,   # sec    # system loop wait time limit
                       "mode_cnt" : 0,          # count    # how many times wait mode occur continuously
                       "task_probability":0.01,            # "Wait_Mode_Task" in this random probability
                       "task_min_time" : 30,      # sec    # minimum "Wait_Mode_Task" duration
@@ -49,7 +48,7 @@ class PinoBot:
         """
 
         # 4. Init Functions
-        Boot = Pino_Utils()
+        Boot = Pino_Init()
         self.hardware ,self.cloud = Boot.boot()
 
     def test(self):
@@ -90,8 +89,9 @@ class PinoBot:
         if volume != self.cur_volume:
             # TODO : change volume
             pass
-        if distance < self.detect["distance"]:
+        if self.detect["distance"] > distance > 4:
             cur_sensor_state = 1
+        print(distance," " , self.detect["pre_state"], cur_sensor_state)
 
         # 2. do actions by sensor state.
         if self.detect["pre_state"] == 0 and cur_sensor_state == 1: # TODO[1] : TEST
@@ -107,7 +107,7 @@ class PinoBot:
                 self.sleep['state'] = False
             print("Wake Up!")
 
-        elif self.detect["pre_state"] == 1 and cur_sensor_state == 0: # TODO[1] : TEST
+        elif self.detect["pre_state"] == 1 and cur_sensor_state == 1: # TODO[1] : TEST
             # 2.3 object [ 1 -> 1 ] , object still in
             print("check sleep mode")
 
@@ -124,6 +124,7 @@ class PinoBot:
                 self.add_task("event", "Sleep_Enter_Event",fail_handler=False)
 
         else : # TODO[1] : TEST
+            print("waiting..")
             # 2.4 object [ 0 -> 0 ] , wait mode
             self.wait["mode_cnt"] +=1
             # set adaptive wait duration
@@ -165,14 +166,14 @@ class PinoBot:
             # 1.2 event task
             # TODO[WIP] execute event
             event_response = self.cloud.send_event(event_name, event_parameter)
-            responses = (event_response,event_response,event_response)
+            responses = (event_response,None,None)
         else :
             print("invalid task , ignore")
             return -1
 
         # TODO[1] : TEST
         # 2. check response in valid
-        responses = self.check_response(responses, fail_handler)
+        responses = self.check_response(responses,task_type, fail_handler)
         if responses is None :
             # if fail_handling is False, just show Error Message and quite task
             if task_type == "talk":
@@ -182,16 +183,15 @@ class PinoBot:
             return 0
 
         # 3. Parse Response
-        intent_name, pino_cmds, dflow_parameters = self.parse_response(responses)
+        intent_name, pino_cmds, dflow_parameters,tts_response = self.parse_response(responses,task_type)
 
+        print("run intent: ",intent_name)
         # 4,1 start actuate in thread
         t1 = threading.Thread(target=self.run_cmds, args=(intent_name, pino_cmds))
         t1.start()
 
-        time.sleep(5)  # test code
-
         # 4.2 start play saying
-        self.cloud.play_audio(responses[2])
+        self.cloud.play_audio(tts_response)
         t1.join()
 
         # 5. if there are future event, add it
@@ -199,38 +199,57 @@ class PinoBot:
         # TODO : if context exist, make loop
         return 0
 
-    def check_response(self,responses, fail_handler):
+    def check_response(self,responses,task_type, fail_handler):
         fail_response = None
         state = 0
-        # 1. result check and if talk failed, call Fail events
-        if responses[0] is None: # stt_response
-            # 1.1 stt fail
-            state = -1
-            fail_response = self.cloud.send_event("FAIL_Hear")
 
-        elif len(responses[0].recognition_result.transcript) == 0:
-            # 1.2 stt ok but talk nothing
-            state = -2
-            fail_response = self.cloud.send_event("FAIL_NotTalk")
+        if task_type == 'event' :
+            # 1. case A, responses is event response
+            if hasattr(responses[0] ,'query_result'):
+                return responses
+            else :
+                fail_response = self.cloud.send_event("FailNoMatchIntent")
+                return fail_response
 
-        elif responses[2].query_result.intent.display_name == "Default Fallback Intent":
-            # 1.3 stt done but no matching intent
-            state = -3
-            fail_response = self.cloud.send_event("FAIL_NoMatchEvent")
         else :
-            # 1.4 nothing fail, success.
-            return responses
+            # 2. case B, responses is voice response
+            if responses[0] is None: # stt_response
+                # 2.1 stt fail
+                state = -1
+                fail_response = self.cloud.send_event("FailHearIntent")
 
-        # 2. check Fail Event response
-        if state != 0 and fail_response is not None and fail_handler == True:
-            return fail_response,fail_response,fail_response
+            elif len(responses[0].recognition_result.transcript) == 0:
+                # 2.2 stt ok but talk nothing
+                state = -2
+                fail_response = self.cloud.send_event("FailNotTalkIntent")
+
+            elif responses[2].query_result.intent.display_name == "Default Fallback Intent":
+                # 2.3 stt done but no matching intent
+                state = -3
+                fail_response = self.cloud.send_event("FailNoMatchIntent")
+            else :
+                # 2.4 nothing fail, success.
+                return responses
+
+            # 3. check Fail Event response
+            if state != 0 and fail_response is not None and fail_handler == True:
+                return fail_response,fail_response,fail_response
+            else :
+                return None
+
+    def parse_response(self,responses,task_type):
+        tts_response = None
+        query_result = None
+        if task_type == "talk":
+            query_result = MessageToDict(responses[1].query_result)
+            tts_response = responses[2]
+        elif task_type == 'event':
+            query_result = MessageToDict(responses[0].query_result)
+            tts_response = responses[0]
         else :
-            return None
+            return None,None,None,None
 
-    def parse_response(self,responses):
-        # parse response
-        query_result = MessageToDict(responses[1].query_result)
-        intent_name = responses[1].query_result.intent.display_name
+        intent_name = query_result['intent']['displayName']
         dflow_parameters = {}
         pino_cmds = []
 
@@ -243,16 +262,19 @@ class PinoBot:
                 num = ast.literal_eval(check_cmd[0])
                 pino_cmds.append([num, check_cmd[1], query_result['parameters'][action_parameters]])
         pino_cmds.sort(key=lambda x: x[0])
-        return intent_name, pino_cmds, dflow_parameters
+        return intent_name, pino_cmds, dflow_parameters, tts_response
+
 
     def add_future_event(self, intent_name, dflow_parameters):
         # TODO dflow_parameters are string, change to dict
+        print(dflow_parameters)
+        parameters = ast.literal_eval(dflow_parameters)
         if intent_name == "Default Fallback Intent":
             return 0
-        elif "time" not in dflow_parameters.keys() or "PinoFutureEvent" not in dflow_parameters.keys():
+        elif "time" not in parameters.keys() or "PinoFutureEvent" not in parameters.keys():
             self.hardware.write(text="DFlow Error \n %s \n PinoFutureEvent" % intent_name, led=[150, 50, 0])
             return -1
-        elif "EVENT" not in dflow_parameters["PinoFutureEvent"].keys():
+        elif "EVENT" not in parameters["PinoFutureEvent"].keys():
             self.hardware.write(text="DFlow Error \n %s \n PinoFutureEvent" % intent_name, led=[150, 50, 0])
             return -2
         else:
@@ -339,143 +361,5 @@ def test():
     a = PinoBot()
     a.run()
 
-
-
 if __name__ == '__main__':
     test()
-
-
-"""
-
-def test_p_m5():
-    P = Bundle()
-    P.stream()
-
-def test_p_m4():
-    p = Pino_Utils()
-    h, Gbot  = p.boot()
-    text_response = Gbot.send_text("안녕하신가")
-    print(text_response.query_result.query_text)
-    print("start strean")
-    Gbot.start_stream()
-    stt_response, chatbot_response, tts = Gbot.get_response()
-    if stt_response is not None and chatbot_response is not None:
-        print("[Q] : %s " % stt_response.recognition_result.transcript)
-        print("[A] : accuracy:%0.3f | %s " % (chatbot_response.query_result.intent_detection_confidence,
-                                              chatbot_response.query_result.fulfillment_text))
-    else:
-        print("rec error")
-
-def test_p_m3():
-    p = Pino_Utils()
-    h, Gbot  = p.boot()
-    Gbot.audio = pyaudio.PyAudio()
-    text_response = Gbot.send_text("안녕하신가")
-    print(text_response.query_result.query_text)
-    print("start strean")
-    Gbot.start_stream()
-    stt_response, chatbot_response, tts = Gbot.get_response()
-    if stt_response is not None and chatbot_response is not None:
-        print("[Q] : %s " % stt_response.recognition_result.transcript)
-        print("[A] : accuracy:%0.3f | %s " % (chatbot_response.query_result.intent_detection_confidence,
-                                              chatbot_response.query_result.fulfillment_text))
-    else:
-        print("rec error")
-
-def test_p_m2():
-    from Core.Cloud.Google import pino_dialogflow
-    #@p = Pino_Utils()
-    #h,c = p.boot()
-
-    DIALOGFLOW_PROJECT_ID = 'a2-bwogyf'
-    DIALOGFLOW_LANGUAGE_CODE = 'ko'
-    GOOGLE_APPLICATION_CREDENTIALS = '/home/pi/Desktop/PinoBot/Keys/a2-bwogyf-c40e46d0dc2b.json'
-    TIME_OUT = 7
-
-    # 2. init and connect dialogflow project
-    Gbot = pino_dialogflow.PinoDialogFlow(DIALOGFLOW_PROJECT_ID,
-                         DIALOGFLOW_LANGUAGE_CODE,
-                         GOOGLE_APPLICATION_CREDENTIALS,
-                         TIME_OUT)
-    Gbot.open_session()
-    Gbot.audio = pyaudio.PyAudio()
-    text_response = Gbot.send_text("안녕하신가")
-    print(text_response.query_result.query_text)
-    print("start strean")
-    Gbot.start_stream()
-    stt_response, chatbot_response, tts = Gbot.get_response()
-    if stt_response is not None and chatbot_response is not None:
-        print("[Q] : %s "%stt_response.recognition_result.transcript)
-        print("[A] : accuracy:%0.3f | %s "%(chatbot_response.query_result.intent_detection_confidence,
-                                            chatbot_response.query_result.fulfillment_text))
-    else :
-        print("rec error")
-
-
-
-
-class Bundle:
-    def __init__(self):
-        from Core.Cloud.Google import pino_dialogflow
-        DIALOGFLOW_PROJECT_ID = 'a2-bwogyf'
-        DIALOGFLOW_LANGUAGE_CODE = 'ko'
-        GOOGLE_APPLICATION_CREDENTIALS = '/home/pi/Desktop/PinoBot/Keys/a2-bwogyf-c40e46d0dc2b.json'
-        TIME_OUT = 7
-
-        # 2. init and connect dialogflow project
-        self.Gbot = pino_dialogflow.PinoDialogFlow(DIALOGFLOW_PROJECT_ID,
-                                              DIALOGFLOW_LANGUAGE_CODE,
-                                              GOOGLE_APPLICATION_CREDENTIALS,
-                                              TIME_OUT)
-        self.Gbot.open_session()
-
-    def stream(self):
-        text_response = self.Gbot.send_text("안녕하신가")
-        print(text_response.query_result.query_text)
-        print("start strean")
-        self.Gbot.start_stream()
-        stt_response, chatbot_response, tts = self.Gbot.get_response()
-        if stt_response is not None and chatbot_response is not None:
-            print("[Q] : %s " % stt_response.recognition_result.transcript)
-            print("[A] : accuracy:%0.3f | %s " % (chatbot_response.query_result.intent_detection_confidence,
-                                                  chatbot_response.query_result.fulfillment_text))
-        else:
-            print("rec error")
-
-
-def test_p_m1():
-    from Core.Cloud.Google import pino_dialogflow
-    #@p = Pino_Utils()
-    #h,c = p.boot()
-
-    DIALOGFLOW_PROJECT_ID = 'a2-bwogyf'
-    DIALOGFLOW_LANGUAGE_CODE = 'ko'
-    GOOGLE_APPLICATION_CREDENTIALS = '/home/pi/Desktop/PinoBot/Keys/a2-bwogyf-c40e46d0dc2b.json'
-    TIME_OUT = 7
-
-    # 2. init and connect dialogflow project
-    Gbot = pino_dialogflow.PinoDialogFlow(DIALOGFLOW_PROJECT_ID,
-                         DIALOGFLOW_LANGUAGE_CODE,
-                         GOOGLE_APPLICATION_CREDENTIALS,
-                         TIME_OUT)
-    Gbot.open_session()
-    Gbot.audio = pyaudio.PyAudio()
-    text_response = Gbot.send_text("안녕하신가")
-    print(text_response.query_result.query_text)
-    print("start strean")
-    Gbot.start_stream()
-    stt_response, chatbot_response, tts = Gbot.get_response()
-    if stt_response is not None and chatbot_response is not None:
-        print("[Q] : %s "%stt_response.recognition_result.transcript)
-        print("[A] : accuracy:%0.3f | %s "%(chatbot_response.query_result.intent_detection_confidence,
-                                            chatbot_response.query_result.fulfillment_text))
-    else :
-        print("rec error")
-
-def test_p_m6():
-    a = PinoBot()
-    a.test()
-
-
-
-"""

@@ -100,14 +100,3 @@ class Pino_UART:
         else :
             return 0
 
-"""
-Module TEST codes 
-"""
-def test():
-    uart = Pino_UART()
-    uart.write("asdf")
-    uart.read()
-    print("R:",uart.received_msg)
-
-if __name__ == '__main__':
-    test()

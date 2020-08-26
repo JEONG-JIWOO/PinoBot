@@ -134,20 +134,3 @@ class Pino_SENSOR:
                 self.volume = 0
             else :
                 self.volume +=1
-
-"""
-Module TEST codes 
-"""
-def test():
-    sensor = Pino_SENSOR()
-    while 1:
-        time.sleep(0.1)
-        distance = sensor.read_sonic_sensor()
-        if distance > 0:
-            print(distance)
-        if sensor.sw_flag :
-            print(sensor.volume)
-            sensor.sw_flag = False
-
-if __name__ == '__main__':
-    test()

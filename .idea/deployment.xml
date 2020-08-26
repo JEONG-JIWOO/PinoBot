@@ -1,8 +1,36 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project version="4">
-  <component name="PublishConfigData" autoUpload="Always" serverName="pi@192.168.0.4:22" showNewOnSourceInSync="false" showNewOnTargetInSync="false">
+  <component name="PublishConfigData" autoUpload="Always" serverName="pi@192.168.0.106:22" showNewOnSourceInSync="false" showNewOnTargetInSync="false">
     <serverData>
+      <paths name="192.168.0.106">
+        <serverdata>
+          <mappings>
+            <mapping deploy="/Desktop/PinoBot" local="$PROJECT_DIR$" web="/" />
+          </mappings>
+        </serverdata>
+      </paths>
+      <paths name="pi@192.168.0.106:22">
+        <serverdata>
+          <mappings>
+            <mapping deploy="/home/pi/Desktop/PinoBot" local="$PROJECT_DIR$" />
+          </mappings>
+        </serverdata>
+      </paths>
+      <paths name="pi@192.168.0.3:22">
+        <serverdata>
+          <mappings>
+            <mapping deploy="/home/pi/Desktop/PinoBot" local="$PROJECT_DIR$" />
+          </mappings>
+        </serverdata>
+      </paths>
       <paths name="pi@192.168.0.4:22">
+        <serverdata>
+          <mappings>
+            <mapping deploy="/home/pi/Desktop/PinoBot" local="$PROJECT_DIR$" />
+          </mappings>
+        </serverdata>
+      </paths>
+      <paths name="pi@192.168.0.6:22">
         <serverdata>
           <mappings>
             <mapping deploy="/home/pi/Desktop/PinoBot" local="$PROJECT_DIR$" />

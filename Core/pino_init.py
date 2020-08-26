@@ -6,7 +6,7 @@ from logging.handlers import RotatingFileHandler
 import sys
 sys.path.append("/home/pi/Desktop/PinoBot/Core")
 
-class Pino_Utils:
+class Pino_Init:
     """
     A. con & deconstruct
     """
@@ -358,13 +358,3 @@ class Pino_Utils:
             config.write(f)
 
 
-"""
-Test code. V1
-"""
-def test():
-    d = Pino_Utils()
-    d.boot()
-    print("tested")
-
-if __name__ == '__main__':
-    test()

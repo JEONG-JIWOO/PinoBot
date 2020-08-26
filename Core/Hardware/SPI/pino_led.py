@@ -91,15 +91,3 @@ class Pino_LED:
             return 0
 
 
-def test():
-    D = Pino_LED()
-    time.sleep(1)
-    D.write([0,0,100,0,100])
-    time.sleep(1)
-    D.write([100,0,0,100])
-    time.sleep(1)
-    D.write([0,50])
-    print("E:" , D.last_exception)
-
-if __name__ == '__main__':
-    test()
