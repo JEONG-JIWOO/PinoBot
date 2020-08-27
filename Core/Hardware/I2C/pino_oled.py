@@ -70,6 +70,9 @@ class Pino_OLED:
             self.oled = adafruit_ssd1306.SSD1306_I2C(self.oled_size[0], self.oled_size[1], self.i2c)
             self.oled.fill(0)
             self.oled.show()
+        except ValueError:
+            print("check device connection")
+            # TODO : ADD WAYS TO WARN USER TO CHECK connection
         except Exception as E:
             self.last_exception = "OLED.reset(), # 4. remake " + repr(E)
 
