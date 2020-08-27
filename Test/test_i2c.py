@@ -6,24 +6,6 @@ Core.Hardware.SPI.Pino_LED
 
 import unittest
 
-
-class CustomTests(unittest.TestCase):
-    def setUp(self):
-        """ 테스트 시작전 테스트 설정"""
-        pass
-
-    def tearDown(self):
-        """ 테스트 끝난이후 실행되는 함수"""
-        pass
-
-    def test_runs(self):
-        """ 실 테스트 코드 """
-        custom_function_1()
-        custom_function_2()
-
-if __name__ == '__main__':
-    unittest.main()
-
 def custom_function_1():
     import board ,time
     from Core.Hardware.I2C import pino_oled
@@ -104,3 +86,22 @@ def custom_function_2():
     servo_board.write([180], 2)
     servo_board.write([1], 2)
     return True
+
+
+class CustomTests(unittest.TestCase):
+    def setUp(self):
+        """ 테스트 시작전 테스트 설정"""
+        pass
+
+    def tearDown(self):
+        """ 테스트 끝난이후 실행되는 함수"""
+        pass
+
+    def test_runs(self):
+        """ 실 테스트 코드 """
+        custom_function_1()
+        custom_function_2()
+
+if __name__ == '__main__':
+    unittest.main()
+
