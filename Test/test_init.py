@@ -6,6 +6,12 @@ Core.Hardware.SPI.Pino_LED
 
 import unittest
 
+def custom_function():
+    from Core.pino_init import Pino_Init
+    d = Pino_Init("/home/pi/Desktop/PinoBot/")
+    d.boot()
+    print("tested")
+    del d
 
 class CustomTests(unittest.TestCase):
     def setUp(self):
@@ -23,8 +29,3 @@ class CustomTests(unittest.TestCase):
 if __name__ == '__main__':
     unittest.main()
 
-def custom_function():
-    from Core.pino_init import Pino_Init
-    d = Pino_Init()
-    d.boot()
-    print("tested")

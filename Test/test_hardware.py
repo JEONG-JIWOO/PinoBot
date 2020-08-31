@@ -32,6 +32,7 @@ def custom_function():
     hardware.write(servo_angle=1)
     hardware.write(serial_msg=1)
     print(hardware.read())
+    del hardware
 
 class CustomTests(unittest.TestCase):
     def setUp(self):
