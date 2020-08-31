@@ -10,11 +10,11 @@ class Pino_Init:
     """
     A. con & deconstruct
     """
-    def __init__(self):
+    def __init__(self,base_path):
         # 0. Argument
         # 1. Static Variables
 
-        self.base_path = "/home/pi/Desktop/PinoBot/"
+        self.base_path = base_path
 
         # 2. variables
         self.config_path = self.base_path+"/config.ini"  # TODO : change path to /boot partition
@@ -26,12 +26,19 @@ class Pino_Init:
         self.config = None
         self.hardware = None
         self.cloud = None
-        self.log = None
 
         # 4. Init Functions
         self.__set_config_default()
     def __del__(self):
-        pass
+        try :
+            self.log_file.close()
+            self.log.removeHandler(self.log_file)
+            self.log_consol.close()
+            self.log.removeHandler(self.log_consol)
+            del self.log
+
+        except:
+            pass
 
     """
     B. Public Functions
