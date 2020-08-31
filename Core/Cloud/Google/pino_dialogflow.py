@@ -142,9 +142,19 @@ class PinoDialogFlow:
     
     """
     def __del__(self):
-        pass
+        try:
+            self.log_file.close()
+            self.log.removeHandler(self.log_file)
+            self.log_consol.close()
+            self.log.removeHandler(self.log_consol)
+            del self.log
+        except:
+            pass
         #if self.audio is not None:
             #self.asound.snd_lib_error_set_handler(None) # set back handler as Default
+
+    def reset(self):
+        return self.open_session()
 
     """
     A.2 find Sound card index by name
