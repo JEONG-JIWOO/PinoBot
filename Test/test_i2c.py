@@ -16,33 +16,33 @@ def custom_function_1():
                       'NanumSquareEB.ttf')
 
     for i in range(15):
-        oled_board.send_loading(ratio=7 * i, msg =" PrePare Boot\n \n WAIT..")
+        oled_board.send_loading_text(ratio=7 * i, msg =" PrePare Boot\n \n WAIT..")
         time.sleep(0.02)
-    oled_board.send_loading(100)
+    oled_board.send_loading_text(100)
     time.sleep(1)
-    oled_board.send_loading()
+    oled_board.send_loading_text()
 
     for i in range(15):
         if i < 5:
             if i % 2 == 0 :
-                oled_board.send_console(step=i,msgs=" loading A")
+                oled_board.send_loading_console(step=i, msgs=" loading A")
             else :
-                oled_board.send_console(step=i, msgs=".")
+                oled_board.send_loading_console(step=i, msgs=".")
             time.sleep(0.2)
         elif i < 10:
             if i % 2 == 0 :
-                oled_board.send_console(step=i, msgs="\n loading B")
+                oled_board.send_loading_console(step=i, msgs="\n loading B")
             else :
-                oled_board.send_console(step=i, msgs=".")
+                oled_board.send_loading_console(step=i, msgs=".")
             time.sleep(0.2)
         elif i < 15:
             if i % 2 == 0 :
-                oled_board.send_console(step=i, msgs="\n loading C")
+                oled_board.send_loading_console(step=i, msgs="\n loading C")
             else :
-                oled_board.send_console(step=i, msgs=".")
+                oled_board.send_loading_console(step=i, msgs=".")
 
             time.sleep(0.2)
-    oled_board.send_console(step=15, msgs="Total Done.",mode="w")
+    oled_board.send_loading_console(step=15, msgs="Total Done.", mode="w")
 
 def custom_function_2():
     import board ,time

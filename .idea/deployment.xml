@@ -23,14 +23,14 @@
           </mappings>
         </serverdata>
       </paths>
-      <paths name="pi@192.168.0.4:22">
+      <paths name="pi@192.168.0.6:22">
         <serverdata>
           <mappings>
             <mapping deploy="/home/pi/Desktop/PinoBot" local="$PROJECT_DIR$" />
           </mappings>
         </serverdata>
       </paths>
-      <paths name="pi@192.168.0.6:22">
+      <paths name="pi@192.168.0.7:22">
         <serverdata>
           <mappings>
             <mapping deploy="/home/pi/Desktop/PinoBot" local="$PROJECT_DIR$" />

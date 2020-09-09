@@ -11,24 +11,49 @@ def event_test():
     from Core.pino_main import PinoBot
     a = PinoBot()
 
-    # 5. fail handler False
-    a.run_task(["event", "Fail_NoMatch_Intents", None, False])
+    # 1. test talk
+    print("\n\n#1. talk\n")
 
-    # 1. valid
-    a.run_task(["event","Fail_NoMatch_Intent",None,True]) #  FailNoMatchIntent
+    a.add_task("talk")
+    a.main_loop_once()
 
-    p = {'a':'asdf'}
-    # 2. add not needed parameter
-    a.run_task(["event", "Fail_NoMatch_Intent",p, True])  #  FailNoMatchIntent
+    # 2. test basic event
+    print("\n\n#2. basic event\n")
 
-    # 3. invalid event name
-    a.run_task(["event", "Fail_NoMatch_Intents",None, True]) # FailNoMatchIntent
+    p = {'a': 'asdf'} # parameter that not used, for these events, but add for test
 
-    # 4. invalid event name & parameter
-    a.run_task(["event", "Fail_NoMatch_Intents",p, True]) # FailNoMatchIntent
+    a.add_task("event", "WakeUp_Event", None, True)
+    a.main_loop_once()
 
-    # 5. fail handler False
-    a.run_task(["event", "Fail_NoMatch_Intents", None, False])
+    a.add_task("event", "Sleep_Event", None, True)
+    a.main_loop_once()
+
+    a.add_task("event", "SleepEnter_Event ", p, True)
+    a.main_loop_once()
+
+    a.add_task("event", "Wait_Event", None, True)
+    a.main_loop_once()
+
+    a.add_task("event", "FailNotTalk_Intent", p, True)
+    a.main_loop_once()
+
+    a.add_task("event", "FailNoMatch_Intent", None, True)
+    a.main_loop_once()
+
+    # 3. test invalid event name
+    print("\n\n#3. invalid event name\n")
+
+    # invalid name, but handler false -> nothing
+    a.add_task("event", "FailNoMatch_Intents", None, False)
+    a.main_loop_once()
+
+    # invalid name, but handler True -> FailNoMatch_Intents
+    a.add_task("event", "Fail", None, True)
+    a.main_loop_once()
+
+    # 4. invalid dialogflow action test
+    a.add_task("event", "invalidAction", None, True)
+    a.main_loop_once()
 
 
 class CustomTests(unittest.TestCase):
@@ -47,8 +72,4 @@ class CustomTests(unittest.TestCase):
 if __name__ == '__main__':
     unittest.main()
 
-def custom_function():
-    from Core.pino_main import PinoBot
-    d = PinoBot()
-    d.run()
 

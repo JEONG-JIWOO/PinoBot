@@ -28,7 +28,7 @@ class Pino_Init:
         self.cloud = None
 
         # 4. Init Functions
-        self.__set_config_default()
+
     def __del__(self):
         try :
             self.log_file.close()
@@ -68,36 +68,36 @@ class Pino_Init:
         # 3. check hardware valid
         if self.__load_hardware() == -1:
             return -1
-        self.hardware.OLED.send_console(step=1, msgs="Hardware..OK.\n")
+        self.hardware.OLED.send_loading_console(step=1, msgs="Hardware..OK.\n")
 
         # 4. check internet connected
-        self.hardware.OLED.send_console(step=2, msgs="Internet..")
+        self.hardware.OLED.send_loading_console(step=2, msgs="Internet..")
         self.__load_internet()
 
         # 4.1 if not, reset internet
         if not self.net_connected:
             self.__reset_internet()
-        self.hardware.OLED.send_console(step=6, msgs="OK. \n")
+        self.hardware.OLED.send_loading_console(step=6, msgs="OK. \n")
 
         # 5. check dialogflow connection
-        self.hardware.OLED.send_console(step=8, msgs="DialogFlow")
+        self.hardware.OLED.send_loading_console(step=8, msgs="DialogFlow")
         if self.__load_diaglogflow() == -1:
-            self.hardware.OLED.send_console(step=12, msgs="Fail. \n")
+            self.hardware.OLED.send_loading_console(step=12, msgs="Fail. \n")
             time.sleep(1)
-            self.hardware.OLED.send_console(step=12, msgs="Shutdown Robot")
+            self.hardware.OLED.send_loading_console(step=12, msgs="Shutdown Robot")
             return -1
-        self.hardware.OLED.send_console(step=13, msgs="OK. \n")
+        self.hardware.OLED.send_loading_console(step=13, msgs="OK. \n")
 
         # 6. copy media from /boot to media folder
-        self.hardware.OLED.send_console(step=14, msgs="Copy Media..")
+        self.hardware.OLED.send_loading_console(step=14, msgs="Copy Media..")
         if self.__media_copy() == -1:
-            self.hardware.OLED.send_console(step=14, msgs="Fail. \n System Error!")
+            self.hardware.OLED.send_loading_console(step=14, msgs="Fail. \n System Error!")
             time.sleep(1)
-            self.hardware.OLED.send_console(step=14, msgs="Shutdown Robot.. \n")
-        self.hardware.OLED.send_console(step=15, msgs="OK. \n")
+            self.hardware.OLED.send_loading_console(step=14, msgs="Shutdown Robot.. \n")
+        self.hardware.OLED.send_loading_console(step=15, msgs="OK. \n")
 
         # 7. Finally all Check ok.
-        self.hardware.OLED.send_console(step=16, msgs="Boot OK!")
+        self.hardware.OLED.send_loading_console(step=16, msgs="Boot OK!")
         return 0
 
     # [C.1] log File load & check
@@ -128,15 +128,19 @@ class Pino_Init:
     def __load_config(self):
         # 1. config not exist, write default config.
         import os
+
+        default_config = self.__config_default()
         if not os.path.isfile(self.config_path):
-            self.__set_config_default()
+            with open(self.config_path,"w") as configfile:
+                default_config.write(configfile)
 
         # 2. try to read config
         try:
             self.config = configparser.ConfigParser()
-            self.config.read_file(open(self.config_path))
+            with open(self.config_path) as f:
+                self.config.read_file(f)
         except Exception as E:
-            self.__set_config_default()
+            self.__config_default()
             self.error_msg = "can't read \n config file"
             self.log.error("boot_utils.__load_config(), " + repr(E))
             return -1
@@ -151,24 +155,58 @@ class Pino_Init:
                      ['bool', 'LED', 'ON'],
                      ['int', 'GPIO', 'sonic_distance'],
                      ['int', 'GPIO', 'sensor_timeout'],
-                     ['int', 'UART', 'baud_rate']]
+                     ['int', 'UART', 'baud_rate'],
+                     ['bool', 'SleepMode', "state"],
+                     ['int', 'SleepMode', "enter_limit_time"],
+                     ['float', 'SleepMode', "task_probability"],
+                     ['int', 'SleepMode', "task_min_time"],
+                     ['int', 'Detect', "distance"],
+                     ['float', 'WaitMode', "adaptive_loop_d"],
+                     ['float', 'WaitMode', "adaptive_loop_limit"],
+                     ['float', 'WaitMode', "task_probability"],
+                     ['int', 'WaitMode', "task_min_time"]]
 
         for check in check_list:
             import ast
-            try:
-                if check[0] == 'int':
-                    int(self.config[check[1]][check[2]])
-                elif check[0] == 'list':
-                    r = ast.literal_eval(self.config[check[1]][check[2]])
-                    if type(r) is not list:
-                        raise ValueError
-                elif check[0] == 'bool':
-                    r = ast.literal_eval(self.config[check[1]][check[2]])
-                    if type(r) is not bool:
-                        raise ValueError
-            except Exception as E:
-                self.error_msg = "config error \n\n"+  check[1] +"  \n\n" + check[2]
-                break
+            failed = 0
+            if check[1] not in self.config.keys():
+                self.error_msg = "no key \n" + check[1]
+                failed = 1
+            elif check[2] not in self.config[check[1]].keys():
+                self.error_msg = "no key \n" + check[1] + "\n" + check[2]
+                failed = 2
+
+            if failed == 0:
+                try:
+                    if check[0] == 'int':
+                        int(self.config[check[1]][check[2]])
+                    elif check[0] == 'float':
+                        float(self.config[check[1]][check[2]])
+                    elif check[0] == 'list':
+                        r = ast.literal_eval(self.config[check[1]][check[2]])
+                        if type(r) is not list:
+                            raise ValueError
+                    elif check[0] == 'bool':
+                        r = ast.literal_eval(self.config[check[1]][check[2]])
+                        if type(r) is not bool:
+                            raise ValueError
+                except Exception as E:
+                    self.error_msg = "config error \n"+  check[1] +"  \n" + check[2]
+                    self.log.error("config error3 "+  check[1] +"  " + check[2] + repr(E))
+                    failed = 3
+
+            if failed == 1 :
+                self.log.error("config error 1 " + check[1] )
+                self.config[check[1]] = {}
+                self.config[check[1]][check[2]] = default_config[check[1]][check[2]]
+
+            elif failed == 2 :
+                self.log.error("config error 2 " + check[1] + "  " + check[2])
+                self.config[check[1]][check[2]] = default_config[check[1]][check[2]]
+            elif failed == 3 :
+                self.log.error("config error 2 " + check[1] + "  " + check[2])
+                self.config[check[1]][check[2]] = default_config[check[1]][check[2]]
+
 
         # 4. if config parsing Failed..
         # try to show error reason on OLED
@@ -182,11 +220,14 @@ class Pino_Init:
                                  self.base_path,
                             'NanumSquareEB.ttf',
                             'NanumSquareEB.ttf')
-                oled.send_console(step=1,msgs=self.error_msg)
+                oled.send_loading_console(step=1, msgs=self.error_msg)
+                with open(self.config_path, "w") as configfile:
+                    self.config.write(configfile)
+
             except:
                 # event OLED FAILED
                 pass
-            return -1
+            return 0
 
         else:
             return 0
@@ -221,10 +262,10 @@ class Pino_Init:
 
     # [C.5] reset wifi, and try to re-connect 5 times
     def __reset_internet(self):
-        self.hardware.OLED.send_console(step=3, msgs="\n Re connect..")
+        self.hardware.OLED.send_loading_console(step=3, msgs="\n Re connect..")
         for i in range(6):
             msg = ""
-            self.hardware.OLED.send_loading(step=4, msg="WiFi Reset.. \n")
+            self.hardware.OLED.send_loading_text(step=4, msg="WiFi Reset.. \n")
             # 1. check wpa_supplicant.conf error
             try:
                 self.log.warning("Checking WIFI..")
@@ -236,7 +277,7 @@ class Pino_Init:
                 self.hardware.write(text = "Fail Internet \n [E21],check wpa_supplicant \n Shutdown",led=[255, 0, 0])
                 return -1  # Exit Program
 
-            self.hardware.OLED.send_loading(step=5, msg="WiFi Reset.. OK \n WiFi re-connect..")
+            self.hardware.OLED.send_loading_text(step=5, msg="WiFi Reset.. OK \n WiFi re-connect..")
             # 2. wpa_supplicant.conf is fine,   re-set wifi
             try:  # Run WIFI reset scripts
                 subprocess.check_output('sh ' + self.base_path + '/Core/Utils/wifiReset.sh', shell=True).decode('utf-8')
@@ -255,14 +296,14 @@ class Pino_Init:
                 time.sleep(2)
                 cnt += 1
                 if cnt % 2 == 0:
-                    self.hardware.OLED.send_loading(step=6, msg="WiFi Reset.. OK \n WiFi re-connect.")
+                    self.hardware.OLED.send_loading_text(step=6, msg="WiFi Reset.. OK \n WiFi re-connect.")
                 else:
-                    self.hardware.OLED.send_loading(step=7, msg="WiFi Reset.. OK \n WiFi re-connect..")
+                    self.hardware.OLED.send_loading_text(step=7, msg="WiFi Reset.. OK \n WiFi re-connect..")
 
             self.__load_internet()
             # 5. if internet connected , close loop
             if self.net_connected is True:  # if network connected, break
-                self.hardware.send_console(step=8, msgs="OK")
+                self.hardware.send_loading_console(step=8, msgs="OK")
                 return 0
             elif i > 5:  # if re connection failed over 5 times.
                 self.log.warning("boot_utils.__load_internet(), Wifi not found.. " )
@@ -274,7 +315,7 @@ class Pino_Init:
         if self.config is None:  # if config is not Loaded, cancel boot.
             return -1
         try:
-            self.hardware.OLED.send_console(step=9, msgs=".")
+            self.hardware.OLED.send_loading_console(step=9, msgs=".")
             from Core.Cloud.Google import pino_dialogflow
             self.cloud = pino_dialogflow.PinoDialogFlow(
                 self.config['GCloud']['google_project'],
@@ -282,10 +323,10 @@ class Pino_Init:
                 self.config['GCloud']['google_key'],
                 int(self.config['GCloud']['time_out'])
             )
-            self.hardware.OLED.send_console(step=10, msgs=".")
+            self.hardware.OLED.send_loading_console(step=10, msgs=".")
             self.cloud.open_session()
             print("\n\n TEST Start!")
-            self.hardware.OLED.send_console(step=11, msgs=".")
+            self.hardware.OLED.send_loading_console(step=11, msgs=".")
             text_response = self.cloud.send_text("안녕하세요")
             self.log.info("Cloud test response %s" % text_response.query_result.query_text)
 
@@ -331,7 +372,7 @@ class Pino_Init:
             return 0
 
     #D.2 config file reset fuction
-    def __set_config_default(self):
+    def __config_default(self):
         config = configparser.ConfigParser()
         config['GCloud'] = {
                                 'google_key':'/home/pi/Desktop/PinoBot/Keys/squarebot01-yauqxo-8d211b1f1a85.json',
@@ -361,7 +402,17 @@ class Pino_Init:
                             'baud_rate': '115200'
         }
 
-        with open(self.config_path,'w') as f:
-            config.write(f)
+        config['SleepMode'] = {"state": 'False',      #            # "Sleep_Mode" state, True or False
+                      "enter_limit_time": '60',       # sec        # how much time sensor detect object, change to "Sleep_Mode"
+                      "task_probability": '0.01',     #            # "Sleep_Mode_Task" in this random probability
+                      "task_min_time": '30'}          # sec        # minimum "Sleep_Mode_Task" duration
 
+        config['Detect'] = {"distance": '30'}         # cm         # sonic sensor threshold to between 1 to 0
 
+        config['WaitMode'] = {
+                     "adaptive_loop_d": '0.05',       # sec        # system loop wait time is adaptive, by this value
+                     "adaptive_loop_limit": '0.5',    # sec        # system loop wait time limit
+                     "task_probability": '0.01',      #            # "Wait_Mode_Task" in this random probability
+                     "task_min_time": '30'}           # sec        # minimum "Wait_Mode_Task" duration
+
+        return config

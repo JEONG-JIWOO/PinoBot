@@ -107,10 +107,10 @@ class Pino_OLED:
 
     # [C.2] convert "text" to image, and send to OLED
     # NOTE : Progress bar : NO,    text : variable size
-    def send_text(self,text):
+    def send_text(self, msgs):
         # 1. make image from text
         try :
-            self.__text_2_image(text)
+            self.__text_2_image(msgs)
         except Exception as E:
             self.last_exception = "OLED.text_2_image() " + repr(E)
             return -1
@@ -129,7 +129,7 @@ class Pino_OLED:
 
     # [C.3] show progress "step" , convert "msg" to image, and send to OLED
     # NOTE : Progress bar : YES,    text : Fixed size
-    def send_console(self, step, msgs, mode = "a"):
+    def send_loading_console(self, step, msgs, mode ="a"):
         # 1. make new image by font size
         im = Image.new("L", (128,64), 0)
         draw = ImageDraw.Draw(im)
@@ -141,7 +141,13 @@ class Pino_OLED:
             self.console_msg = msgs
 
         # 2. draw text to image
-        draw.text((18, 0), self.console_msg, font=self.console_font, fill=255, spacing=2, align="left")
+        try:
+            draw.text((18, 0), self.console_msg, font=self.console_font, fill=255, spacing=2, align="left")
+        except Exception as E :
+            self.last_exception = str(E)
+            self.reset()
+            return -1
+
         if step > 16:
             step = 16
         for i in range(step):
@@ -163,7 +169,7 @@ class Pino_OLED:
 
     # [C.4] show progress "step" , convert "msg" to image, and send to OLED
     # NOTE : Progress bar : YES,    text : variable size
-    def send_loading(self, step = 0, ratio = 0, msg =""):
+    def send_loading_text(self, step = 0, ratio = 0, msg =""):
         progress_im = Image.new("L", self.oled_size, 0)
         draw = ImageDraw.Draw(progress_im)
 
