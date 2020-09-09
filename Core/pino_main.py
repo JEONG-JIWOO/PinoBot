@@ -13,11 +13,37 @@ from logging.handlers import RotatingFileHandler
 
 
 class PinoBot:
+    """
+        Summary of Class
+
+        A. Initializing parts.
+            A.1 __init__
+            A.2 __del__
+            A.3 reset()
+            A.4 __init_logger()
+
+        B. Public
+            B.1 main_loop_once
+            B.2 add_task
+
+        C. Private
+            C.1 __run_task
+            C.2 __execute_pino_commands
+            C.3 __run_pino_command
+            C.4 __run_pino_event_commands
+
+    """
+
+    """
+    A.1 Initializing PinoBot Module 
+    """
     def __init__(self):
         # 0. Argument
         # 1. Static Variables
 
         # 2. variables
+
+        # TODO : get some values from config.ini file
         self.cur_volume = 0                               # current speaker volume rate [ 0 ~ 10 ]
 
         self.sleep = {"state":False,                      # "Sleep_Mode" state, True or False
@@ -54,6 +80,10 @@ class PinoBot:
         self.hardware.write(text="부팅완료!\n 대기중..", led=[0,0,0])
         self.__load_logger()
 
+    """
+    A.2 Deconstruct PinoBot Module 
+    """
+    # TODO:[WIP] ; need to check memory
     def __del__(self):
         try:
             self.log_file.close()
@@ -70,14 +100,21 @@ class PinoBot:
         except:
             pass
 
+    """
+    A.3 soft reset Module 
+    this actually needed? 
+    """
     def reset(self):
-        # TODO: Add reset fuction
+        # TODO: Add reset function
         pass
 
+    """
+    A.4 set Logger
+    """
     def __load_logger(self):
         # 1 set logger and formatter
         path = self.base_path + "/log/PinoMain.log"
-        self.log = logging.getLogger("Boot")
+        self.log = logging.getLogger("Main")
         self.log.setLevel(logging.DEBUG)
         formatter = logging.Formatter('[%(levelname)s] (%(asctime)s : %(filename)s:%(lineno)d) > %(message)s')
 
@@ -97,85 +134,105 @@ class PinoBot:
         self.log.info("Start BootLoader")
         return 0
 
-    def run(self):
-        while True:
-            self.main_loop_once()
-            time.sleep(self.wait["adaptive_loop_d"])
-
+    """
+    B.1 pinobot's main loop function
+    """
     def main_loop_once(self):
-        """
-        pinobot's main loop function
-
-        """
         # 1. check hardware signals
         cur_sensor_state = 0
         volume, distance, serial_msgs = self.hardware.read()
+
+        # 2. add event by serial message
         if serial_msgs is not None:
             # TODO : add event task
             pass
+
+        # 3. set volume by switch
         if volume != self.cur_volume:
             # TODO : change volume
             pass
         if self.detect["distance"] > distance > 4:
             cur_sensor_state = 1
 
-        # 2. do actions by sensor state.
+        # 4. do actions by sensor state.
         if self.detect["pre_state"] == 0 and cur_sensor_state == 1:
-            # 2.1 object [ 0 -> 1 ] , new object
-            # add talk task
+            # 4.1 object [ 0 -> 1 ] , new object, add talk task
             self.detect["first_time"] = time.time()
-            self.__add_task("talk")
-
-        elif self.detect["pre_state"] == 1 and cur_sensor_state == 0:
-            # 2.2 object [ 1 -> 0 ] , object gone
-            if self.sleep['state'] :
-                # if in "sleep mode" change to wake mode, and add WakeUp_Event
-                self.sleep['state'] = False
-                self.__add_task("event", "WakeUp_Event", fail_handler=False) # TODO : TEST
+            self.add_task("talk")
 
         elif self.detect["pre_state"] == 1 and cur_sensor_state == 1:
-            # 2.3 object [ 1 -> 1 ] , object still in
-
-
+            # 4.2 object [ 1 -> 1 ] , object still in
             if self.sleep['state'] and time.time() - self.sleep['task_last_time']> self.sleep['task_min_time']:
                 # if already in sleep mode, do random "sleep mode event"
                 if random.random() <= self.sleep['task_probability']:
-                    self.__add_task("event", "Sleep_Event", fail_handler=False)
-
-            # not sleep mode, change to sleep mode
+                    self.add_task("event", "Sleep_Event", fail_handler=False)
             elif time.time() - self.detect["first_time"] > self.sleep["enter_limit_time"]:
+                # not sleep mode, check time and ,change to sleep mode
                 self.sleep['state'] = True
-                self.__add_task("event", "Sleep_Enter_Event", fail_handler=False)
+                self.add_task("event", "SleepEnter_Event", fail_handler=False)
+
+            else :
+                # less then thresholds time, to talk
+                self.add_task("talk")
+
+        elif self.detect["pre_state"] == 1 and cur_sensor_state == 0:
+            # 4.3 object [ 1 -> 0 ] , object gone
+            if self.sleep['state'] :
+                # if in "sleep mode" change to wake mode, and add WakeUp_Event
+                self.sleep['state'] = False
+                self.add_task("event", "WakeUp_Event", fail_handler=False) # TODO : TEST
 
         else :
-            # 2.4 object [ 0 -> 0 ] , wait mode
+            # 4.4 object [ 0 -> 0 ] , wait mode
             self.wait["mode_cnt"] +=1
             # set adaptive wait duration
             if self.wait["adaptive_loop_d"] + 0.01 < self.wait["adaptive_loop_limit"]:
                 self.wait["adaptive_loop_d"] += 0.01
             # do random "wait mode event"
             if random.random() <= self.wait['task_probability']:
-                self.__add_task("event", "Wait_Event", fail_handler=False)
-        self.detect["pre_state"] = cur_sensor_state
+                self.add_task("event", "Wait_Event", fail_handler=False)
+        self.detect["pre_state"] = cur_sensor_state  # update sensor state
 
-        # 3. check Reserved Task list
+        # 5. check Reserved Task list
         for task in self.reserved_task:
             reserve_time = task[0]
-
-            #print("res : ", reserve_time)
-            #print("now : ", datetime.datetime.now().astimezone())
-            if datetime.datetime.now().astimezone() > reserve_time: # TODO[1] : TEST
-                self.__add_task(task_type="event", event_name=task[1], event_parameter=task[2])
+            if datetime.datetime.now().astimezone() > reserve_time:
+                self.add_task(task_type="event", event_name=task[1], event_parameter=task[2])
                 self.reserved_task.remove(task)
 
-        # 4. check Task Q
+        # 6. check Task Q
         # before end all task, don't end mainloop
         # this is also needed for continuous talk
         while self.task_q.qsize() > 0:
             next_task = self.task_q.get()
-            self.run_task(next_task)
+            self.__run_task(next_task)
 
-    def run_task(self, task):
+        # 7. finally sleep few seconds, 0.2 ~ 1,
+        # if in "wait mode", sleep time is getting bigger to reduce cpu use-age.
+        # to do that. change value self.wait["adaptive_loop_d"] : as 0.2sec(min) ~ 1sec(max)
+        time.sleep(self.wait["adaptive_loop_d"])
+
+    def add_task(self, task_type, event_name = None, event_parameter=None, fail_handler = True):
+        self.log.info("%s %s %s %r"%(task_type, event_name, event_parameter, fail_handler))
+        if isinstance(event_parameter,dict):
+            self.task_q.put([task_type, event_name, event_parameter, fail_handler])
+
+        elif isinstance(event_parameter,str):
+            try:
+                parsed_parameter = ast.literal_eval(event_parameter.strip())
+            except SyntaxError:
+                self.log.warning("parse event parameter error, in future_event :%s" % event_parameter)
+                parsed_parameter = None
+            else :
+                if isinstance(parsed_parameter,str):
+                    self.log.warning("parse event parameter error:%s"%parsed_parameter)
+                    parsed_parameter = None
+            self.task_q.put([task_type, event_name, parsed_parameter, fail_handler])
+
+        else :
+            self.task_q.put([task_type, event_name, None, fail_handler])
+
+    def __run_task(self, task):
         task_type       = task[0]
         event_name      = task[1]
         event_parameter = task[2]
@@ -183,7 +240,7 @@ class PinoBot:
         talk_responses = ()
         event_response = None
 
-        # [STEP 1.1] get "talk" response
+        # 1. get "talk" response
         if task_type == "talk":
             """
             Description of DialogFlow streaming, 
@@ -205,48 +262,50 @@ class PinoBot:
                 if there is no matched intent, 
                 Usually dialogFlow automatically set intent to -> "Default Fallback Intent"
                 but "Default Fallback Intent" is too broad,
-                therefore, in PinoBot make new intent : "Fail_NoMatch_Intent"
+                therefore, in PinoBot make new intent : "FailNoMatch_Intent"
             """
 
-            # 1. streaming voice
+            # 1.1. streaming voice
             self.hardware.write(text="듣는중..", led=[204, 255, 51])
             self.cloud.start_stream()
             talk_responses = self.cloud.get_response()
             self.hardware.write(text="인식중..", led=[0, 0, 0])
 
-            # E1. do not talk anything
+            # 1.E1. do not talk anything
             if talk_responses[0] is None:
                 # if streaming can't rec talking, return None to Response
                 if fail_handler is not False:
-                    event_response = self.cloud.send_event("Fail_NotTalk_Intent")
+                    event_response = self.cloud.send_event("FailNotTalk_Intent")
                     task_type = "event"
                 else :
                     self.hardware.write(text="Talk Fail", led=[150, 50, 0])
                     return -1
 
-            # E2. do not talk anything
+            # 1.E2. do not talk anything
             elif len(talk_responses[0].recognition_result.transcript) == 0:
                 # or just cant't rec talk
                 if fail_handler is not False:
-                    event_response = self.cloud.send_event("Fail_NotTalk_Intent")
+                    event_response = self.cloud.send_event("FailNotTalk_Intent")
                     task_type = "event"
                 else :
                     self.hardware.write(text="Talk Fail", led=[150, 50, 0])
                     return -1
 
-            # E3. No matched Intent
+            # 1.E3. No matched Intent
             elif talk_responses[1].query_result.intent.display_name == "Default Fallback Intent":
                 if fail_handler is not False:
-                    #self.__add_task("event", "Fail_NoMatch_Intent", fail_handler=False)
+                    event_response = self.cloud.send_event("FailNoMatch_Intent")
+                    if event_response is None :
+                        event_response = talk_responses[1]
                     task_type = "event"
                 else :
                     self.hardware.write(text="Talk Fail", led=[150, 50, 0])
                     return -1
-            # No Error
+            # 1.2 No Error
             else :
                 self.hardware.write(text="", led=[0, 150, 0])
 
-        # [STEP 1.2] get "event" response
+        # 2. get "event" response
         elif task_type == "event" and event_name is not None:
             """
             Description of DialogFlow Event, 
@@ -262,50 +321,51 @@ class PinoBot:
                 Most common case, if there is no matched intent
                 Usually dialogFlow automatically set intent to -> "Default Fallback Intent"
                 but "Default Fallback Intent" is too broad,
-                therefore, in PinoBot make new intent : "Fail_NoMatch_Intent"
+                therefore, in PinoBot make new intent : "FailNoMatch_Intent"
             
             # E3. event fail case
             """
             event_response = self.cloud.send_event(event_name, event_parameter)
-            # E1. unknown error cause response to None
+            # 2.E1. unknown error cause response to None
             if not hasattr(event_response,'query_result'):
                 if fail_handler is not False:
-                    event_response = self.cloud.send_event("Fail_NoMatch_Intent")
+                    event_response = self.cloud.send_event("FailNoMatch_Intent")
                 else :
                     self.hardware.write(text=event_name+"\n fail", led=[150, 50, 0])
                     return -1
 
-            # E2. No matched Intent
+            # 2.E2. No matched Intent
             elif event_response.query_result.intent.display_name == "Default Fallback Intent":
                 if fail_handler is not False:
-                    event_response = self.cloud.send_event("Fail_NoMatch_Intent")
+                    event_response = self.cloud.send_event("FailNoMatch_Intent")
                 else :
                     self.hardware.write(text=event_name+"\n fail", led=[150, 50, 0])
                     return -1
 
-            # E3. event fail case
+            # 2.E3. event fail case
             if event_response is None :
                 self.hardware.write("fail event \n %s"%event_name)
                 return -1
 
-        # [STEP 1.3] ignore invalid event type
+        # 3. ignore invalid event type
         else :
             print("invalid task , ignore")
             return -1
 
-        # [STEP 2.1] Parse query result
+        # 4, Parse query result
         dflow_parameters = {}
         pino_commands = []
         query_result = None
         if task_type == "talk":
             query_result = MessageToDict(talk_responses[1].query_result)
-        elif task_type == 'event' and event_response is not None: # TODO find error why event_response= None came to here
+        elif task_type == 'event' and event_response is not None:
+            # TODO [BUG] find error why event_response= None came to here
             query_result = MessageToDict(event_response.query_result)
         else:
             return -1
         intent_name = query_result['intent']['displayName']
 
-        # [STEP 2.2] Parse DialogFlow PinoBot Parameter
+        # 5. Parse DialogFlow PinoBot Parameter
         # TODO intent name matching without upper , lower case
         """
         Description of DialogFlow PinoBot Parameter,
@@ -319,7 +379,7 @@ class PinoBot:
         ...
         
         "PinoBot Event Command":
-        PinoFutureEventName         str  -> "Fail_NoMatch_Intent"
+        PinoFutureEventName         str  -> "FailNoMatch_Intent"
         PinoFutureEventParameter    dict -> {"para1":"123"} 
 
         "PinoBot Command" :
@@ -339,10 +399,10 @@ class PinoBot:
         Due to that, actual "PinoBot Command" is like..
         
         {"1_PinoActuate : "[2,10,10,30,40,50]",
-         "2_PinoSerial :  "asdf",
+         "2_PinoSerial :  "asdf",d
          ...
          "time" : "2020-08-27T18:44:42+09:00",
-         "PinoFutureEventName" : "Fail_NoMatch_Intent"
+         "PinoFutureEventName" : "FailNoMatch_Intent"
          }
     
         in bellow code, just extract "PinoBot Command" and order it, 
@@ -373,24 +433,26 @@ class PinoBot:
 
         pino_commands.sort(key=lambda x: x[0]) # sort by command order number
 
-        # [STEP 3] Execute PinoBot Parameter
+        # 6. Execute PinoBot Parameter
         print("run intent: ",intent_name,"\n cmds :",pino_commands)
         # start actuate in thread
         t1 = threading.Thread(target=self.__execute_pino_commands, args=(intent_name, pino_commands))
         t1.start()
 
-        # start play saying
+        # 7. start play saying
         if task_type == "talk":
             self.cloud.play_audio(talk_responses[2])
         elif task_type == 'event':
             self.cloud.play_audio(event_response)
-        # wait for end
+        # 8. wait for end
         t1.join()
 
+        # 9. RUN Custom wave file
         if "PinoPlayWav" in pino_commands:
             # TODO : Play wave file
             pass
 
+        # 10. run custom scripts
         # TODO : Extention
         """
         to make user write script and handle custom commands 
@@ -407,25 +469,6 @@ class PinoBot:
         self.__run_pino_event_commands(dflow_parameters)
         return 0
 
-    def __add_task(self, task_type, event_name = None, event_parameter=None, fail_handler = True):
-        self.log.info("%s %s %s %r"%(task_type, event_name, event_parameter, fail_handler))
-        if isinstance(event_parameter,dict):
-            self.task_q.put([task_type, event_name, event_parameter, fail_handler])
-
-        elif isinstance(event_parameter,str):
-            try:
-                parsed_parameter = ast.literal_eval(event_parameter.strip())
-            except SyntaxError:
-                self.log.warning("parse event parameter error, in future_event :%s" % parsed_parameter)
-                parsed_parameter = None
-            else :
-                if isinstance(parsed_parameter,str):
-                    self.log.warning("parse event parameter error:%s"%parsed_parameter)
-                    parsed_parameter = None
-            self.task_q.put([task_type, event_name, parsed_parameter, fail_handler])
-
-        else :
-            self.task_q.put([task_type, event_name, None, fail_handler])
 
     def __execute_pino_commands(self, intent_name, pino_command):
         for pino_cmd in pino_command:
@@ -528,7 +571,7 @@ class PinoBot:
                     return 0
                 else :
                     print("end keep talk")
-                    self.__add_task("talk")
+                    self.add_task("talk")
                     self.keep_talk['cur_iter'] +=1
         else : # reset keep talk
             self.keep_talk['cur_iter'] = 0
@@ -559,8 +602,13 @@ class PinoBot:
             self.log.info("add reserved event %s %s %s %s"%(event_time, event_name,later,str(event_parameter)))
 
 def test():
-    a = PinoBot()
-    a.run()
+    bot = PinoBot()
+    while True:
+        # Do try , Except on in here
+        try:
+            bot.main_loop_once()
+        except Exception as E:
+            bot.log.error(repr(E))
 
 if __name__ == '__main__':
     test()
