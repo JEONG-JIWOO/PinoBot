@@ -20,7 +20,6 @@ class PinoBot:
             A.1 __init__
             A.2 __del__
             A.3 reset()
-            A.4 __init_logger()
 
         B. Public
             B.1 main_loop_once
@@ -78,7 +77,21 @@ class PinoBot:
         boot = Pino_Init(self.base_path)
         self.hardware ,self.cloud = boot.boot()
         self.hardware.write(text="부팅완료!\n 대기중..", led=[0,0,0])
-        self.__load_logger()
+
+        # 5 set logger and formatter
+        path = self.base_path + "/log/PinoMain.log"
+        self.log = logging.getLogger("Main")
+        self.log.setLevel(logging.DEBUG)
+        formatter = logging.Formatter('[%(levelname)s] (%(asctime)s : %(filename)s:%(lineno)d) > %(message)s')
+        self.log_file = RotatingFileHandler(filename=path, maxBytes=5 * 1024 * 1024,
+                                            mode='w',
+                                            encoding='utf-8')
+        self.log_file.setFormatter(formatter)
+        self.log.addHandler(self.log_file)
+        self.log_console = logging.StreamHandler()
+        self.log_console.setFormatter(formatter)
+        self.log.addHandler(self.log_console)
+        self.log.info("Start PinoMain")
 
     """
     A.2 Deconstruct PinoBot Module 
@@ -88,8 +101,8 @@ class PinoBot:
         try:
             self.log_file.close()
             self.log.removeHandler(self.log_file)
-            self.log_consol.close()
-            self.log.removeHandler(self.log_consol)
+            self.log_console.close()
+            self.log.removeHandler(self.log_console)
             del self.log
         except:
             pass
@@ -108,31 +121,6 @@ class PinoBot:
         # TODO: Add reset function
         pass
 
-    """
-    A.4 set Logger
-    """
-    def __load_logger(self):
-        # 1 set logger and formatter
-        path = self.base_path + "/log/PinoMain.log"
-        self.log = logging.getLogger("Main")
-        self.log.setLevel(logging.DEBUG)
-        formatter = logging.Formatter('[%(levelname)s] (%(asctime)s : %(filename)s:%(lineno)d) > %(message)s')
-
-        # 2 set file logger
-        self.log_file = RotatingFileHandler(filename=path, maxBytes=5 * 1024 * 1024,
-                                            mode='w',
-                                            encoding='utf-8')
-        self.log_file.setFormatter(formatter)
-        self.log.addHandler(self.log_file)
-
-        # 3 set consol logger
-        self.log_consol = logging.StreamHandler()
-        self.log_consol.setFormatter(formatter)
-        self.log.addHandler(self.log_consol)
-
-        # 4 logger OK.
-        self.log.info("Start BootLoader")
-        return 0
 
     """
     B.1 pinobot's main loop function
@@ -158,6 +146,7 @@ class PinoBot:
         if self.detect["pre_state"] == 0 and cur_sensor_state == 1:
             # 4.1 object [ 0 -> 1 ] , new object, add talk task
             self.detect["first_time"] = time.time()
+            self.wait["adaptive_loop_d"] = 0.1
             self.add_task("talk")
 
         elif self.detect["pre_state"] == 1 and cur_sensor_state == 1:
@@ -180,7 +169,7 @@ class PinoBot:
             if self.sleep['state'] :
                 # if in "sleep mode" change to wake mode, and add WakeUp_Event
                 self.sleep['state'] = False
-                self.add_task("event", "WakeUp_Event", fail_handler=False) # TODO : TEST
+                self.add_task("event", "WakeUp_Event", fail_handler=False)
 
         else :
             # 4.4 object [ 0 -> 0 ] , wait mode
@@ -233,6 +222,7 @@ class PinoBot:
             self.task_q.put([task_type, event_name, None, fail_handler])
 
     def __run_task(self, task):
+        # 1. parse parameter
         task_type       = task[0]
         event_name      = task[1]
         event_parameter = task[2]
@@ -240,7 +230,7 @@ class PinoBot:
         talk_responses = ()
         event_response = None
 
-        # 1. get "talk" response
+        # 2. get "talk" response
         if task_type == "talk":
             """
             Description of DialogFlow streaming, 
@@ -265,13 +255,13 @@ class PinoBot:
                 therefore, in PinoBot make new intent : "FailNoMatch_Intent"
             """
 
-            # 1.1. streaming voice
+            # 2.1. streaming voice
             self.hardware.write(text="듣는중..", led=[204, 255, 51])
             self.cloud.start_stream()
             talk_responses = self.cloud.get_response()
             self.hardware.write(text="인식중..", led=[0, 0, 0])
 
-            # 1.E1. do not talk anything
+            # 2.E1. do not talk anything
             if talk_responses[0] is None:
                 # if streaming can't rec talking, return None to Response
                 if fail_handler is not False:
@@ -281,7 +271,7 @@ class PinoBot:
                     self.hardware.write(text="Talk Fail", led=[150, 50, 0])
                     return -1
 
-            # 1.E2. do not talk anything
+            # 2.E2. do not talk anything
             elif len(talk_responses[0].recognition_result.transcript) == 0:
                 # or just cant't rec talk
                 if fail_handler is not False:
@@ -291,7 +281,7 @@ class PinoBot:
                     self.hardware.write(text="Talk Fail", led=[150, 50, 0])
                     return -1
 
-            # 1.E3. No matched Intent
+            # 2.E3. No matched Intent
             elif talk_responses[1].query_result.intent.display_name == "Default Fallback Intent":
                 if fail_handler is not False:
                     event_response = self.cloud.send_event("FailNoMatch_Intent")
@@ -301,11 +291,11 @@ class PinoBot:
                 else :
                     self.hardware.write(text="Talk Fail", led=[150, 50, 0])
                     return -1
-            # 1.2 No Error
+            # 2.2 No Error
             else :
                 self.hardware.write(text="", led=[0, 150, 0])
 
-        # 2. get "event" response
+        # 3. get "event" response
         elif task_type == "event" and event_name is not None:
             """
             Description of DialogFlow Event, 
@@ -347,7 +337,7 @@ class PinoBot:
                 self.hardware.write("fail event \n %s"%event_name)
                 return -1
 
-        # 3. ignore invalid event type
+        # ignore invalid event type
         else :
             print("invalid task , ignore")
             return -1
@@ -366,7 +356,6 @@ class PinoBot:
         intent_name = query_result['intent']['displayName']
 
         # 5. Parse DialogFlow PinoBot Parameter
-        # TODO intent name matching without upper , lower case
         """
         Description of DialogFlow PinoBot Parameter,
         
@@ -424,12 +413,12 @@ class PinoBot:
 
                 if isinstance(num, int) or isinstance(num, float) :
                     # check first block "1" or "a" is int or float,
-                    pino_commands.append([num, check_cmd[1], query_result['parameters'][action_parameters]])
+                    pino_commands.append([num, check_cmd[1], query_result['parameters'][action_parameters].upper()])
                 else :
                     # if first block is not number (like "a") : go to dflow_parameters
-                    dflow_parameters[action_parameters] = query_result['parameters'][action_parameters]
+                    dflow_parameters[action_parameters] = query_result['parameters'][action_parameters].upper()
             else :
-                dflow_parameters[action_parameters] = query_result['parameters'][action_parameters]
+                dflow_parameters[action_parameters] = query_result['parameters'][action_parameters].upper()
 
         pino_commands.sort(key=lambda x: x[0]) # sort by command order number
 
@@ -448,12 +437,12 @@ class PinoBot:
         t1.join()
 
         # 9. RUN Custom wave file
-        if "PinoPlayWav" in pino_commands:
+        if "PinoPlayWav".upper() in pino_commands:
             # TODO : Play wave file
             pass
 
         # 10. run custom scripts
-        # TODO : Extention
+        # TODO : Extension
         """
         to make user write script and handle custom commands 
         in future 1.5 version, make extention from here
@@ -461,24 +450,40 @@ class PinoBot:
 
         this also could connect with scratch language
         """
-        if "PinoCustomCmd" in dflow_parameters :
+        if "PinoCustomCmd".upper() in dflow_parameters :
             run_pino_custom_cmd(hardware=self.hardware,
                             intent_name=intent_name,
                             dialogflow_parameters=query_result['parameters'])
 
+        # 11. run event command
         self.__run_pino_event_commands(dflow_parameters)
         return 0
 
 
-    def __execute_pino_commands(self, intent_name, pino_command):
-        for pino_cmd in pino_command:
+    def __execute_pino_commands(self, intent_name, pino_commands):
+        for pino_cmd in pino_commands:
             self.__run_pino_command(intent_name, pino_cmd)
 
     def __run_pino_command(self, intent_name, cmd):
         cmd_name = cmd[1]
         cmd_args = cmd[2]
 
-        if cmd_name == "PinoActuate":
+        """
+        2020.09.09 
+        add upper,lower case correction 
+        
+        ori :
+            PinoActuate .. OK
+            Pinoactuate .. FAIL
+        
+        new :
+            PinoActuate -> PINOACCURATE (use upper function)
+            Pinoactuate -> PINOACCURATE .. ok
+            pinoactuate -> PINOACCURATE .. ok
+            Pino_actuate -> PINO_ACCURATE .. FAIL
+        """
+
+        if cmd_name.upper() == "PinoActuate".upper():
             args = None
             servo_time = None
             try:
@@ -494,11 +499,11 @@ class PinoBot:
                     self.hardware.write(servo_angle=args[1:], servo_time=servo_time)
                     return 0
 
-        elif cmd_name == "PinoExpress":
+        elif cmd_name == "PinoExpress".upper():
             # TODO : actuate prebuild face emotion
             pass
 
-        elif cmd_name == "PinoLED":
+        elif cmd_name == "PinoLED".upper():
             args = None
             try:
                 args = ast.literal_eval(cmd_args)
@@ -512,16 +517,16 @@ class PinoBot:
                     self.hardware.write(led=args)
                     return 0
 
-        elif cmd_name == "PinoSerialMsg":
+        elif cmd_name == "PinoSerialMsg".upper():
             self.hardware.write(serial_msg=cmd_args)
 
-        elif cmd_name == "PinoShowText":
+        elif cmd_name == "PinoShowText".upper():
             self.hardware.write(text=cmd_args)
 
-        elif cmd_name == "PinoShowImage":
+        elif cmd_name == "PinoShowImage".upper():
             self.hardware.write(image=cmd_args)
 
-        elif cmd_name == "PinoWait":
+        elif cmd_name == "PinoWait".upper():
             args = None
             try:
                 args = ast.literal_eval(cmd_args)
@@ -540,7 +545,6 @@ class PinoBot:
     def __run_pino_event_commands(self, dflow_parameters):
         cmd_list = dflow_parameters.keys()
 
-
         """
         Description of PinoBot KeepTalk,
         
@@ -554,8 +558,7 @@ class PinoBot:
 
         """
 
-
-        if 'PinoKeepTalkMax' in cmd_list:
+        if 'PinoKeepTalkMax'.upper() in cmd_list:
             try:
                 n_max = ast.literal_eval(dflow_parameters['PinoKeepTalkMax'])
             except SyntaxError:
@@ -578,7 +581,7 @@ class PinoBot:
             self.keep_talk['max'] = 0
 
 
-        if 'PinoFutureEventName' in cmd_list and 'PinoFutureEventParameter' in cmd_list:
+        if 'PinoFutureEventName'.upper() in cmd_list and 'PinoFutureEventParameter'.upper() in cmd_list:
             event_time = datetime.datetime.strptime(dflow_parameters['time'],
                                                     "%Y-%m-%dT%H:%M:%S%z")  # "2020-08-06T18:00:00+09:00"
             event_name = dflow_parameters['PinoFutureEventName']#'2020-08-31T22:35:46+09:00'
@@ -601,7 +604,9 @@ class PinoBot:
             self.hardware.write(text="이벤트 예약 \n %s \n+ %s " % (event_name ,later[:-7]), led=[50, 250, 0])
             self.log.info("add reserved event %s %s %s %s"%(event_time, event_name,later,str(event_parameter)))
 
-def test():
+
+
+if __name__ == '__main__':
     bot = PinoBot()
     while True:
         # Do try , Except on in here
@@ -609,7 +614,3 @@ def test():
             bot.main_loop_once()
         except Exception as E:
             bot.log.error(repr(E))
-
-if __name__ == '__main__':
-    test()
-    #test()
