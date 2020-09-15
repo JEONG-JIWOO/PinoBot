@@ -75,7 +75,7 @@ class PinoBot:
 
         # 4. Init Functions
         boot = Pino_Init(self.base_path)
-        self.hardware ,self.cloud = boot.boot()
+        self.hardware ,self.cloud,self.config = boot.boot()
         self.hardware.write(text="부팅완료!\n 대기중..", led=[0,0,0])
 
         # 5 set logger and formatter
@@ -372,7 +372,7 @@ class PinoBot:
         PinoFutureEventParameter    dict -> {"para1":"123"} 
 
         "PinoBot Command" :
-        $n_PinoActuate              list  -> [2,10,10,30,40,50]
+        $n_PinoMotor                list  -> [2,10,10,30,40,50]
         $n_PinoLED                  list  -> [50,20, 90]
         $n_PinoSerial               str   -> "asd_ass"
         $n_PinoWait                 float -> 1.2
@@ -387,7 +387,7 @@ class PinoBot:
         $n is order of command written in Dialogflow Console.
         Due to that, actual "PinoBot Command" is like..
         
-        {"1_PinoActuate : "[2,10,10,30,40,50]",
+        {"1_PinoMotor : "[2,10,10,30,40,50]",
          "2_PinoSerial :  "asdf",d
          ...
          "time" : "2020-08-27T18:44:42+09:00",
@@ -430,18 +430,14 @@ class PinoBot:
 
         # 7. start play saying
         if task_type == "talk":
-            self.cloud.play_audio(talk_responses[2])
+            self.cloud.play_audio_response(talk_responses[2])
         elif task_type == 'event':
-            self.cloud.play_audio(event_response)
+            self.cloud.play_audio_response(event_response)
         # 8. wait for end
         t1.join()
 
-        # 9. RUN Custom wave file
-        if "PinoPlayWav".upper() in pino_commands:
-            # TODO : Play wave file
-            pass
 
-        # 10. run custom scripts
+        # 9. run custom scripts
         # TODO : Extension
         """
         to make user write script and handle custom commands 
@@ -455,7 +451,7 @@ class PinoBot:
                             intent_name=intent_name,
                             dialogflow_parameters=query_result['parameters'])
 
-        # 11. run event command
+        # 10. run event command
         self.__run_pino_event_commands(dflow_parameters)
         return 0
 
@@ -473,28 +469,28 @@ class PinoBot:
         add upper,lower case correction 
         
         ori :
-            PinoActuate .. OK
+            PinoMotor .. OK
             Pinoactuate .. FAIL
         
         new :
-            PinoActuate -> PINOACCURATE (use upper function)
+            PinoMotor -> PINOACCURATE (use upper function)
             Pinoactuate -> PINOACCURATE .. ok
             pinoactuate -> PINOACCURATE .. ok
             Pino_actuate -> PINO_ACCURATE .. FAIL
         """
 
-        if cmd_name.upper() == "PinoActuate".upper():
+        if cmd_name.upper() == "PinoMotor".upper():
             args = None
             servo_time = None
             try:
                 args = ast.literal_eval(cmd_args)
                 servo_time = float(args[0])
             except:
-                self.hardware.write(text="DFlow Error \n %s \n PinoActuate" % intent_name, led=[150, 50, 0])
+                self.hardware.write(text="DFlow Error \n %s \n PinoMotor" % intent_name, led=[150, 50, 0])
                 return -1
             else:
                 if type(args) is not list or type(servo_time) is not float or len(args) < 2:
-                    self.hardware.write(text="DFlow Error \n %s \n PinoActuate" % intent_name, led=[150, 50, 0])
+                    self.hardware.write(text="DFlow Error \n %s \n PinoMotor" % intent_name, led=[150, 50, 0])
                 else:
                     self.hardware.write(servo_angle=args[1:], servo_time=servo_time)
                     return 0
@@ -539,6 +535,12 @@ class PinoBot:
                 else:
                     time.sleep(args)
                     return 0
+
+
+        # 9. RUN Custom wave file
+        elif cmd_name == "PinoPlayWav".upper():
+            # TODO : Play wave file
+            pass
 
         return 0
 

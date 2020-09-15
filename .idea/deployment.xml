@@ -12,7 +12,7 @@
       <paths name="pi@192.168.0.106:22">
         <serverdata>
           <mappings>
-            <mapping deploy="/home/pi/Desktop/PinoBot" local="$PROJECT_DIR$" />
+            <mapping deploy="/home/pi/Desktop" local="$PROJECT_DIR$" />
           </mappings>
         </serverdata>
       </paths>

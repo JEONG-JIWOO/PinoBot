@@ -51,7 +51,7 @@ class Pino_Init:
             sys.exit()
 
         # boot success
-        return self.hardware , self.cloud
+        return self.hardware , self.cloud , self.config
 
     """
     C. Private , Loading Functions
@@ -128,7 +128,6 @@ class Pino_Init:
     def __load_config(self):
         # 1. config not exist, write default config.
         import os
-
         default_config = self.__config_default()
         if not os.path.isfile(self.config_path):
             with open(self.config_path,"w") as configfile:
@@ -169,13 +168,17 @@ class Pino_Init:
         for check in check_list:
             import ast
             failed = 0
+            # 3.1 check Form exists.
             if check[1] not in self.config.keys():
                 self.error_msg = "no key \n" + check[1]
                 failed = 1
+
+            # 3.2 check value exists.
             elif check[2] not in self.config[check[1]].keys():
                 self.error_msg = "no key \n" + check[1] + "\n" + check[2]
                 failed = 2
 
+            # 3.3 check value valid
             if failed == 0:
                 try:
                     if check[0] == 'int':
@@ -195,14 +198,18 @@ class Pino_Init:
                     self.log.error("config error3 "+  check[1] +"  " + check[2] + repr(E))
                     failed = 3
 
+            # 3.4 if Form not exist
             if failed == 1 :
                 self.log.error("config error 1 " + check[1] )
                 self.config[check[1]] = {}
                 self.config[check[1]][check[2]] = default_config[check[1]][check[2]]
 
+            # 3.5 if value not exist [2]
             elif failed == 2 :
                 self.log.error("config error 2 " + check[1] + "  " + check[2])
                 self.config[check[1]][check[2]] = default_config[check[1]][check[2]]
+
+            # 3.6 if value not valid
             elif failed == 3 :
                 self.log.error("config error 2 " + check[1] + "  " + check[2])
                 self.config[check[1]][check[2]] = default_config[check[1]][check[2]]
@@ -227,7 +234,7 @@ class Pino_Init:
             except:
                 # event OLED FAILED
                 pass
-            return 0
+            return -1
 
         else:
             return 0
@@ -263,22 +270,24 @@ class Pino_Init:
     # [C.5] reset wifi, and try to re-connect 5 times
     def __reset_internet(self):
         self.hardware.OLED.send_loading_console(step=3, msgs="\n Re connect..")
+
+        # 1. try to reconnect max 5 times
         for i in range(6):
             msg = ""
             self.hardware.OLED.send_loading_text(step=4, msg="WiFi Reset.. \n")
-            # 1. check wpa_supplicant.conf error
+            # 2. check wpa_supplicant.conf error
             try:
                 self.log.warning("Checking WIFI..")
                 msg = subprocess.check_output('sh ' + self.base_path + '/Core/Utils/wifiCheck.sh', shell=True).decode(
                     'utf-8')
             except Exception as E:
-                #  3.1.1 , wpa_supplicant.conf error
+                #  wpa_supplicant.conf error
                 self.log.error("boot_utils.__load_internet(), Fail.. " + repr(E)+" "+ msg)
                 self.hardware.write(text = "Fail Internet \n [E21],check wpa_supplicant \n Shutdown",led=[255, 0, 0])
                 return -1  # Exit Program
 
             self.hardware.OLED.send_loading_text(step=5, msg="WiFi Reset.. OK \n WiFi re-connect..")
-            # 2. wpa_supplicant.conf is fine,   re-set wifi
+            # 3. wpa_supplicant.conf is fine,   re-set wifi
             try:  # Run WIFI reset scripts
                 subprocess.check_output('sh ' + self.base_path + '/Core/Utils/wifiReset.sh', shell=True).decode('utf-8')
             except Exception as E:
@@ -286,9 +295,8 @@ class Pino_Init:
                 self.hardware.write(text = "Fail Internet \n [E22],Linux Error \n Shutdown ",led=[255, 0, 0])
                 return -1  # Exit Program
 
-            # 3. wifi reset message
             self.log.warning("boot_utils.__Reset_internet(), reset wifi....")
-            #self.hardware.write(led=[205, 140, 0])  # Orange LED on
+            self.hardware.write(led=[205, 140, 0])  # Orange LED on
 
             # 4. wait 30 seconds to reconnect
             cnt = 0
@@ -305,14 +313,16 @@ class Pino_Init:
             if self.net_connected is True:  # if network connected, break
                 self.hardware.send_loading_console(step=8, msgs="OK")
                 return 0
-            elif i > 5:  # if re connection failed over 5 times.
+            # 6. if re connection failed over 5 times.
+            elif i > 5:
                 self.log.warning("boot_utils.__load_internet(), Wifi not found.. " )
                 self.hardware.write(text= "wifi \n not found \n Shutdown",led=[255, 0, 100])  # PURPLE LED ON
                 return -1
 
     # [C.6] Cloud connect & check Function
     def __load_diaglogflow(self):
-        if self.config is None:  # if config is not Loaded, cancel boot.
+        # 1. if config is not Loaded, cancel boot.
+        if self.config is None:
             return -1
         try:
             self.hardware.OLED.send_loading_console(step=9, msgs=".")

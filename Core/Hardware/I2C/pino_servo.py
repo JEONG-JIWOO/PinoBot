@@ -63,7 +63,7 @@ class Pino_SERVO:
         if (time.time() - self.last_reset_time) < 60:
             return 0
 
-        # 2. if self.serial exists..
+        # 2. if self.pca exists..
         if self.pca is not None:
             self.pca.deinit()
             del self.pca
@@ -105,26 +105,26 @@ class Pino_SERVO:
             elif trj_time > self.max_trj_time:
                 trj_time = self.max_trj_time
 
-            # 3. get run motor index
-            run_motors_n =[]
+            # 3. get actuate_motor_index_list
+            actuate_motor_index_list =[]
             for index in range(len(tar_angles)):
                 if self.motor_enable[index] == 1:
-                    run_motors_n.append(index)
-            # ex)  run_motors_n -> [0,1,2,3,4]  or like..[0,1,2,4,6]
+                    actuate_motor_index_list.append(index)
+            # ex)  actuate_motor_index_list -> [0,1,2,3,4]  or like..[0,1,2,4,6]
 
-            # 3. start to make trajectory
+            # 4. start to make trajectory
             trjs = []
-            for index in run_motors_n:
-                # 3-1 if motor is enabled, check target angle is Valid
+            for index in actuate_motor_index_list:
+                # 4-1 if motor is enabled, check target angle is Valid
                 tar_angle = tar_angles[index]
                 if tar_angle < self.min_angle_limit[index]:
                     tar_angle = self.min_angle_limit[index]
                 elif tar_angle > self.max_angle_limit[index]:
                     tar_angle = self.max_angle_limit[index]
-                # 3-2 calculate trajectory
+                # 4-2 calculate trajectory
                 trjs.append(self._make_trj(self.cur_angles[index],tar_angle,trj_time))
 
-            # 4. init trajectory
+            # 5. init trajectory
             """
              self.num_motor = 5
              run_motor_n = [0,1,2,3,4]
@@ -136,25 +136,25 @@ class Pino_SERVO:
              [1, 2, 3, 4, 5, 6, 7, 8]
              ]
             """
-            # 4.1 run trajectory
+            # 5.1 run trajectory
             for j in range(len(trjs[0])):
                 # 4.2 start 50ms cycle
                 start_time = time.time()
-                for motor_n in range(len(run_motors_n)):
+                for motor_n in range(len(actuate_motor_index_list)):
                     new_angle =  trjs[motor_n][j]
                     if self.cur_angles[motor_n] != new_angle:  # if motor angle is same as before, skip i2c comm
                         self.servos[motor_n].angle = new_angle
                         self.cur_angles[motor_n] = new_angle
-                # 4.3 calculate wait time
+                # 5.3 calculate wait time
                 wait_time = self.control_time - (time.time() - start_time)
                 time.sleep(wait_time) # sleep for few milliseconds, and makes all loop done, in exactly 20ms
 
-                # 4.4 check if force stop initiated,
+                # 5.4 check if force stop initiated,
                 if self.force_stop_flag:
                     return 0
 
-            # 5. last fit to target angle
-            for index in range(len(run_motors_n)):
+            # 6. last fit to target angle
+            for index in range(len(actuate_motor_index_list)):
                 self.servos[index].angle = tar_angles[index]
 
         except Exception as E:
@@ -173,9 +173,9 @@ class Pino_SERVO:
     def _make_trj(self,cur_angle,tar_angle,trj_time):
         # linear trajectory
         # TODO : F-curve trajectory
-        n_thread = int(trj_time/self.control_time)
+        n_steps = int(trj_time/self.control_time)
         trj = []
-        for i in range(n_thread):
-            trj.append(cur_angle + int( i*(tar_angle - cur_angle)/n_thread))
+        for i in range(n_steps):
+            trj.append(cur_angle + int( i*(tar_angle - cur_angle)/n_steps))
         return trj
 
