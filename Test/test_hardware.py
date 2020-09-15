@@ -10,13 +10,16 @@ def custom_function():
     """
     Module TEST codes
     """
+    # 1. init test
     from Core.Hardware.v1 import HardwareV1
     import configparser
     config = configparser.ConfigParser()
-    config.read_file(open("/home/pi/Desktop/PinoBot/config.ini"))
+    with open("/home/pi/Desktop/PinoBot/config.ini") as fp:
+        config.read_file(fp)
 
     hardware = HardwareV1(config=config, base_path="/home/pi/Desktop/PinoBot/")
 
+    # 2. function test
     # valid case
     print("=====valid!=====")
     hardware.write(text="하이루", led=[0, 0, 100], servo_angle=[180, 180, 90], servo_time=2)
@@ -25,6 +28,7 @@ def custom_function():
     hardware.write(serial_msg="test_msg_logs")
     print(hardware.read())
 
+    run_pyaudio()
     print("=====Invalid!=====")
     # invalid case
     hardware.write(text=1)
@@ -32,7 +36,61 @@ def custom_function():
     hardware.write(servo_angle=1)
     hardware.write(serial_msg=1)
     print(hardware.read())
+
+    # 3. reset test
+    hardware.reset()
+
+    # 4. function test after reset
+    print("=====valid!=====")
+    hardware.write(text="하이루", led=[0, 0, 100], servo_angle=[180, 180, 90], servo_time=2)
+    hardware.write(image="test.jpg")
+    hardware.write(text="아아")
+    hardware.write(serial_msg="test_msg_logs")
+    print(hardware.read())
+
+    run_pyaudio()
+    print("=====Invalid!=====")
+    # invalid case
+    hardware.write(text=1)
+    hardware.write(led=1)
+    hardware.write(servo_angle=1)
+    hardware.write(serial_msg=1)
+    print(hardware.read())
+
+    # 5. del test
     del hardware
+
+def run_pyaudio():
+    import pyaudio
+    import wave
+
+    audio = pyaudio.PyAudio()
+    stream = audio.open(format=pyaudio.paInt16, channels=1,
+                             rate=16000, input=True,
+                             frames_per_buffer=2048, input_device_index=2)
+
+    a = stream.read(2048, exception_on_overflow = False)
+    print(a)
+    stream.close()
+
+    wav_data = wave.open("./1.wav", "rb")
+    # Open play stream. Formats are fixed,
+    stream = audio.open(
+        format=pyaudio.paInt16,
+        channels=1,
+        rate=16000,
+        output=True
+    )
+
+    # Play wav file.
+    data = wav_data.readframes(2048)
+    while len(data) > 1:
+        stream.write(data)
+        data = wav_data.readframes(2048)
+    stream.stop_stream()
+    stream.close()
+    audio.terminate()
+
 
 class CustomTests(unittest.TestCase):
     def setUp(self):

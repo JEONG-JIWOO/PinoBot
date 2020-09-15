@@ -11,6 +11,7 @@ def custom_function():
     d = Pino_Init("/home/pi/Desktop/PinoBot/")
     d.boot()
     print("tested")
+
     del d
 
 class CustomTests(unittest.TestCase):
