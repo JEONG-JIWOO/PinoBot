@@ -6,6 +6,12 @@ Core.Hardware.SPI.Pino_LED
 
 import unittest
 
+def custom_function():
+    from Core.Hardware import pino_uart
+    uart = pino_uart.Pino_UART()
+    uart.write("asdf")
+    uart.read()
+    print("R:", uart.received_msg)
 
 class CustomTests(unittest.TestCase):
     def setUp(self):
@@ -22,12 +28,5 @@ class CustomTests(unittest.TestCase):
 
 if __name__ == '__main__':
     unittest.main()
-
-def custom_function():
-    from Core.Hardware import pino_uart
-    uart = pino_uart.Pino_UART()
-    uart.write("asdf")
-    uart.read()
-    print("R:", uart.received_msg)
 
 

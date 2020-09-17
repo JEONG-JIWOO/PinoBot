@@ -60,6 +60,7 @@ def custom_function():
     # 5. del test
     del hardware
 
+
 def run_pyaudio():
     import pyaudio
     import wave

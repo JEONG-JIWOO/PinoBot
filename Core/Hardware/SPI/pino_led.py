@@ -1,3 +1,5 @@
+#!/usr/bin/python3
+
 import spidev , time
 
 class Pino_LED:

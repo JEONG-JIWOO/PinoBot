@@ -1,4 +1,5 @@
-import board
+#!/usr/bin/python3
+
 from PIL import Image, ImageDraw, ImageFont
 import adafruit_ssd1306
 import time
@@ -187,11 +188,14 @@ class Pino_OLED:
         if msg != "":
             self.__text_2_image(msg, resize=(110, 64))
             progress_im.paste(self.im,(18,0))
-
-        self.im = progress_im.convert("1")
-        self.oled.image(self.im)
-        self.oled.show()
-
+        try:
+            self.im = progress_im.convert("1")
+            self.oled.image(self.im)
+            self.oled.show()
+        except Exception as E :
+            self.last_exception = str(E)
+            self.reset()
+            return -1
     """
     D. Private Functions
     """
@@ -245,7 +249,6 @@ class Pino_OLED:
             # 2. change to binary image and save it.
             self.im = im.convert("1")
         except FileNotFoundError as E:
-            self.last_exception = "OLED.load_image() " + repr(E)
             return -2
         except Exception as E :
             self.last_exception = "OLED.load_image() " + repr(E)

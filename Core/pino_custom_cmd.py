@@ -1,4 +1,4 @@
-
+#!/usr/bin/python3
 
 def run_pino_custom_cmd(hardware, intent_name, dialogflow_parameters):
     #hardware.write(text="Hello\nWorld!", led=[0, 0, 100], servo_angle=[180, 180, 90], servo_time=2)

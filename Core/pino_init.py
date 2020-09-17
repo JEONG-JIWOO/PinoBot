@@ -1,10 +1,11 @@
+#!/usr/bin/python3
+
 import configparser
 import requests
 import subprocess, time
 import logging
 from logging.handlers import RotatingFileHandler
-import sys
-sys.path.append("/home/pi/Desktop/PinoBot/Core")
+
 
 class Pino_Init:
     """
@@ -13,11 +14,10 @@ class Pino_Init:
     def __init__(self,base_path):
         # 0. Argument
         # 1. Static Variables
-
-        self.base_path = base_path
+        self.base_path = "/home/pi/Desktop/PinoBot/" #base_path
 
         # 2. variables
-        self.config_path = self.base_path+"/config.ini"  # TODO : change path to /boot partition
+        self.config_path = "/boot/PinoBot/PinoConfig.ini" # self.base_path+"/config.ini"
         self.net_connected = False
         self.error_msg =""
 
@@ -46,7 +46,7 @@ class Pino_Init:
     # [B.1] Actual Function called from Outside.
     def boot(self):
         # if boot Failed,
-        if self.__main_boot() == -1:
+        if self.__main_boot == -1:
             import sys
             sys.exit()
 
@@ -57,12 +57,27 @@ class Pino_Init:
     C. Private , Loading Functions
     """
     # [C.0] main boot Sequence
+    @property
     def __main_boot(self):
         # 1. set logger
         self.__load_logger()
 
         # 2. load ini
         if self.__load_config() == -1:
+            try:
+                from Core.Hardware.I2C.pino_oled import Pino_OLED
+                import board
+                i2c = board.I2C()
+                oled = Pino_OLED(i2c,
+                                 self.base_path,
+                            'NanumSquareEB.ttf',
+                            'NanumSquareEB.ttf')
+                oled.send_loading_console(step=1, msgs=self.error_msg)
+                with open(self.config_path, "w") as configfile:
+                    self.config.write(configfile)
+            except:
+                # if OLED FAILED , ignore
+                pass
             return -1
 
         # 3. check hardware valid
@@ -89,11 +104,15 @@ class Pino_Init:
         self.hardware.OLED.send_loading_console(step=13, msgs="OK. \n")
 
         # 6. copy media from /boot to media folder
-        self.hardware.OLED.send_loading_console(step=14, msgs="Copy Media..")
+        self.hardware.OLED.send_loading_console(step=14, msgs="Copy Media..pass")
+
+        """
+        not used for now.
         if self.__media_copy() == -1:
             self.hardware.OLED.send_loading_console(step=14, msgs="Fail. \n System Error!")
             time.sleep(1)
             self.hardware.OLED.send_loading_console(step=14, msgs="Shutdown Robot.. \n")
+        """
         self.hardware.OLED.send_loading_console(step=15, msgs="OK. \n")
 
         # 7. Finally all Check ok.
@@ -103,7 +122,7 @@ class Pino_Init:
     # [C.1] log File load & check
     def __load_logger(self):
         # 1 set logger and formatter
-        path = self.base_path + "/log/Boot.log"
+        path = self.base_path + "log/Boot.log"
         self.log = logging.getLogger("Boot")
         self.log.setLevel(logging.DEBUG)
         formatter = logging.Formatter('[%(levelname)s] (%(asctime)s : %(filename)s:%(lineno)d) > %(message)s')
@@ -129,6 +148,11 @@ class Pino_Init:
         # 1. config not exist, write default config.
         import os
         default_config = self.__config_default()
+        if not os.path.isdir("/boot/PinoBot"):
+            self.error_msg = "no PinoBot \nfolder \n on /boot"
+            self.log.error("no PinoBot \nfolder \n on /boot")
+            return -1
+
         if not os.path.isfile(self.config_path):
             with open(self.config_path,"w") as configfile:
                 default_config.write(configfile)
@@ -214,30 +238,7 @@ class Pino_Init:
                 self.log.error("config error 2 " + check[1] + "  " + check[2])
                 self.config[check[1]][check[2]] = default_config[check[1]][check[2]]
 
-
-        # 4. if config parsing Failed..
-        # try to show error reason on OLED
-        if self.error_msg != "":
-            # noinspection PyBroadException
-            try:
-                from Core.Hardware.I2C.pino_oled import Pino_OLED
-                import board
-                i2c = board.I2C()
-                oled = Pino_OLED(i2c,
-                                 self.base_path,
-                            'NanumSquareEB.ttf',
-                            'NanumSquareEB.ttf')
-                oled.send_loading_console(step=1, msgs=self.error_msg)
-                with open(self.config_path, "w") as configfile:
-                    self.config.write(configfile)
-
-            except:
-                # event OLED FAILED
-                pass
-            return -1
-
-        else:
-            return 0
+        return 0
 
     # [C.3] load hardware
     def __load_hardware(self):
@@ -385,7 +386,7 @@ class Pino_Init:
     def __config_default(self):
         config = configparser.ConfigParser()
         config['GCloud'] = {
-                                'google_key':'/home/pi/Desktop/PinoBot/Keys/squarebot01-yauqxo-8d211b1f1a85.json',
+                                'google_key':'/boot/PinoBot/keys/squarebot01-yauqxo-8d211b1f1a85.json',
                                 'google_project':'squarebot01-yauqxo',
                                 'language': 'ko',
                                 'time_out': '7'
@@ -424,5 +425,7 @@ class Pino_Init:
                      "adaptive_loop_limit": '0.5',    # sec        # system loop wait time limit
                      "task_probability": '0.01',      #            # "Wait_Mode_Task" in this random probability
                      "task_min_time": '30'}           # sec        # minimum "Wait_Mode_Task" duration
+
+        config['Boot'] = {"AutoBoot":"False"}
 
         return config

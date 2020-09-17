@@ -1,4 +1,4 @@
-#!/usr/bin/env python3.7
+#!/usr/bin/python3
 """
 Write By Jiwoo Jeong
 
@@ -169,6 +169,7 @@ class HardwareV1:
     # [C.2] read data from hardware
     def read(self):
         self.SENSOR.read_sonic_sensor()
+        #print("v1 %f"%self.SENSOR.distance)
         volume = self.SENSOR.volume
         distance = self.SENSOR.distance
         serial_msgs = self.UART.received_msg

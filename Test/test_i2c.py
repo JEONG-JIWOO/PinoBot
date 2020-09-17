@@ -83,7 +83,7 @@ def custom_function_1():
     oled_board.send_loading_console(step=15, msgs="Total Done.", mode="w")
 
     # 5. del test
-    del oled
+    del oled_board
 
 def custom_function_2():
     # 1. init test
@@ -106,6 +106,7 @@ def custom_function_2():
     # 4. working after reset test
     time.sleep(1)
     servo_board.write([0, 0, 0, 0, 0], 4)
+    servo_board.write([100, 90, 80, 70, 60, 30, 32], 0.1)
     run_pyaudio()
     servo_board.write([180], 2)
     servo_board.write([1], 2)
@@ -116,8 +117,6 @@ def custom_function_2():
 def run_pyaudio():
     import pyaudio
     import wave
-
-    servo_board.write([100, 90, 80, 70, 60, 30, 32], 0.1)
     audio = pyaudio.PyAudio()
     stream = audio.open(format=pyaudio.paInt16, channels=1,
                              rate=16000, input=True,

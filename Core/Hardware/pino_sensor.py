@@ -1,3 +1,6 @@
+#!/usr/bin/python3
+# TODO, Change gpio module
+
 import RPi.GPIO
 import time
 
@@ -22,7 +25,7 @@ class Pino_SENSOR:
         self.ECHO_Pin = 24  # [GPIO24] sonic sensor echo pin
 
         # 2. variables
-        self.distance = 0   # [cm] Measured distance
+        self.distance = 150   # [cm] Measured distance
         self.sw_flag = False
         self.volume = 0     # 0 ~ 9 relative Speaker Volume
         self.last_reset_time = 0
@@ -66,6 +69,7 @@ class Pino_SENSOR:
         try:
             # 4.1 init GPIO
             self.GPIO = RPi.GPIO
+            self.GPIO.cleanup()
             self.GPIO.setmode(self.GPIO.BCM)
             # 4.2 init GPIO PINS
             self.GPIO.setup(self.SW_Pin  , self.GPIO.IN , pull_up_down=self.GPIO.PUD_DOWN)
@@ -110,12 +114,13 @@ class Pino_SENSOR:
 
             # 5. change time to distance
             self.distance = ( (pulse_end - pulse_start) * 17001) # 1000000/2 / 29.41
+            #print("sensor %f"%self.distance)
 
         except Exception as E:  # if Error occurs
             self.last_exception = "read_sonic_sensor() ," +repr(E)  # save error Message
             print(self.last_exception)
             self.reset()  # reset gpio
-            return -1
+            return 150
 
         else :
             return self.distance

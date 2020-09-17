@@ -5,56 +5,45 @@ Core.Hardware.SPI.Pino_LED
 """
 
 import unittest
-
+import tracemalloc
+import psutil
+import os
 
 def event_test():
-    from Core.pino_main import PinoBot
-    a = PinoBot()
-
+    tracemalloc.start()
+    from pino_main import PinoBot
     # 1. test talk
-    print("\n\n#1. talk\n")
+    bot = PinoBot()
+    cnt =0
+    snap = tracemalloc.take_snapshot()
+    snap_0 = snap
+    while True:
+        # Do try , Except on in here
+        try:
+            cnt +=1
+            bot.main_loop_once()
 
-    a.add_task("talk")
-    a.main_loop_once()
+            if cnt % 3 == 0:
+                """
+                snap_new = tracemalloc.take_snapshot()
+                print("Compare TOP 5 with start")
+                for stat in snap_0.compare_to(snap_new, "lineno")[:5]:
+                    print("%03.2f KB    + %03.2f KB"%(stat.size/1000,stat.size_diff/1000))
 
-    # 2. test basic event
-    print("\n\n#2. basic event\n")
+                print("=" * 30)
+                print("Compare TOP 5 with before loop")
+                for stat in snap_0.compare_to(snap_new, "lineno")[:5]:
+                    print("%03.2f KB   + %03.2f KB"%(stat.size/1000,stat.size_diff/1000))
 
-    p = {'a': 'asdf'} # parameter that not used, for these events, but add for test
+                snap = snap_new
+                """
+                pid = os.getpid()
+                current_process = psutil.Process(pid)
+                current_process_memory_usage_as_KB = current_process.memory_info()[0] / 2. ** 20
+                print(f" Current memory KB   : {current_process_memory_usage_as_KB: 9.3f} KB")
 
-    a.add_task("event", "WakeUp_Event", None, True)
-    a.main_loop_once()
-
-    a.add_task("event", "Sleep_Event", None, True)
-    a.main_loop_once()
-
-    a.add_task("event", "SleepEnter_Event ", p, True)
-    a.main_loop_once()
-
-    a.add_task("event", "Wait_Event", None, True)
-    a.main_loop_once()
-
-    a.add_task("event", "FailNotTalk_Intent", p, True)
-    a.main_loop_once()
-
-    a.add_task("event", "FailNoMatch_Intent", None, True)
-    a.main_loop_once()
-
-    # 3. test invalid event name
-    print("\n\n#3. invalid event name\n")
-
-    # invalid name, but handler false -> nothing
-    a.add_task("event", "FailNoMatch_Intents", None, False)
-    a.main_loop_once()
-
-    # invalid name, but handler True -> FailNoMatch_Intents
-    a.add_task("event", "Fail", None, True)
-    a.main_loop_once()
-
-    # 4. invalid dialogflow action test
-    a.add_task("event", "invalidAction", None, True)
-    a.main_loop_once()
-
+        except Exception as E:
+            bot.log.error(repr(E))
 
 class CustomTests(unittest.TestCase):
     def setUp(self):
