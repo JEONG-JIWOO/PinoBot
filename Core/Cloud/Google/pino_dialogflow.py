@@ -452,11 +452,13 @@ class PinoDialogFlow:
             return None, None, None
 
         # 2. Wait for response
+        print("get Response", end = '')
         while True: 
             try:
                 # 3. get response
                 item = next(self.responses) # receive Response
-                self.log.info("get Response...")
+                #self.log.info("get Response...")
+                print('.', end = '')
 
                 # 4. If STT Process is done
                 # this response not include chatbot result, just STT result(talkers question)
@@ -495,6 +497,7 @@ class PinoDialogFlow:
 
 
         # 8. return Result
+        print()
         time.sleep(0.05) # wait for turn off Stream
         if self.stt_response is not None and self.dflow_response is not None:
             return self.stt_response, self.dflow_response , self.tts_response

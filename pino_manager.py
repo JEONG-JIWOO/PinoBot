@@ -75,8 +75,8 @@ def main_boot():
                         '==========================================================================\n')
 
     print("\n\nchecking PinoMain.py")
-    with open("/dev/tty1", 'w') as tty0:
-        tty0.write("\n\nchecking PinoMain.py\n")
+    with open("/dev/tty1", 'w') as tty1:
+        tty1.write("\n\nchecking PinoMain.py\n")
     boot_config = check_auto_boot_config()
     main_process = None
 
@@ -91,10 +91,10 @@ def main_boot():
             else:
                 print("[PinoManager] no PinoBot, launch")
                 print(loding_str)
-                with open("/dev/tty1", 'w') as tty0:
-                    tty0.write(loding_str)
-                    main_process = subprocess.Popen("sudo python3 ./pino_main.py &>> /dev/tty1", shell=True,cwd="/home/pi/Desktop/PinoBot/",
-                                      stdout=tty0,stderr=tty0)
+                with open("/dev/tty1", 'w') as tty1:
+                    tty1.write(loding_str)
+                    main_process = subprocess.Popen("python3 ./pino_main.py &>> /dev/tty1", shell=True,cwd="/home/pi/Desktop/PinoBot/",
+                                      stdout=tty1,stderr=tty1)
                 if main_process.returncode == 127:
                     print("[PinoManager] Invalid install")
                     return 0
