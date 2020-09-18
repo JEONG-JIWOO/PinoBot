@@ -13,26 +13,27 @@ def custom_function():
     sensor =  pino_sensor.Pino_SENSOR()
 
     # 2. working test
-    for i in range(100):
+    for i in range(30):
         time.sleep(0.1)
         distance = sensor.read_sonic_sensor()
         if distance > 0:
-            print(distance)
+            print("%3.3f cm    %d "%(distance , sensor.volume*10) +"%")
         if sensor.sw_flag :
-            print(sensor.volume)
             sensor.sw_flag = False
 
     # 3. reset test
+
+    time.sleep(10)
+
     sensor.reset()
 
     # 4. working after reset test
-    for i in range(100):
+    for i in range(30):
         time.sleep(0.1)
         distance = sensor.read_sonic_sensor()
         if distance > 0:
-            print(distance)
+            print("%3.3f cm    %d "%(distance , sensor.volume*10) +"%")
         if sensor.sw_flag :
-            print(sensor.volume)
             sensor.sw_flag = False
 
     # 5. del test

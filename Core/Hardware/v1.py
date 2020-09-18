@@ -180,6 +180,7 @@ class HardwareV1:
 
         return volume, distance, serial_msgs
 
+
     """
     D. Private Functions
     """

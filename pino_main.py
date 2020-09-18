@@ -130,7 +130,7 @@ class PinoBot:
         # 1. check hardware signals
         cur_sensor_state = 0
         volume, distance, serial_msgs = self.hardware.read()
-        print("sensor %3.4f cm "%distance)
+        #print("sensor %3.4f cm   voiume %d"%(distance,volume))
 
         # 2. add event by serial message
         if serial_msgs is not None:
@@ -425,7 +425,8 @@ class PinoBot:
         pino_commands.sort(key=lambda x: x[0]) # sort by command order number
 
         # 6. Execute PinoBot Parameter
-        print("run intent: ",intent_name,"\n cmds :",pino_commands)
+        self.hardware.write(led=[0, 0, 0])
+        print("run intent: ",intent_name)
         # start actuate in thread
         t1 = threading.Thread(target=self.__execute_pino_commands, args=(intent_name, pino_commands))
         t1.start()

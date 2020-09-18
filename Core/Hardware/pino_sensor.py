@@ -1,12 +1,19 @@
 #!/usr/bin/python3
 # TODO, Change gpio module
 
-import RPi.GPIO
+#import RPi.GPIO
 import time
+import adafruit_hcsr04
+import board
+from digitalio import DigitalInOut , Direction ,Pull
+from adafruit_debouncer import Debouncer
+import threading
+from queue import Queue
 
 """
 Reference
 https://m.blog.naver.com/PostView.nhn?blogId=chandong83&logNo=221155355360
+
 
 """
 
@@ -19,31 +26,30 @@ class Pino_SENSOR:
     def __init__(self):
         # 1. Static Variables
         self.MAX_DISTANCE = 150  # [cm] Max Boundary distance
-        self.TIMEOUT = self.MAX_DISTANCE* 2 * 29.41  # [ms] sensor timeout limits
-        self.SW_Pin = 17    # [GPIO17] Volume switch pin
-        self.TRIG_Pin = 23  # [GPIO23] sonic sensor trigger pin
-        self.ECHO_Pin = 24  # [GPIO24] sonic sensor echo pin
 
         # 2. variables
         self.distance = 150   # [cm] Measured distance
-        self.sw_flag = False
         self.volume = 0     # 0 ~ 9 relative Speaker Volume
         self.last_reset_time = 0
         self.last_exception = ""
+        self.sw_flag = False
 
         # 3. Objects
-        self.GPIO = None
+        self.sonar = None
+
+        self.sw_queue = Queue()
+        self.statue_queue = Queue()
 
         # 4. Init Functions
+        self.t1 = threading.Thread(target=self.read_switch, args=(self.sw_queue, self.statue_queue))
+        self.t1.daemon = True
         self.reset()
 
     def __del__(self):
         # Free GPIO
-        self.GPIO.setmode(self.GPIO.BCM)
-        self.GPIO.cleanup((self.TRIG_Pin,self.ECHO_Pin))
         # noinspection PyBroadException
         try:
-            del self.GPIO
+            self.sonar.deinit()
         except :
             pass
     """
@@ -56,10 +62,8 @@ class Pino_SENSOR:
             return 0
 
         # 2. if self.GPIO exists..
-        if self.GPIO is not None:
-            self.GPIO.cleanup()  # Close gpio
-            time.sleep(0.01)     # Wait a moment
-            del self.GPIO      # Deconstruct gpio Object
+        if self.sonar is not None:
+            self.sonar.deinit()
 
         # 3. refresh last reset time
         self.last_reset_time = time.time()
@@ -68,17 +72,7 @@ class Pino_SENSOR:
         # 4. re open GPIO
         try:
             # 4.1 init GPIO
-            self.GPIO = RPi.GPIO
-            self.GPIO.cleanup()
-            self.GPIO.setmode(self.GPIO.BCM)
-            # 4.2 init GPIO PINS
-            self.GPIO.setup(self.SW_Pin  , self.GPIO.IN , pull_up_down=self.GPIO.PUD_DOWN)
-            self.GPIO.setup(self.TRIG_Pin, self.GPIO.OUT)
-
-            self.GPIO.setup(self.ECHO_Pin, self.GPIO.IN , pull_up_down=self.GPIO.PUD_DOWN)
-            # 4.3 init GPIO interrupt
-            self.GPIO.add_event_detect(self.SW_Pin, self.GPIO.RISING, callback=self.__sw_callback,)
-
+            self.sonar = adafruit_hcsr04.HCSR04(board.D23, board.D24)
         except Exception as E:
             self.last_exception = "reset() ," +repr(E)
             return -1
@@ -88,54 +82,56 @@ class Pino_SENSOR:
     """
     # [C.1] read ultra sonic sensor, and store at "self.distance"
     def read_sonic_sensor(self):
-        try :
-            # 1. send start signal to Trigger pin
-            self.GPIO.output(self.TRIG_Pin, True)
-            time.sleep(0.00001)
-            self.GPIO.output(self.TRIG_Pin, False)
+        if not self.t1.is_alive():
+            print("[Warning] pino_sensor start thread")
+            if self.t1 is not None:
+                del self.t1
+            self.t1 = threading.Thread(target=self.read_switch, args=(self.sw_queue, self.statue_queue))
+            self.t1.daemon = True
+            self.t1.start()
 
-            # 2. receive response
-            measure_start: float = time.time()
-            pulse_start = 0
-            pulse_end = 0
+        if self.statue_queue.qsize() < 10:
+            self.statue_queue.put(1)
 
-            # 3. wait for first pulse.
-            while self.GPIO.input(self.ECHO_Pin) == 0:
-                pulse_start = time.time()
-                if ((pulse_start - measure_start)*1000000) >= self.TIMEOUT :
-                    return 150
-
-            # 4. measure time for last pulse.
-            # measure_start = time.time()
-            while self.GPIO.input(self.ECHO_Pin) == 1:
-                pulse_end = time.time()
-                if ((pulse_end - pulse_start)*1000000) >=  self.TIMEOUT:
-                    return 150
-
-            # 5. change time to distance
-            self.distance = ( (pulse_end - pulse_start) * 17001) # 1000000/2 / 29.41
-            #print("sensor %f"%self.distance)
-
-        except Exception as E:  # if Error occurs
-            self.last_exception = "read_sonic_sensor() ," +repr(E)  # save error Message
-            print(self.last_exception)
-            self.reset()  # reset gpio
-            return 150
-
-        else :
-            return self.distance
-
-    """
-    D. Private Functions
-    """
-    # [D.1] switch interrupt callback
-    def __sw_callback(self,channel):
-        # change sw_flag to True
-        if not self.sw_flag:
+        while not self.sw_queue.empty():
             self.sw_flag = True
-            # Volume Switch Interrupt Function
-            # Volume changes circular 0 -> 1 -> 2 ..... -> 9 -> 0
-            if self.volume > 9:
+            self.sw_queue.get()
+            self.volume += 1
+            if self.volume > 10:
                 self.volume = 0
-            else :
-                self.volume +=1
+
+        for i in range(10):
+            try:
+                self.distance = self.sonar.distance
+                return self.distance
+            except RuntimeError:
+                time.sleep(0.05)
+
+        return self.MAX_DISTANCE
+
+    def read_switch(self,sw_queue,statue_queue):
+        switch_pin = DigitalInOut(board.D17)
+        switch_pin.direction = Direction.INPUT
+        switch_pin.pull = Pull.DOWN
+        switch = Debouncer(switch_pin)
+
+        cnt  = 0
+        while True:
+            switch.update()
+            if switch.fell:
+                sw_queue.put(1)
+
+            cnt +=1
+            time.sleep(0.05)
+            if cnt > 500 :
+                #print("check alive, %d"%self.statue_queue.qsize())
+                if statue_queue.empty():
+                    break
+                else :
+                    statue_queue.get_nowait()
+                cnt = 0
+
+        print("[Warning] pino_sensor exit sensor thread")
+        del switch
+        switch_pin.deinit()
+        return 0
