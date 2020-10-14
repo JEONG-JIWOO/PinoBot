@@ -12,35 +12,12 @@ class Pino_LED:
         self.last_reset_time = 0
         self.last_exception = ""
 
-        # 3. Objects
-        self.cs = None
-        self.spi_bus = None
-
-        # 4. Init Functions
-        self.reset()
 
     def __del__(self):
         pass
 
     def reset(self):
-        # 1. check last reset time,
-        #    only can reset after 1min after last reset
-        if (time.time() - self.last_reset_time) < 60:
-            return 0
-
-        # 2. if spi, and cs exists..
-
-        # 3. refresh last reset time
-        self.last_reset_time = time.time()
-        self.last_exception = ""
-
-        # 4. re-open cs,spi and turn-off led
-        try:
-            self.write([0,0,0,0,0,0])
-
-        except Exception as E:
-            self.last_exception = "RGB_LED.reset()" + repr(E)
-            return -1
+        pass
 
     def write(self,rgb_s,b_persent = 100):
         # 1. check global self.on variable

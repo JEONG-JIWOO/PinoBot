@@ -16,28 +16,29 @@ class Pino_SERVO:
     """
     def __init__(self, i2c, num_motor = 8,
                  motor_enable = (1, 1, 1, 1, 1, 1, 1, 1),
-                 motor_min_angle = (0, 0, 0, 0, 0, 0, 0, 0),
-                 motor_max_angle = (170, 170, 170, 170, 170, 170, 170, 170),
+                 motor_min_angle = (0, 0, 50, 0, 0, 0, 0, 0),
+                 motor_max_angle = (150,150,140,60,60,0,0,0),
                  motor_default_angle =(0, 0, 0, 0, 0, 0, 0, 0)):
 
         # 0. arguments
         self.i2c = i2c
         self.num_motor = num_motor
         self.motor_enable = list(motor_enable)
-        self.max_angle_limit = list(motor_max_angle)
         self.min_angle_limit = list(motor_min_angle)
+        self.max_angle_limit = list(motor_max_angle)
         self.motor_default_angle = list(motor_default_angle)
+        self.motor_direction = [-1,1,1,1,-1,0,0,0]
 
         # 1. Static Variables
         self.pwm_min = 580 # min pwm, sg-90 : -90,
         self.pwm_max = 2480 # max pwm, sg-90 : +90,
         self.min_trj_time = 0.3
-        self.max_trj_time = 15
+        self.max_trj_time = 5
         self.control_time = 0.02
 
         # 2. variables
         self.servos = []
-        self.cur_angles = [0,0,0,0,0,0,0,0]
+        self.cur_angles = [30,30,50,30,30,0,0,0]
         self.last_reset_time = 0
         self.last_exception = ""
         self.force_stop_flag = False
@@ -121,7 +122,7 @@ class Pino_SERVO:
                 tar_angle = tar_angles[index]
                 if tar_angle < self.min_angle_limit[index]:
                     tar_angle = self.min_angle_limit[index]
-                elif tar_angle > self.max_angle_limit[index]:
+                if tar_angle > self.max_angle_limit[index]:
                     tar_angle = self.max_angle_limit[index]
                 # 4-2 calculate trajectory
                 trjs.append(self._make_trj(self.cur_angles[index],tar_angle,trj_time))
@@ -145,8 +146,12 @@ class Pino_SERVO:
                 for motor_n in range(len(actuate_motor_index_list)):
                     new_angle =  trjs[motor_n][j]
                     if self.cur_angles[motor_n] != new_angle:  # if motor angle is same as before, skip i2c comm
-                        self.servos[motor_n].angle = new_angle
-                        self.cur_angles[motor_n] = new_angle
+                        if self.motor_direction[motor_n] == 1:
+                            self.servos[motor_n].angle = new_angle
+                            self.cur_angles[motor_n] = new_angle
+                        elif self.motor_direction[motor_n] == -1:
+                            self.servos[motor_n].angle = 180 - new_angle
+                            self.cur_angles[motor_n] = new_angle
                 # 5.3 calculate wait time
                 wait_time = self.control_time - (time.time() - start_time)
                 time.sleep(wait_time) # sleep for few milliseconds, and makes all loop done, in exactly 20ms
@@ -154,10 +159,6 @@ class Pino_SERVO:
                 # 5.4 check if force stop initiated,
                 if self.force_stop_flag:
                     return 0
-
-            # 6. last fit to target angle
-            for index in range(len(actuate_motor_index_list)):
-                self.servos[index].angle = tar_angles[index]
 
         except Exception as E:
             self.last_exception = "SERVO.write("+str(tar_angles)+","+str(trj_time)+"), "+repr(E)

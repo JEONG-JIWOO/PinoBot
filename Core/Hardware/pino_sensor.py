@@ -1,7 +1,5 @@
 #!/usr/bin/python3
-# TODO, Change gpio module
 
-#import RPi.GPIO
 import time
 import adafruit_hcsr04
 import board
@@ -122,8 +120,8 @@ class Pino_SENSOR:
                 sw_queue.put(1)
 
             cnt +=1
-            time.sleep(0.05)
-            if cnt > 500 :
+            time.sleep(0.2)
+            if cnt > 100 :
                 #print("check alive, %d"%self.statue_queue.qsize())
                 if statue_queue.empty():
                     break

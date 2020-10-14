@@ -23,7 +23,7 @@ def custom_function():
 
     # 3. reset test
 
-    time.sleep(10)
+    time.sleep(1)
 
     sensor.reset()
 

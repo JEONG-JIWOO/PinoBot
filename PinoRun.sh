@@ -1,3 +1,2 @@
 #! /bin/bash
-
-python3 /home/pi/Desktop/PinoBot/pino_main.py
+/usr/bin/python3 -u /home/pi/Desktop/PinoBot/pino_main.py &>> /dev/tty1

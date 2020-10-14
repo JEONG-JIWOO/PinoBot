@@ -1,0 +1,14 @@
+[Unit]
+Description=PinoBot Service
+After=network.target
+
+[Service]
+ExecStart=
+WorkingDirectory=/home/pi/Desktop/PinoBot
+StandardOutput=inherit
+StandardError=inherit
+Restart=always
+User=pi
+
+[Install]
+WantedBy=multi-user.target

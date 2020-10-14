@@ -24,9 +24,9 @@ if __name__ == '__main__':
 def custom_function_1():
     # 1. init test
     from Core.Cloud.Google.pino_dialogflow import PinoDialogFlow
-    DIALOGFLOW_PROJECT_ID = 'a2-bwogyf'
+    DIALOGFLOW_PROJECT_ID = 'squarebot01-yauqxo'
     DIALOGFLOW_LANGUAGE_CODE = 'ko'
-    GOOGLE_APPLICATION_CREDENTIALS = '/home/pi/Desktop/PinoBot/Keys/a2-bwogyf-c40e46d0dc2b.json'
+    GOOGLE_APPLICATION_CREDENTIALS = '/boot/PinoBot/keys/pinobot01_example.json'
     TIME_OUT = 7
 
 
@@ -42,7 +42,7 @@ def custom_function_1():
     print("[Q] : %s " % text_response.query_result.query_text)
     print("[A] : accuracy:%0.3f | %s " % (text_response.query_result.intent_detection_confidence,
                                           text_response.query_result.fulfillment_text))
-    Gbot.play_audio_response(text_response)
+    #Gbot.play_audio_response(text_response)
 
     Gbot.start_stream()
     print("Streaming started, say something timeout, %d seconds" % TIME_OUT)
@@ -53,7 +53,7 @@ def custom_function_1():
                                               chatbot_response.query_result.fulfillment_text))
     else:
         print("rec error")
-    Gbot.play_audio_response(tts)
+    #Gbot.play_audio_response(tts)
     print("\n\n Start!")
     event_response = Gbot.send_event("Wall_Event", {'Wall_time': 50})
     print("[Q] : %s " % event_response.query_result.query_text)
@@ -69,7 +69,7 @@ def custom_function_1():
     print("[Q] : %s " % text_response.query_result.query_text)
     print("[A] : accuracy:%0.3f | %s " % (text_response.query_result.intent_detection_confidence,
                                           text_response.query_result.fulfillment_text))
-    Gbot.play_audio_response(text_response)
+    #Gbot.play_audio_response(text_response)
 
     Gbot.start_stream()
     print("Streaming started, say something timeout, %d seconds" % TIME_OUT)
@@ -80,7 +80,7 @@ def custom_function_1():
                                               chatbot_response.query_result.fulfillment_text))
     else:
         print("rec error")
-    Gbot.play_audio_response(tts)
+    #Gbot.play_audio_response(tts)
     print("\n\n Start!")
     event_response = Gbot.send_event("Wall_Event", {'Wall_time': 50})
     print("[Q] : %s " % event_response.query_result.query_text)

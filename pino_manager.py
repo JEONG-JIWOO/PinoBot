@@ -80,35 +80,31 @@ def main_boot():
     boot_config = check_auto_boot_config()
     main_process = None
 
-    try:
-        while boot_config == 0:
-            #print("[PinoManager] check PinoBot process")
-            ps_list = subprocess.run("ps -ef | grep py", shell=True, stdout=subprocess.PIPE).stdout.decode()
+    #try:
 
-            if "pino_main.py" in ps_list:
-                print("[PinoManager] pino_bot running ignore")
-                pass
-            else:
-                print("[PinoManager] no PinoBot, launch")
-                print(loding_str)
-                with open("/dev/tty1", 'w') as tty1:
-                    tty1.write(loding_str)
-                    main_process = subprocess.Popen("python3 ./pino_main.py &>> /dev/tty1", shell=True,cwd="/home/pi/Desktop/PinoBot/",
-                                      stdout=tty1,stderr=tty1)
-                if main_process.returncode == 127:
-                    print("[PinoManager] Invalid install")
-                    return 0
-                elif main_process.returncode == 137:
-                    print("[PinoManager] kill command, restart pinobot")
+    if boot_config == 1:
+        #print("[PinoManager] check PinoBot process")
+        ps_list = subprocess.run("ps -ef | grep py", shell=True, stdout=subprocess.PIPE).stdout.decode()
+        if "pino_main.py" in ps_list:
+            print("[PinoManager] pino_bot running ignore")
+            pass
+        else:
+            print("[PinoManager] no PinoBot, launch")
+            print(loding_str)
+            with open("/dev/tty1", 'w') as tty1:
+                tty1.write(loding_str)
+                main_process = subprocess.run("python3 /home/pi/Desktop/PinoBot/pino_main.py &>> /dev/tty1",
+                                              shell=True,cwd="/home/pi/Desktop/PinoBot/",
+                                  stdout=tty1,stderr=tty1)
+            if main_process.returncode == 127:
+                print("[PinoManager] Invalid install")
+                return 0
+            elif main_process.returncode == 137:
+                print("[PinoManager] kill command, kill pinobot")
+                return 0
+            else :
+                return 0
 
-                # wait until process, dead
-
-            time.sleep(3)
-    except :
-        # TODO, if parent(pino manager) is dead, kill pino main
-        if main_process is not None:
-            main_process.terminate()
-            main_process.kill()
 
 if __name__ == '__main__':
     main_boot()

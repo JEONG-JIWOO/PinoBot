@@ -189,7 +189,7 @@ class HardwareV1:
     def __set_default(self):
         #self.OLED.send_console(1,"Hardware Done!..   \n")
         self.RGB_LED.write([20,20,20,20,20,20])
-        self.SERVO.write([0,0,0,0,0],1)
+        self.SERVO.write([45,45,90,0,0],1)
 
     # [D.2] load logger
     def __set_logger(self):

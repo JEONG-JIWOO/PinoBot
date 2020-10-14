@@ -19,10 +19,15 @@ def custom_function():
 
     hardware = HardwareV1(config=config, base_path="/home/pi/Desktop/PinoBot/")
 
+    hardware.write(text="앞으로", led=[0, 0, 100], servo_angle=[45, 45, 90, 29, 60], servo_time=2)
+    hardware.write(text="아래로", led=[0, 100, 100], servo_angle=[135, 135, 90,180,180], servo_time=2)
+    hardware.write(text="위로", led=[255, 255, 255], servo_angle=[0, 0, 0, 10, 10], servo_time=2)
+    hardware.write(text="다시 기본", led=[0, 0, 50], servo_angle=[30, 30, 80, 26, 30], servo_time=2)
+
     # 2. function test
     # valid case
     print("=====valid!=====")
-    hardware.write(text="하이루", led=[0, 0, 100], servo_angle=[180, 180, 90], servo_time=2)
+    hardware.write(text="하이루", led=[0, 0, 100], servo_angle=[0, 0, 90], servo_time=2)
     hardware.write(image="test.jpg")
     hardware.write(text="아아")
     hardware.write(serial_msg="test_msg_logs")
@@ -42,10 +47,11 @@ def custom_function():
 
     # 4. function test after reset
     print("=====valid!=====")
-    hardware.write(text="하이루", led=[0, 0, 100], servo_angle=[180, 180, 90], servo_time=2)
+    hardware.write(text="하이루", led=[0, 0, 100], servo_angle=[0, 0, 120], servo_time=2)
     hardware.write(image="test.jpg")
     hardware.write(text="아아")
     hardware.write(serial_msg="test_msg_logs")
+    hardware.write(text="기본값 설정", led=[0, 0, 100], servo_angle=[30, 30, 80, 30, 30], servo_time=2)
     print(hardware.read())
 
     run_pyaudio()
@@ -74,23 +80,6 @@ def run_pyaudio():
     print(a)
     stream.close()
 
-    wav_data = wave.open("./1.wav", "rb")
-    # Open play stream. Formats are fixed,
-    stream = audio.open(
-        format=pyaudio.paInt16,
-        channels=1,
-        rate=16000,
-        output=True
-    )
-
-    # Play wav file.
-    data = wav_data.readframes(2048)
-    while len(data) > 1:
-        stream.write(data)
-        data = wav_data.readframes(2048)
-    stream.stop_stream()
-    stream.close()
-    audio.terminate()
 
 
 class CustomTests(unittest.TestCase):
