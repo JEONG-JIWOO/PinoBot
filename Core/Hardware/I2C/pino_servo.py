@@ -9,6 +9,7 @@ import time
 # Import the PCA9685 module.
 from adafruit_pca9685 import PCA9685
 from adafruit_motor import servo
+import random
 
 class Pino_SERVO:
     """
@@ -18,7 +19,7 @@ class Pino_SERVO:
                  motor_enable = (1, 1, 1, 1, 1, 1, 1, 1),
                  motor_min_angle = (0, 0, 50, 0, 0, 0, 0, 0),
                  motor_max_angle = (150,150,140,60,60,0,0,0),
-                 motor_default_angle =(0, 0, 0, 0, 0, 0, 0, 0)):
+                 motor_default_angle =(75, 75, 80, 30, 30, 0, 0, 0)):
 
         # 0. arguments
         self.i2c = i2c
@@ -169,6 +170,17 @@ class Pino_SERVO:
 
     def set_default(self):
         self.write(self.motor_default_angle,1)
+
+    def cal_random_motion(self,t):
+        motion = [t]
+        for i in range(self.num_motor):
+            if i == 0 or 1:
+                motion.append(random.randint(75-50,75+50)) # [TODO], Change Hard Cording
+            elif i == 2:
+                motion.append(random.randint(80 - 30, 80 + 30))
+            elif i == 3 or 4:
+                motion.append(random.randint(15 - 12,15+ 5))
+        return motion
     """
     D. Private Functions
     """

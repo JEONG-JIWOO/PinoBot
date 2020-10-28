@@ -243,6 +243,11 @@ class PinoBot:
             2. self.cloud.get_response() 
                 return tuple object, return = (stt_response, chatbot_response, tts_response)
             
+            # E0. Gcloud error
+                1. internet error
+                2. to much use
+                3. unknown
+            
             # E1. stt_response is None,
                 if can't recognize voice or talking
             
@@ -263,8 +268,18 @@ class PinoBot:
             talk_responses = self.cloud.get_response()
             self.hardware.write(text="인식중..", led=[0, 0, 0])
 
+            # 2.E0. Gcloud Error
+            if self.cloud.gcloud_state < 0:
+                if self.cloud.gcloud_state == -1 or -2:  # 'Internet Error', 'google server error'
+                    self.hardware.write(text="인터넷 문제\n 가 있어요 ㅠㅠ ")
+                elif self.cloud.gcloud_state == -3:
+                    self.hardware.write(text="오늘의 할당량을 \n 다 사용했네요 ㅠㅠ")
+                else :
+                    self.hardware.write(text="무언가 문제가 있어요 \n ㅠㅠ")
+                return -1
+
             # 2.E1. do not talk anything
-            if talk_responses[0] is None:
+            elif talk_responses[0] is None:
                 # if streaming can't rec talking, return None to Response
                 if fail_handler is not False:
                     event_response = self.cloud.send_event("FailNotTalk_Intent")
@@ -280,18 +295,25 @@ class PinoBot:
                     event_response = self.cloud.send_event("FailNotTalk_Intent")
                     task_type = "event"
                 else :
-                    self.hardware.write(text="Talk Fail", led=[150, 50, 0])
+                    self.hardware.write(text="Fail...", led=[150, 50, 0])
                     return -1
 
             # 2.E3. No matched Intent
             elif talk_responses[1].query_result.intent.display_name == "Default Fallback Intent":
+                msg = "인식실패 : \n%s" % self.cloud. stt_response.recognition_result.transcript
+                self.hardware.write(text=msg, led=[150, 50, 0])
+                try: # [1.1] log error
+                    with open("./fail_case.txt","a") as fail_file:
+                        m = time.asctime()+"    %s\n"%self.cloud. stt_response.recognition_result.transcript
+                        fail_file.write(m)
+                except:
+                    pass
                 if fail_handler is not False:
                     event_response = self.cloud.send_event("FailNoMatch_Intent")
                     if event_response is None :
                         event_response = talk_responses[1]
                     task_type = "event"
                 else :
-                    self.hardware.write(text="Talk Fail", led=[150, 50, 0])
                     return -1
             # 2.2 No Error
             else :
@@ -305,7 +327,12 @@ class PinoBot:
             1. self.cloud.send_event(event_name, event_parameter)
             call event by event_name(str) and event_parameter(dict)
             responses contain chatbot_response, and tts_response, (no need stt_response)
-
+            
+            # E0. Gcloud error
+                1. internet error
+                2. to much use
+                3. unknown
+            
             # E1. event_response is None,
                 not Usually occur, but sometimes happen, therefore we need handler
                 
@@ -318,8 +345,19 @@ class PinoBot:
             # E3. event fail case
             """
             event_response = self.cloud.send_event(event_name, event_parameter)
+
+            # E0. Gcloud Error
+            if self.cloud.gcloud_state < 0:
+                if self.cloud.gcloud_state == -1 or -2:  # 'Internet Error', 'google server error'
+                    self.hardware.write(text="인터넷 문제\n 가 있어요 ㅠㅠ ")
+                elif self.cloud.gcloud_state == -3:  # too much use
+                    self.hardware.write(text="오늘의 할당량을 \n 다 사용했네요 ㅠㅠ")
+                else :  # Unknown
+                    self.hardware.write(text="무언가 문제가 있어요 \n ㅠㅠ")
+                return -1
+
             # 2.E1. unknown error cause response to None
-            if not hasattr(event_response,'query_result'):
+            elif not hasattr(event_response,'query_result'):
                 if fail_handler is not False:
                     event_response = self.cloud.send_event("FailNoMatch_Intent")
                 else :
@@ -401,6 +439,7 @@ class PinoBot:
         
         """
 
+        is_pinoMotor = False  # V1.1
         for action_parameters in query_result['parameters'].keys():
             # split order and "PinoBot Command" name
             check_cmd = action_parameters.split("_")
@@ -414,8 +453,10 @@ class PinoBot:
                     continue
 
                 if isinstance(num, int) or isinstance(num, float) :
-                    # check first block "1" or "a" is int or float,
+                    # case first block is int or float, -> pino command
                     pino_commands.append([num, check_cmd[1], query_result['parameters'][action_parameters].upper()])
+                    if check_cmd[1].upper() == "PinoMotor".upper():
+                        is_pinoMotor = True
                 else :
                     # if first block is not number (like "a") : go to dflow_parameters
                     dflow_parameters[action_parameters] = query_result['parameters'][action_parameters].upper()
@@ -424,23 +465,34 @@ class PinoBot:
 
         pino_commands.sort(key=lambda x: x[0]) # sort by command order number
 
-        # 6. Execute PinoBot Parameter
+        # TODO [1.1]
+        # 6. add random motion
+        # if "PinoMotor".upper() not in :
+        if not is_pinoMotor:
+            a = random.randint(1, 6)
+            rm = self.hardware.SERVO.cal_random_motion(a / 2)  # make random motion
+            pino_commands.append([0, "PinoMotor",str(rm)])  # dflow parameter is str, so cast to str
+            rm = self.hardware.SERVO.cal_random_motion(a / 2)
+            pino_commands.append([3, "PinoMotor",str(rm)])
+
+        pino_commands.sort(key=lambda x: x[0])
+        # 7. Execute PinoBot Parameter
         self.hardware.write(led=[0, 0, 0])
         print("run intent: ",intent_name)
         # start actuate in thread
         t1 = threading.Thread(target=self.__execute_pino_commands, args=(intent_name, pino_commands))
         t1.start()
 
-        # 7. start play saying
+        # 8. start play saying
         if task_type == "talk":
             self.cloud.play_audio_response(talk_responses[2])
         elif task_type == 'event':
             self.cloud.play_audio_response(event_response)
-        # 8. wait for end
+        # 9. wait for end
         t1.join()
 
 
-        # 9. run custom scripts
+        # 10. run custom scripts
         # TODO : Extension
         """
         to make user write script and handle custom commands 
@@ -454,10 +506,17 @@ class PinoBot:
                             intent_name=intent_name,
                             dialogflow_parameters=query_result['parameters'])
 
-        # 10. run event command
+        # 11. run event command
         self.__run_pino_event_commands(dflow_parameters)
         self.hardware.write(text="\n\n...", led=[0, 0, 0])
         #raise ValueError
+
+
+        # 12. [TODO] 1.1 if intent failed, write log
+        # 1. write log to 1day log file
+
+        # 2. write log to total log file
+
         return 0
 
 
@@ -487,6 +546,7 @@ class PinoBot:
         if cmd_name.upper() == "PinoMotor".upper():
             args = None
             servo_time = None
+            #print("run motor, ",cmd_args)
             try:
                 args = ast.literal_eval(cmd_args)
                 servo_time = float(args[0])
@@ -672,9 +732,14 @@ if __name__ == '__main__':
     print(loding_str)
     while True:
         # Do try , Except on in here
-        try:
+        #try:
             bot.main_loop_once()
-        except Exception as E:
-            bot.log.error(repr(E))
-            break
+        #except Exception as E:
+            #bot.log.error(repr(E))
+            #break
+
+        # TODO 1.1
+        # if email : enable, and time == config
+        # send daily fail log & total log to email
+
     del bot

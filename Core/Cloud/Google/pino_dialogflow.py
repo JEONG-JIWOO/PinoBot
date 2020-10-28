@@ -242,7 +242,7 @@ class PinoDialogFlow:
             stream = self.audio.open(
                 format=pyaudio.paInt16,
                 channels=1,
-                rate=self._SAMPLE_RATE,
+                rate=15800, #self._SAMPLE_RATE,
                 output=True
             )
 
@@ -453,10 +453,11 @@ class PinoDialogFlow:
 
         # 2. Wait for response
         print("get Response", end = '')
-        while True: 
+        for item in self.responses:
             try:
                 # 3. get response
-                item = next(self.responses) # receive Response
+                #import google.api_core.exceptions as E
+                #raise E.TooManyRequests('as')
                 #self.log.info("get Response...")
                 print('.', end = '')
 
@@ -481,25 +482,17 @@ class PinoDialogFlow:
                         self.tts_response = None
                     break
 
-            # 7. Close loop, before Final call
-            # Error hander, usually called when user don't talk anything 
-            except StopIteration: 
-                self.stt_response = None
-                self.dflow_response = None
-                self.log.error("i can't get result by some reason")
-                break
-
-            # 8. check google cloud error.
+            # 7. check google cloud error.
             except Exception as GCLOUD_ERROR:  # Gcloud Error
                 self._find_error(GCLOUD_ERROR)
                 self.asound.snd_lib_error_set_handler(None) # set back handler as Default
                 break
 
-
         # 8. return Result
         print()
         time.sleep(0.05) # wait for turn off Stream
         if self.stt_response is not None and self.dflow_response is not None:
+            self.gcloud_state = 1
             return self.stt_response, self.dflow_response , self.tts_response
         
         return None, None, None
@@ -555,7 +548,9 @@ class PinoDialogFlow:
         except Exception as GCLOUD_ERROR:  # Gcloud Error
             self._find_error(GCLOUD_ERROR)
             return None
+
         # 5. SAVE result
+        self.gcloud_state = 1
         self.dflow_response = response
         self.tts_response = response
         return response
@@ -577,25 +572,25 @@ class PinoDialogFlow:
             self.log.error(GCLOUD_ERROR)
             self.gcloud_state = -1
 
-        # -2: 'ETC Network client and Server Error',
-        elif (isinstance(GCLOUD_ERROR, E.ServerError) or isinstance(GCLOUD_ERROR, E.ClientError)):
-            self.log.error(GCLOUD_ERROR)
-            self.gcloud_state = -2
-
         # -3: 'over use Error',
         elif isinstance(GCLOUD_ERROR, E.TooManyRequests):
             self.log.error(GCLOUD_ERROR)
-            self.gcloud_state = -3 
+            self.gcloud_state = -3
 
         # -4: 'authorization Error',
         elif isinstance(GCLOUD_ERROR, E.Unauthorized):
             self.log.error(GCLOUD_ERROR)
-            self.gcloud_state = -4 
+            self.gcloud_state = -4
 
         # -5: 'code bug',
-        elif isinstance(GCLOUD_ERROR, E.BadRequest) :
+        elif isinstance(GCLOUD_ERROR, E.BadRequest):
             self.log.error(GCLOUD_ERROR)
             self.gcloud_state = -5
+
+        # -2: 'ETC Network client and Server Error',
+        elif (isinstance(GCLOUD_ERROR, E.ServerError) or isinstance(GCLOUD_ERROR, E.ClientError)):
+            self.log.error(GCLOUD_ERROR)
+            self.gcloud_state = -2
 
         else:
             self.log.critical(GCLOUD_ERROR)
