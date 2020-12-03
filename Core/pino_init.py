@@ -1,11 +1,11 @@
 #!/usr/bin/python3
 
 import configparser
-import requests
+#import requests
 import subprocess, time
 import logging
 from logging.handlers import RotatingFileHandler
-
+from urllib3 import PoolManager, Timeout, Retry
 
 class Pino_Init:
     """
@@ -86,7 +86,6 @@ class Pino_Init:
         self.hardware.OLED.send_loading_console(step=1, msgs="Hardware..OK.\n")
 
         # 4. check internet connected
-        self.hardware.OLED.send_loading_console(step=2, msgs="Internet..")
         self.__load_internet()
 
         # 4.1 if not, reset internet
@@ -255,14 +254,20 @@ class Pino_Init:
 
     # [C.4] check internet connection
     def __load_internet(self):
+        self.net_connected = False
+        self.hardware.OLED.send_loading_console(step=2, msgs="check network..")
+        a = time.time()
+        http = PoolManager(timeout=Timeout(connect=1.0, read=2.0),retries=Retry(0, redirect=0))
         try:
-            response = requests.get('https://status.cloud.google.com/', timeout=2.50)
-            if response.status_code != 200:  # if internet not ok.
+            response = http.request("HEAD",'https://status.cloud.google.com/')
+            msg  = "Internet.. "+str(response.status)+".."
+            self.hardware.OLED.send_loading_console(step=2, msgs=msg)
+            if response.status == 200:  # if internet ok.
                 self.log.warning("Internet Not Connected")
-                self.net_connected = False
-            else:
                 self.net_connected = True
+                return 0
         except Exception as E:
+            print(time.time()-a)
             self.log.error("boot_utils.__load_internet(), " + repr(E))
             return -1
         else:
@@ -270,13 +275,15 @@ class Pino_Init:
 
     # [C.5] reset wifi, and try to re-connect 5 times
     def __reset_internet(self):
-        self.hardware.OLED.send_loading_console(step=3, msgs="\n Re connect..")
+        #self.hardware.OLED.send_loading_console(step=3, msgs="\n Re connect..")
 
-        # 1. try to reconnect max 5 times
-        for i in range(6):
+        # 1. try to reconnect max 10 times
+        for i in range(11):
             msg = ""
-            self.hardware.OLED.send_loading_text(step=4, msg="WiFi Reset.. \n")
+
             # 2. check wpa_supplicant.conf error
+            """
+            self.hardware.OLED.send_loading_console(step=4, msgs="WiFi Reset.. \n")
             try:
                 self.log.warning("Checking WIFI..")
                 msg = subprocess.check_output('sh ' + self.base_path + '/Core/Utils/wifiCheck.sh', shell=True).decode(
@@ -287,7 +294,7 @@ class Pino_Init:
                 self.hardware.write(text = "Fail Internet \n [E21],check wpa_supplicant \n Shutdown",led=[255, 0, 0])
                 return -1  # Exit Program
 
-            self.hardware.OLED.send_loading_text(step=5, msg="WiFi Reset.. OK \n WiFi re-connect..")
+            self.hardware.OLED.send_loading_console(step=5, msg="WiFi Reset.. OK \n WiFi re-connect..")
             # 3. wpa_supplicant.conf is fine,   re-set wifi
             try:  # Run WIFI reset scripts
                 subprocess.check_output('sh ' + self.base_path + '/Core/Utils/wifiReset.sh', shell=True).decode('utf-8')
@@ -297,28 +304,34 @@ class Pino_Init:
                 return -1  # Exit Program
 
             self.log.warning("boot_utils.__Reset_internet(), reset wifi....")
+            """
             self.hardware.write(led=[205, 140, 0])  # Orange LED on
 
-            # 4. wait 30 seconds to reconnect
+            # 4. wait 20 seconds to reconnect
             cnt = 0
-            for i in range(15):
-                time.sleep(2)
+            for j in range(20):
+                time.sleep(1)
                 cnt += 1
                 if cnt % 2 == 0:
-                    self.hardware.OLED.send_loading_text(step=6, msg="WiFi Reset.. OK \n WiFi re-connect.")
+                    lcd_msg = "WiFi Re-connect. \n %d - %d times.."%(i,j)
+                    self.hardware.OLED.send_loading_text(step=6, msg=lcd_msg)
                 else:
-                    self.hardware.OLED.send_loading_text(step=7, msg="WiFi Reset.. OK \n WiFi re-connect..")
+                    lcd_msg = "WiFi Re-connect..\n %d - %d times.." %(i,j)
+                    self.hardware.OLED.send_loading_text(step=7, msg=lcd_msg)
+
 
             self.__load_internet()
             # 5. if internet connected , close loop
             if self.net_connected is True:  # if network connected, break
-                self.hardware.send_loading_console(step=8, msgs="OK")
+                self.hardware.OLED.send_loading_console(step=8, msgs="OK")
                 return 0
-            # 6. if re connection failed over 5 times.
-            elif i > 5:
-                self.log.warning("boot_utils.__load_internet(), Wifi not found.. " )
+            # 6. if re connecti on failed over 11 times.
+            elif i > 10:
+                self.log.warning("boot_utils.__load_internet(), Wifi  not     found.. " )
                 self.hardware.write(text= "wifi \n not found \n Shutdown",led=[255, 0, 100])  # PURPLE LED ON
                 return -1
+            else :
+                continue
 
     # [C.6] Cloud connect & check Function
     def __load_diaglogflow(self):
