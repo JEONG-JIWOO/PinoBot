@@ -98,7 +98,7 @@ class HardwareV1:
                                                    self.config['MOTOR']['motor_default_angle'])
                                                )
             self.RGB_LED = pino_led.Pino_LED(on=ast.literal_eval(self.config['LED']['ON'])) # rec error occur
-            self.SENSOR = pino_sensor.Pino_SENSOR()
+            self.SENSOR = pino_sensor.Pino_GPIO()
             self.UART = pino_uart.Pino_UART(baud_rate=int(self.config['UART']['baud_rate']))
 
         except Exception as E:

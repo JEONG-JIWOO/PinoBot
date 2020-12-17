@@ -442,8 +442,20 @@ class PinoBot:
         is_pinoMotor = False  # V1.1
         for action_parameters in query_result['parameters'].keys():
             # split order and "PinoBot Command" name
-            check_cmd = action_parameters.split("_")
+            """
+             action_parameters :
+            str or dict,
+            
+            dict is not handled in this function
+            
+            
+            """
 
+            if not isinstance(action_parameters,str):
+                continue
+
+
+            check_cmd = action_parameters.split("_")
             if len(check_cmd) != 1:
                 # if "_" is contained in parameter name, like.. ("1_PinoCmd" or "a_asdf")
                 try:

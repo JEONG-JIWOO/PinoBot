@@ -242,7 +242,7 @@ class PinoDialogFlow:
             stream = self.audio.open(
                 format=pyaudio.paInt16,
                 channels=1,
-                rate=15800, #self._SAMPLE_RATE,
+                rate=16000, #self._SAMPLE_RATE,
                 output=True
             )
 

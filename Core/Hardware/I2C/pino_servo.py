@@ -19,7 +19,7 @@ class Pino_SERVO:
                  motor_enable = (1, 1, 1, 1, 1, 1, 1, 1),
                  motor_min_angle = (0, 0, 50, 0, 0, 0, 0, 0),
                  motor_max_angle = (150,150,140,60,60,0,0,0),
-                 motor_default_angle =(75, 75, 80, 30, 30, 0, 0, 0)):
+                 motor_default_angle =(0, 0, 40, 0, 0, 0, 0, 0)):
 
         # 0. arguments
         self.i2c = i2c
@@ -148,10 +148,10 @@ class Pino_SERVO:
                     new_angle =  trjs[motor_n][j]
                     if self.cur_angles[motor_n] != new_angle:  # if motor angle is same as before, skip i2c comm
                         if self.motor_direction[motor_n] == 1:
-                            self.servos[motor_n].angle = new_angle
+                            self.servos[motor_n].angle = new_angle +self.motor_default_angle[motor_n]
                             self.cur_angles[motor_n] = new_angle
                         elif self.motor_direction[motor_n] == -1:
-                            self.servos[motor_n].angle = 180 - new_angle
+                            self.servos[motor_n].angle = 180 - new_angle +self.motor_default_angle[motor_n]
                             self.cur_angles[motor_n] = new_angle
                 # 5.3 calculate wait time
                 wait_time = self.control_time - (time.time() - start_time)

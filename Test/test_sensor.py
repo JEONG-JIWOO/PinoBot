@@ -10,7 +10,7 @@ def custom_function():
     # 1. init test
     from Core.Hardware import pino_sensor
     import time
-    sensor =  pino_sensor.Pino_SENSOR()
+    sensor =  pino_sensor.Pino_GPIO()
 
     # 2. working test
     for i in range(30):

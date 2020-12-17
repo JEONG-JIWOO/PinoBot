@@ -23,6 +23,7 @@ def custom_function():
     hardware.write(text="아래로", led=[0, 100, 100], servo_angle=[135, 135, 90,180,180], servo_time=2)
     hardware.write(text="위로", led=[255, 255, 255], servo_angle=[0, 0, 0, 10, 10], servo_time=2)
     hardware.write(text="다시 기본", led=[0, 0, 50], servo_angle=[30, 30, 80, 26, 30], servo_time=2)
+    hardware.SERVO.set_default()
 
     # 2. function test
     # valid case
@@ -72,7 +73,7 @@ def run_pyaudio():
     import wave
 
     audio = pyaudio.PyAudio()
-    stream = audio.open(format=pyaudio.paInt16, channels=1,
+    stream = audio.open(format=pyaudio.paInt16, channels=2,
                              rate=16000, input=True,
                              frames_per_buffer=2048, input_device_index=2)
 

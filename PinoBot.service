@@ -3,7 +3,7 @@ Description=PinoBot Service
 After=network.target
 
 [Service]
-ExecStart=
+ExecStart=/bin/bash /home/pi/Desktop/PinoBot/PinoRun.sh
 WorkingDirectory=/home/pi/Desktop/PinoBot
 StandardOutput=inherit
 StandardError=inherit

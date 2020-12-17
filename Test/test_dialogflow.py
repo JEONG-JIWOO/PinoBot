@@ -5,22 +5,6 @@ Core.Hardware.SPI.Pino_LED
 """
 
 import unittest ,time
-class CustomTests(unittest.TestCase):
-    def setUp(self):
-        """ 테스트 시작전 테스트 설정"""
-        pass
-
-    def tearDown(self):
-        """ 테스트 끝난이후 실행되는 함수"""
-        pass
-
-    def test_runs(self):
-        """ 실 테스트 코드 """
-        custom_function_1()
-
-if __name__ == '__main__':
-    unittest.main()
-
 def custom_function_1():
     # 1. init test
     from Core.Cloud.Google.pino_dialogflow import PinoDialogFlow
@@ -42,7 +26,7 @@ def custom_function_1():
     print("[Q] : %s " % text_response.query_result.query_text)
     print("[A] : accuracy:%0.3f | %s " % (text_response.query_result.intent_detection_confidence,
                                           text_response.query_result.fulfillment_text))
-    #Gbot.play_audio_response(text_response)
+    Gbot.play_audio_response(text_response)
 
     Gbot.start_stream()
     print("Streaming started, say something timeout, %d seconds" % TIME_OUT)
@@ -69,7 +53,7 @@ def custom_function_1():
     print("[Q] : %s " % text_response.query_result.query_text)
     print("[A] : accuracy:%0.3f | %s " % (text_response.query_result.intent_detection_confidence,
                                           text_response.query_result.fulfillment_text))
-    #Gbot.play_audio_response(text_response)
+    Gbot.play_audio_response(text_response)
 
     Gbot.start_stream()
     print("Streaming started, say something timeout, %d seconds" % TIME_OUT)
@@ -80,7 +64,7 @@ def custom_function_1():
                                               chatbot_response.query_result.fulfillment_text))
     else:
         print("rec error")
-    #Gbot.play_audio_response(tts)
+    Gbot.play_audio_response(tts)
     print("\n\n Start!")
     event_response = Gbot.send_event("Wall_Event", {'Wall_time': 50})
     print("[Q] : %s " % event_response.query_result.query_text)
@@ -89,3 +73,20 @@ def custom_function_1():
 
     # 5. del test
     del Gbot
+
+class CustomTests(unittest.TestCase):
+    def setUp(self):
+        """ 테스트 시작전 테스트 설정"""
+        pass
+
+    def tearDown(self):
+        """ 테스트 끝난이후 실행되는 함수"""
+        pass
+
+    def test_runs(self):
+        """ 실 테스트 코드 """
+        custom_function_1()
+
+if __name__ == '__main__':
+    unittest.main()
+
