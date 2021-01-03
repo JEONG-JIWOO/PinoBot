@@ -8,7 +8,7 @@ import unittest
 
 def custom_function():
     # 1. init test
-    from Core.Hardware import pino_sensor
+    from modules.Hardware import pino_sensor
     import time
     sensor =  pino_sensor.Pino_GPIO()
 

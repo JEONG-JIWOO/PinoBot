@@ -11,7 +11,7 @@ def custom_function():
     Module TEST codes
     """
     # 1. init test
-    from Core.Hardware.v1 import HardwareV1
+    from modules.Hardware.v1 import HardwareV1
     import configparser
     config = configparser.ConfigParser()
     with open("/home/pi/Desktop/PinoBot/config.ini") as fp:

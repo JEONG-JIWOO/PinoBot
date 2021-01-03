@@ -6,10 +6,11 @@ Core.Hardware.SPI.Pino_LED
 
 import unittest
 
+
 def custom_function():
 
     # 1. init test
-    from Core.Hardware.SPI import pino_led
+    from modules.Hardware.SPI import pino_led
     import time
     led = pino_led.Pino_LED()
 

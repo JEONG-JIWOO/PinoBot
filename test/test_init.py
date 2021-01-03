@@ -7,8 +7,8 @@ Core.Hardware.SPI.Pino_LED
 import unittest
 
 def custom_function():
-    from Core.pino_init import Pino_Init
-    d = Pino_Init("/home/pi/Desktop/PinoBot/")
+    from modules.pino_init import Pino_Init
+    d = Pino_Init("~/Desktop/Desktop/PinoBot/")
     d.boot()
     print("tested")
 

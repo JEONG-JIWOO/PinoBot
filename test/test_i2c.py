@@ -9,7 +9,7 @@ import unittest
 def custom_function_1():
     # 1. init test
     import board ,time
-    from Core.Hardware.I2C import pino_oled
+    from modules.Hardware.I2C import pino_oled
     i2c = board.I2C()
     oled_board = pino_oled.Pino_OLED(i2c,
                       "/home/pi/Desktop/PinoBot/",
@@ -88,7 +88,7 @@ def custom_function_1():
 def custom_function_2():
     # 1. init test
     import board ,time
-    from Core.Hardware.I2C import pino_servo
+    from modules.Hardware.I2C import pino_servo
     i2c = board.I2C()
     servo_board = pino_servo.Pino_SERVO(i2c)
 
@@ -116,7 +116,7 @@ def custom_function_2():
 
 def random_motion_test():
     import board ,random
-    from Core.Hardware.I2C import pino_servo
+    from modules.Hardware.I2C import pino_servo
     i2c = board.I2C()
     servo_board = pino_servo.Pino_SERVO(i2c)
     servo_board.set_default()

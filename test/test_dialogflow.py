@@ -1,18 +1,16 @@
 """
 Module TEST codes
-
 Core.Hardware.SPI.Pino_LED
 """
-
 import unittest ,time
+
 def custom_function_1():
     # 1. init test
-    from Core.Cloud.Google.pino_dialogflow import PinoDialogFlow
+    from modules.Cloud.Google.pino_dialogflow import PinoDialogFlow
     DIALOGFLOW_PROJECT_ID = 'squarebot01-yauqxo'
     DIALOGFLOW_LANGUAGE_CODE = 'ko'
-    GOOGLE_APPLICATION_CREDENTIALS = '/boot/PinoBot/keys/pinobot01_example.json'
+    GOOGLE_APPLICATION_CREDENTIALS = '~/Desktop/PinoBot/keys/pinobot01_example.json'
     TIME_OUT = 7
-
 
     Gbot = PinoDialogFlow(DIALOGFLOW_PROJECT_ID,
                           DIALOGFLOW_LANGUAGE_CODE,
@@ -35,6 +33,7 @@ def custom_function_1():
         print("[Q] : %s " % stt_response.recognition_result.transcript)
         print("[A] : accuracy:%0.3f | %s " % (chatbot_response.query_result.intent_detection_confidence,
                                               chatbot_response.query_result.fulfillment_text))
+
     else:
         print("rec error")
     #Gbot.play_audio_response(tts)

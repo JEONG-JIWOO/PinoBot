@@ -1,8 +1,8 @@
 #!/usr/bin/python3
 
 import time, random , queue
-from Core.pino_init import Pino_Init
-from Core.pino_custom_cmd import run_pino_custom_cmd
+from modules.pino_init import Pino_Init
+from modules.pino_custom_cmd import run_pino_custom_cmd
 import ast , datetime
 
 from google.protobuf.json_format import MessageToDict

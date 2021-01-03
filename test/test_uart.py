@@ -7,7 +7,7 @@ Core.Hardware.SPI.Pino_LED
 import unittest
 
 def custom_function():
-    from Core.Hardware import pino_uart
+    from modules.Hardware import pino_uart
     uart = pino_uart.Pino_UART()
     uart.write("asdf")
     uart.read()

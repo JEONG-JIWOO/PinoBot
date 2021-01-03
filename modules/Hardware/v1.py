@@ -8,9 +8,9 @@ PinoBot V1 Hardware Control Module
 import logging , time
 import board
 
-from Core.Hardware.I2C import pino_servo , pino_oled
-from Core.Hardware import pino_sensor , pino_uart
-from Core.Hardware.SPI import pino_led
+from modules.Hardware.I2C import pino_servo , pino_oled
+from modules.Hardware import pino_sensor , pino_uart
+from modules.Hardware.SPI import pino_led
 
 class HardwareV1:
     """

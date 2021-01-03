@@ -17,7 +17,7 @@ class Pino_Init:
         self.base_path = "/home/pi/Desktop/PinoBot/" #base_path
 
         # 2. variables
-        self.config_path = "/boot/PinoBot/PinoConfig.ini" # self.base_path+"/config.ini"
+        self.config_path = "~/Desktop//PinoBot/PinoConfig.ini" # self.base_path+"/config.ini"
         self.net_connected = False
         self.error_msg =""
 
@@ -65,7 +65,7 @@ class Pino_Init:
         # 2. load ini
         if self.__load_config() == -1:
             try:
-                from Core.Hardware.I2C.pino_oled import Pino_OLED
+                from modules.Hardware.I2C.pino_oled import Pino_OLED
                 import board
                 i2c = board.I2C()
                 oled = Pino_OLED(i2c,
@@ -102,7 +102,7 @@ class Pino_Init:
             return -1
         self.hardware.OLED.send_loading_console(step=13, msgs="OK. \n")
 
-        # 6. copy media from /boot to media folder
+        # 6. copy media from ~/Desktop/ to media folder
         self.hardware.OLED.send_loading_console(step=14, msgs="Copy Media..pass")
 
         """
@@ -147,9 +147,9 @@ class Pino_Init:
         # 1. config not exist, write default config.
         import os
         default_config = self.__config_default()
-        if not os.path.isdir("/boot/PinoBot"):
-            self.error_msg = "no PinoBot \nfolder \n on /boot"
-            self.log.error("no PinoBot \nfolder \n on /boot")
+        if not os.path.isdir("~/Desktop/PinoBot"):
+            self.error_msg = "no PinoBot \nfolder \n on ~/Desktop/"
+            self.log.error("no PinoBot \nfolder \n on ~/Desktop/")
             return -1
 
         if not os.path.isfile(self.config_path):
@@ -244,7 +244,7 @@ class Pino_Init:
         if self.config is None:  # if config is not Loaded, cancel boot.
             return -1
         try:
-            from Core.Hardware import v1
+            from modules.Hardware import v1
             self.hardware = v1.HardwareV1(self.config,self.base_path)
         except Exception as E:
             self.log.error("boot_utils.__load_hardware(), " + repr(E))
@@ -340,7 +340,7 @@ class Pino_Init:
             return -1
         try:
             self.hardware.OLED.send_loading_console(step=9, msgs=".")
-            from Core.Cloud.Google import pino_dialogflow
+            from modules.Cloud.Google import pino_dialogflow
             self.cloud = pino_dialogflow.PinoDialogFlow(
                 self.config['GCloud']['google_project'],
                 self.config['GCloud']['language'],
@@ -360,7 +360,7 @@ class Pino_Init:
         else :
             return 0
 
-    # [C.7] Copy Media files from /boot dir
+    # [C.7] Copy Media files from ~/Desktop/ dir
     def __media_copy(self):
         import os , shutil
         # 1. check media folder exist.
@@ -374,20 +374,20 @@ class Pino_Init:
 
         # 2. copy media file.
         # TODO check works on wav and jpg/png files
-        if os.path.isdir("/boot/media"):
-            files = [ f for f in os.listdir('/boot/media/') if os.path.isfile(f) ]
+        if os.path.isdir("~/Desktop//media"):
+            files = [ f for f in os.listdir('~/Desktop//media/') if os.path.isfile(f) ]
             self.log.info("start copy media file")
             for file_name in files:
                 if os.path.isfile(self.base_path+"/media/"+file_name):  # if file exist,
                     try:
                         os.remove(self.base_path+"/media/" + file_name) #  remove old file
-                        shutil.copyfile("/boot/media/" + file_name, self.base_path + "/media/" + file_name)  # try copy
+                        shutil.copyfile("~/Desktop//media/" + file_name, self.base_path + "/media/" + file_name)  # try copy
                     except Exception as E:
-                        self.log.warning("boot_utils.__media_copy(), ( /boot/media/"
+                        self.log.warning("boot_utils.__media_copy(), ( ~/Desktop//media/"
                                          + file_name + self.base_path + "/media/" + file_name + ") "+repr(E))
                 else :
                     try :
-                        shutil.copyfile("/boot/media/"+file_name,self.base_path+"/media/"+file_name) # try copy
+                        shutil.copyfile("~/Desktop//media/"+file_name,self.base_path+"/media/"+file_name) # try copy
                     except Exception as E:
                         self.log.warning("boot_utils.__media_copy(), copy fail " + file_name + ") " + repr(E))
 
@@ -399,7 +399,7 @@ class Pino_Init:
     def __config_default(self):
         config = configparser.ConfigParser()
         config['GCloud'] = {
-                                'google_key':'/boot/PinoBot/keys/squarebot01-yauqxo-8d211b1f1a85.json',
+                                'google_key':'~/Desktop//PinoBot/keys/squarebot01-yauqxo-8d211b1f1a85.json',
                                 'google_project':'squarebot01-yauqxo',
                                 'language': 'ko',
                                 'time_out': '7'
