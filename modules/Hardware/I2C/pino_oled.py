@@ -204,9 +204,9 @@ class Pino_OLED:
         # 1. try to load font from config file
 
         try :
-            self.main_font = ImageFont.truetype(self.base_path+"/Core/Hardware/Fonts/"+self.main_font_name,
+            self.main_font = ImageFont.truetype(self.base_path+"/modules/Hardware/Fonts/"+self.main_font_name,
                                                 self.main_font_size)
-            self.console_font = ImageFont.truetype(self.base_path+"/Core/Hardware/Fonts/"+self.console_font_name,
+            self.console_font = ImageFont.truetype(self.base_path+"/modules/Hardware/Fonts/"+self.console_font_name,
                                                    self.console_font_size)
         except IOError :
             print("fail to load font, load [NanumBarunGothicBold] ")
@@ -218,10 +218,10 @@ class Pino_OLED:
         # 2. try to load font from pinobot Default Font
         try :
             self.main_font = ImageFont.truetype(
-                                self.base_path+"/Core/Hardware/Fonts/NanumBarunGothicBold.ttf",
+                                self.base_path+"/modules/Hardware/Fonts/NanumBarunGothicBold.ttf",
                                 self.main_font_size)
             self.console_font = ImageFont.truetype(
-                                self.base_path+"/Core/Hardware/Fonts/NanumBarunGothicBold.ttf",
+                                self.base_path+"/modules/Hardware/Fonts/NanumBarunGothicBold.ttf",
                                 self.console_font_size)
         except IOError:
             print("fail to load font, load [system default] ")

@@ -17,7 +17,7 @@ class Pino_Init:
         self.base_path = "/home/pi/Desktop/PinoBot/" #base_path
 
         # 2. variables
-        self.config_path = "~/Desktop//PinoBot/PinoConfig.ini" # self.base_path+"/config.ini"
+        self.config_path = "/home/pi/Desktop/PinoBot/PinoConfig.ini" # self.base_path+"/config.ini"
         self.net_connected = False
         self.error_msg =""
 
@@ -102,7 +102,7 @@ class Pino_Init:
             return -1
         self.hardware.OLED.send_loading_console(step=13, msgs="OK. \n")
 
-        # 6. copy media from ~/Desktop/ to media folder
+        # 6. copy media from /home/pi/Desktop/ to media folder
         self.hardware.OLED.send_loading_console(step=14, msgs="Copy Media..pass")
 
         """
@@ -147,10 +147,10 @@ class Pino_Init:
         # 1. config not exist, write default config.
         import os
         default_config = self.__config_default()
-        if not os.path.isdir("~/Desktop/PinoBot"):
-            self.error_msg = "no PinoBot \nfolder \n on ~/Desktop/"
-            self.log.error("no PinoBot \nfolder \n on ~/Desktop/")
-            return -1
+        #if not os.path.isdir("/home/pi/Desktop/PinoBot"):
+        #    self.error_msg = "no PinoBot \nfolder \n on /home/pi/Desktop/"
+        #    self.log.error("no PinoBot \nfolder \n on /home/pi/Desktop/")
+        #    return -1
 
         if not os.path.isfile(self.config_path):
             with open(self.config_path,"w") as configfile:
@@ -360,7 +360,7 @@ class Pino_Init:
         else :
             return 0
 
-    # [C.7] Copy Media files from ~/Desktop/ dir
+    # [C.7] Copy Media files from /home/pi/Desktop/ dir
     def __media_copy(self):
         import os , shutil
         # 1. check media folder exist.
@@ -374,20 +374,20 @@ class Pino_Init:
 
         # 2. copy media file.
         # TODO check works on wav and jpg/png files
-        if os.path.isdir("~/Desktop//media"):
-            files = [ f for f in os.listdir('~/Desktop//media/') if os.path.isfile(f) ]
+        if os.path.isdir("/home/pi/Desktop/media"):
+            files = [ f for f in os.listdir('/home/pi/Desktop/media/') if os.path.isfile(f) ]
             self.log.info("start copy media file")
             for file_name in files:
                 if os.path.isfile(self.base_path+"/media/"+file_name):  # if file exist,
                     try:
                         os.remove(self.base_path+"/media/" + file_name) #  remove old file
-                        shutil.copyfile("~/Desktop//media/" + file_name, self.base_path + "/media/" + file_name)  # try copy
+                        shutil.copyfile("/home/pi/Desktop/media/" + file_name, self.base_path + "/media/" + file_name)  # try copy
                     except Exception as E:
-                        self.log.warning("boot_utils.__media_copy(), ( ~/Desktop//media/"
+                        self.log.warning("boot_utils.__media_copy(), ( /home/pi/Desktop/media/"
                                          + file_name + self.base_path + "/media/" + file_name + ") "+repr(E))
                 else :
                     try :
-                        shutil.copyfile("~/Desktop//media/"+file_name,self.base_path+"/media/"+file_name) # try copy
+                        shutil.copyfile("/home/pi/Desktop/media/"+file_name,self.base_path+"/media/"+file_name) # try copy
                     except Exception as E:
                         self.log.warning("boot_utils.__media_copy(), copy fail " + file_name + ") " + repr(E))
 
@@ -399,7 +399,7 @@ class Pino_Init:
     def __config_default(self):
         config = configparser.ConfigParser()
         config['GCloud'] = {
-                                'google_key':'~/Desktop//PinoBot/keys/squarebot01-yauqxo-8d211b1f1a85.json',
+                                'google_key':'/home/pi/Desktop/PinoBot/keys/squarebot01-yauqxo-8d211b1f1a85.json',
                                 'google_project':'squarebot01-yauqxo',
                                 'language': 'ko',
                                 'time_out': '7'
