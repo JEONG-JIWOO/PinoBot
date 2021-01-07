@@ -344,7 +344,7 @@ class Pino_Init:
             self.cloud = pino_dialogflow.PinoDialogFlow(
                 self.config['GCloud']['google_project'],
                 self.config['GCloud']['language'],
-                self.config['GCloud']['google_key'],
+                "/home/pi/Desktop/PinoBot/keys/"+self.config['GCloud']['google_key'],
                 int(self.config['GCloud']['time_out'])
             )
             self.hardware.OLED.send_loading_console(step=10, msgs=".")
@@ -399,7 +399,7 @@ class Pino_Init:
     def __config_default(self):
         config = configparser.ConfigParser()
         config['GCloud'] = {
-                                'google_key':'/home/pi/Desktop/PinoBot/keys/squarebot01-yauqxo-8d211b1f1a85.json',
+                                'google_key':'squarebot01-yauqxo-8d211b1f1a85.json',
                                 'google_project':'squarebot01-yauqxo',
                                 'language': 'ko',
                                 'time_out': '7'
