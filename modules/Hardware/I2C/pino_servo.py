@@ -43,10 +43,11 @@ class Pino_SERVO:
         self.last_reset_time = 0
         self.last_exception = ""
         self.force_stop_flag = False
+        self.sleep_mode_register = None
+        self.operation_mode_register = None
 
         # 3. Objects
         self.pca = None
-
         # 4. Init Functions
         self.reset()
 
@@ -79,14 +80,23 @@ class Pino_SERVO:
         # 4. re open Serial
         try:
             self.pca = PCA9685(self.i2c)
+            self.operation_mode_register = self.pca.mode1_reg
+            self.sleep_mode_register = (self.operation_mode_register & 0x7F) | 0x10
             self.pca.frequency = 50
             self.servos = []
             for i in range(8):
                 self.servos.append(servo.Servo(self.pca.channels[i], min_pulse=self.pwm_min, max_pulse=self.pwm_max))
+            self.sleep()
+
         except Exception as E:
             self.last_exception = "SERVO.reset()" + repr(E)
             return -1
 
+    def sleep(self): # set pca9685 to sleep mode
+        self.pca.mode1_reg = self.sleep_mode_register
+
+    def wake_up(self): # set pca9685 to opteration mode
+        self.pca.mode1_reg = self.operation_mode_register
     """
     C. Public Functions
     """
@@ -101,6 +111,8 @@ class Pino_SERVO:
             del tar_angles[self.num_motor:]  # cut out-ranged value.
         elif len(tar_angles) == 0 :
             return 0
+
+        self.wake_up()
 
         try:
             # 2. check trj_time is Valid
@@ -159,13 +171,17 @@ class Pino_SERVO:
 
                 # 5.4 check if force stop initiated,
                 if self.force_stop_flag:
+                    self.sleep()
                     return 0
 
         except Exception as E:
             self.last_exception = "SERVO.write("+str(tar_angles)+","+str(trj_time)+"), "+repr(E)
             print(self.last_exception)
+            self.sleep()
             return -1
         else:
+            self.pca.mode1_reg = self.sleep_mode_register
+            self.sleep()
             return 0
 
     def set_default(self):
