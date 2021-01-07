@@ -42,7 +42,7 @@ class HardwareV1:
 
         # 4. Init Functions
         self.reset()
-        #self.__set_default()
+        self.set_default()
 
     def __del__(self):
         for sub_modules in [self.SERVO, self.OLED , self.RGB_LED , self.SENSOR]:
@@ -180,16 +180,15 @@ class HardwareV1:
 
         return volume, distance, serial_msgs
 
+    # [C.3] set hardware as default value
+    def set_default(self):
+        # self.OLED.send_console(1,"Hardware Done!..   \n")
+        self.RGB_LED.write([20, 20, 20, 20, 20, 20])
+        self.SERVO.set_default()
 
     """
     D. Private Functions
     """
-    # [D.1] set hardware as default value
-    # TODO : SET REAL VALUE.
-    def __set_default(self):
-        #self.OLED.send_console(1,"Hardware Done!..   \n")
-        self.RGB_LED.write([20,20,20,20,20,20])
-        self.SERVO.write([45,45,90,0,0],1)
 
     # [D.2] load logger
     def __set_logger(self):
