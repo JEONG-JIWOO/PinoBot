@@ -6,19 +6,21 @@ Core.Hardware.SPI.Pino_LED
 
 import unittest
 
+
 def custom_function():
     # 1. init test
     from modules.Hardware import pino_sensor
     import time
-    sensor =  pino_sensor.Pino_GPIO()
+
+    sensor = pino_sensor.Pino_GPIO()
 
     # 2. working test
     for i in range(30):
         time.sleep(0.1)
         distance = sensor.read_sonic_sensor()
         if distance > 0:
-            print("%3.3f cm    %d "%(distance , sensor.volume*10) +"%")
-        if sensor.sw_flag :
+            print("%3.3f cm    %d " % (distance, sensor.volume * 10) + "%")
+        if sensor.sw_flag:
             sensor.sw_flag = False
 
     # 3. reset test
@@ -32,12 +34,13 @@ def custom_function():
         time.sleep(0.1)
         distance = sensor.read_sonic_sensor()
         if distance > 0:
-            print("%3.3f cm    %d "%(distance , sensor.volume*10) +"%")
-        if sensor.sw_flag :
+            print("%3.3f cm    %d " % (distance, sensor.volume * 10) + "%")
+        if sensor.sw_flag:
             sensor.sw_flag = False
 
     # 5. del test
     del sensor
+
 
 class CustomTests(unittest.TestCase):
     def setUp(self):
@@ -52,9 +55,6 @@ class CustomTests(unittest.TestCase):
         """ 실 테스트 코드 """
         custom_function()
 
-if __name__ == '__main__':
+
+if __name__ == "__main__":
     unittest.main()
-
-
-
-

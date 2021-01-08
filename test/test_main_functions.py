@@ -7,9 +7,11 @@ Core.Hardware.SPI.Pino_LED
 import unittest
 import tracemalloc
 
+
 def event_test():
     tracemalloc.start()
     from pino_main import PinoBot
+
     a = PinoBot()
 
     mem1 = tracemalloc.take_snapshot()
@@ -24,7 +26,7 @@ def event_test():
     # 2. test basic event
     print("\n\n#2. basic event\n")
 
-    p = {'a': 'asdf'} # parameter that not used, for these events, but add for test
+    p = {"a": "asdf"}  # parameter that not used, for these events, but add for test
 
     a.add_task("event", "WakeUp_Event", None, True)
     a.main_loop_once()
@@ -75,10 +77,12 @@ def event_test():
 
     display_mem(mem1)
 
+
 def display_mem(mem_b):
     mem3 = tracemalloc.take_snapshot()
     for stat in mem3.compare_to(mem_b, "lineno")[:10]:
         print(stat)
+
 
 class CustomTests(unittest.TestCase):
     def setUp(self):
@@ -93,7 +97,6 @@ class CustomTests(unittest.TestCase):
         """ 실 테스트 코드 """
         event_test()
 
-if __name__ == '__main__':
+
+if __name__ == "__main__":
     unittest.main()
-
-

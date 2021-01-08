@@ -7,11 +7,13 @@ import time
 # pip3 install adafruit-circuitpython-ssd1306
 # https://github.com/adafruit/Adafruit_CircuitPython_SSD1306
 
+
 class Pino_OLED:
     """
     A. con & deconstruct
     """
-    def __init__(self,i2c,base_path,console_font_name="",main_font_name=""):
+
+    def __init__(self, i2c, base_path, console_font_name="", main_font_name=""):
         # 0. Argument
         self.base_path = base_path
         self.console_font_name = console_font_name
@@ -20,7 +22,7 @@ class Pino_OLED:
 
         # 1. Static Variables
         self.oled_size = (128, 64)
-        self.main_font_size =30
+        self.main_font_size = 30
         self.console_font_size = 12
 
         # 2. variables
@@ -44,9 +46,11 @@ class Pino_OLED:
             del self.main_font
         except:
             pass
+
     """
     B. reset 
     """
+
     def reset(self):
         # 1. check last reset time,
         #    only can reset after 1min after last reset
@@ -56,11 +60,10 @@ class Pino_OLED:
         # 2. if self.serial exists..
         if self.oled is not None:
             try:
-                del self.oled     # Deconstruct Object
+                del self.oled  # Deconstruct Object
                 del self.main_font
             except Exception as E:
                 self.last_exception = "OLED.reset(), # 2. del " + repr(E)
-
 
         # 3. refresh last reset time
         self.last_reset_time = time.time()
@@ -68,7 +71,9 @@ class Pino_OLED:
 
         # 4. re open Serial
         try:
-            self.oled = adafruit_ssd1306.SSD1306_I2C(self.oled_size[0], self.oled_size[1], self.i2c)
+            self.oled = adafruit_ssd1306.SSD1306_I2C(
+                self.oled_size[0], self.oled_size[1], self.i2c
+            )
             self.oled.fill(0)
             self.oled.show()
         except ValueError:
@@ -84,67 +89,75 @@ class Pino_OLED:
             self.last_exception = "OLED.reset(), # 5. load font " + repr(E)
 
         return 0
+
     """
     C. Public Functions
     """
     # [C.1] find image by "image_name', from directory, and send to OLED
-    def send_image(self,image_name):
+    def send_image(self, image_name):
         # 1. load image
         result = self.__load_image(image_name)
         if result != 0:  # if result is not 0, Error in Find file
             return result
         # 2. try to send
-        try :
+        try:
             self.oled.image(self.im)
             self.oled.show()
         # 3. Fail to send data
-        except Exception as E :
+        except Exception as E:
             self.last_exception = "OLED.send_image() " + repr(E)
             self.reset()
             return -1
         # 4. Success to send data
-        else :
+        else:
             return 0
 
     # [C.2] convert "text" to image, and send to OLED
     # NOTE : Progress bar : NO,    text : variable size
     def send_text(self, msgs):
         # 1. make image from text
-        try :
+        try:
             self.__text_2_image(msgs)
         except Exception as E:
             self.last_exception = "OLED.text_2_image() " + repr(E)
             return -1
         # 2. try to send
-        try :
+        try:
             self.oled.image(self.im)
             self.oled.show()
         # 3. Fail to send data
-        except Exception as E :
+        except Exception as E:
             self.last_exception = str(E)
             self.reset()
             return -1
         # 4. Success to send data
-        else :
+        else:
             return 0
 
     # [C.3] show progress "step" , convert "msg" to image, and send to OLED
     # NOTE : Progress bar : YES,    text : Fixed size
-    def send_loading_console(self, step, msgs, mode ="a"):
+    def send_loading_console(self, step, msgs, mode="a"):
         # 1. make new image by font size
-        im = Image.new("L", (128,64), 0)
+        im = Image.new("L", (128, 64), 0)
         draw = ImageDraw.Draw(im)
 
         if mode == "a":
             self.console_msg += msgs
-            #print(self.console_msg)
-        else :
+            # print(self.console_msg)
+        else:
             self.console_msg = msgs
 
         # 2. draw text to image
         try:
-            draw.text((18, 0), self.console_msg, font=self.console_font, fill=255, spacing=2, align="left")
-        except Exception as E :
+            draw.text(
+                (18, 0),
+                self.console_msg,
+                font=self.console_font,
+                fill=255,
+                spacing=2,
+                align="left",
+            )
+        except Exception as E:
             self.last_exception = str(E)
             self.reset()
             return -1
@@ -156,25 +169,25 @@ class Pino_OLED:
 
         # 3. change to binary image and save it.
         self.im = im.convert("1")
-        try :
+        try:
             self.oled.image(self.im)
             self.oled.show()
         # 4. Fail to send data
-        except Exception as E :
+        except Exception as E:
             self.last_exception = str(E)
             self.reset()
             return -1
         # 5. Success to send data
-        else :
+        else:
             return 0
 
     # [C.4] show progress "step" , convert "msg" to image, and send to OLED
     # NOTE : Progress bar : YES,    text : variable size
-    def send_loading_text(self, step = 0, ratio = 0, msg =""):
+    def send_loading_text(self, step=0, ratio=0, msg=""):
         progress_im = Image.new("L", self.oled_size, 0)
         draw = ImageDraw.Draw(progress_im)
 
-        if step == 0 :
+        if step == 0:
             now_step = int(ratio * 0.16)
             for i in range(now_step):
                 self.__draw_line(draw, i)
@@ -187,15 +200,16 @@ class Pino_OLED:
 
         if msg != "":
             self.__text_2_image(msg, resize=(110, 64))
-            progress_im.paste(self.im,(18,0))
+            progress_im.paste(self.im, (18, 0))
         try:
             self.im = progress_im.convert("1")
             self.oled.image(self.im)
             self.oled.show()
-        except Exception as E :
+        except Exception as E:
             self.last_exception = str(E)
             self.reset()
             return -1
+
     """
     D. Private Functions
     """
@@ -203,26 +217,32 @@ class Pino_OLED:
     def __load_font(self):
         # 1. try to load font from config file
 
-        try :
-            self.main_font = ImageFont.truetype(self.base_path+"/modules/Hardware/Fonts/"+self.main_font_name,
-                                                self.main_font_size)
-            self.console_font = ImageFont.truetype(self.base_path+"/modules/Hardware/Fonts/"+self.console_font_name,
-                                                   self.console_font_size)
-        except IOError :
+        try:
+            self.main_font = ImageFont.truetype(
+                self.base_path + "/modules/Hardware/Fonts/" + self.main_font_name,
+                self.main_font_size,
+            )
+            self.console_font = ImageFont.truetype(
+                self.base_path + "/modules/Hardware/Fonts/" + self.console_font_name,
+                self.console_font_size,
+            )
+        except IOError:
             print("fail to load font, load [NanumBarunGothicBold] ")
         except Exception as E:
             self.last_exception = "OLED.load_font(), No IOError " + repr(E)
-        else :
+        else:
             return 0
 
         # 2. try to load font from pinobot Default Font
-        try :
+        try:
             self.main_font = ImageFont.truetype(
-                                self.base_path+"/modules/Hardware/Fonts/NanumBarunGothicBold.ttf",
-                                self.main_font_size)
+                self.base_path + "/modules/Hardware/Fonts/NanumBarunGothicBold.ttf",
+                self.main_font_size,
+            )
             self.console_font = ImageFont.truetype(
-                                self.base_path+"/modules/Hardware/Fonts/NanumBarunGothicBold.ttf",
-                                self.console_font_size)
+                self.base_path + "/modules/Hardware/Fonts/NanumBarunGothicBold.ttf",
+                self.console_font_size,
+            )
         except IOError:
             print("fail to load font, load [system default] ")
         except Exception as E:
@@ -242,20 +262,20 @@ class Pino_OLED:
 
     # [D.2] load image form directory
     def __load_image(self, image_name):
-        try :
-            path = self.base_path+"media/image/"+image_name
+        try:
+            path = self.base_path + "media/image/" + image_name
             image = Image.open(path)
             im = image.resize(self.oled_size)
             # 2. change to binary image and save it.
             self.im = im.convert("1")
         except FileNotFoundError as E:
             return -2
-        except Exception as E :
+        except Exception as E:
             self.last_exception = "OLED.load_image() " + repr(E)
             return -1
 
     # [D.3] convert text as binary image using PIL,
-    def __text_2_image(self, unicode_text, resize = (128, 64)):
+    def __text_2_image(self, unicode_text, resize=(128, 64)):
         # 1. split text by newline
         split_text = unicode_text.split("\n")
 
@@ -277,10 +297,17 @@ class Pino_OLED:
         draw = ImageDraw.Draw(im)
 
         # 4. draw text to image
-        draw.text((0, 0), unicode_text, font=self.main_font, fill=255, spacing=space, align="center")
+        draw.text(
+            (0, 0),
+            unicode_text,
+            font=self.main_font,
+            fill=255,
+            spacing=space,
+            align="center",
+        )
 
         # 5. change to binary image and save it.
-        im = im.resize(resize,resample=Image.LANCZOS)
+        im = im.resize(resize, resample=Image.LANCZOS)
         self.im = im.convert("1")
         return 0
 
@@ -293,4 +320,3 @@ class Pino_OLED:
         x0 = 1
         x1 = length - x0
         draw.line(xy=[(x0, y0), (x1, y1)], fill=255, width=3)
-

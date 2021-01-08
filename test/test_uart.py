@@ -6,12 +6,15 @@ Core.Hardware.SPI.Pino_LED
 
 import unittest
 
+
 def custom_function():
     from modules.Hardware import pino_uart
+
     uart = pino_uart.Pino_UART()
     uart.write("asdf")
     uart.read()
     print("R:", uart.received_msg)
+
 
 class CustomTests(unittest.TestCase):
     def setUp(self):
@@ -26,7 +29,6 @@ class CustomTests(unittest.TestCase):
         """ 실 테스트 코드 """
         custom_function()
 
-if __name__ == '__main__':
+
+if __name__ == "__main__":
     unittest.main()
-
-

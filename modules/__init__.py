@@ -1,4 +1,3 @@
-
 """
 
 def poll_thread(self):

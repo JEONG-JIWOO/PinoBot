@@ -1,9 +1,10 @@
 #!/usr/bin/python3
 
-import spidev , time
+import spidev, time
+
 
 class Pino_LED:
-    def __init__(self,on = True):
+    def __init__(self, on=True):
         # 0. arguments
         self.on = on
         # 1. Static Variables
@@ -12,19 +13,18 @@ class Pino_LED:
         self.last_reset_time = 0
         self.last_exception = ""
 
-
     def __del__(self):
         pass
 
     def reset(self):
         pass
 
-    def write(self,rgb_s,b_persent = 100):
+    def write(self, rgb_s, b_persent=100):
         # 1. check global self.on variable
         if not self.on:
             return 0
 
-        try :
+        try:
             # 2. calculate power and brightness
             power = int(b_persent * 31 / 100.0)
             ledstart = (power & 31) | 224
@@ -61,15 +61,15 @@ class Pino_LED:
             spi.xfer2([0] * 4)
             spi.xfer2(leds)
             spi.xfer2([0xFF] * 4)
-            spi.close()            # free spi device
+            spi.close()  # free spi device
 
         # 6. Fail to send data
-        except Exception as E :
-            self.last_exception = "RGB_LED.write(" + str(rgb_s) +","+str(b_persent) + "), " + repr(E)
+        except Exception as E:
+            self.last_exception = (
+                "RGB_LED.write(" + str(rgb_s) + "," + str(b_persent) + "), " + repr(E)
+            )
             self.reset()
             return -1
         #  Success to send data
-        else :
+        else:
             return 0
-
-
