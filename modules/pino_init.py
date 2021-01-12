@@ -1,25 +1,30 @@
 #!/usr/bin/python3
 
 import configparser
-#import requests
+
+# import requests
 import subprocess, time
 import logging
 from logging.handlers import RotatingFileHandler
 from urllib3 import PoolManager, Timeout, Retry
 
+
 class Pino_Init:
     """
     A. con & deconstruct
     """
-    def __init__(self,base_path):
+
+    def __init__(self, base_path):
         # 0. Argument
         # 1. Static Variables
-        self.base_path = "/home/pi/Desktop/PinoBot/" #base_path
+        self.base_path = "/home/pi/Desktop/PinoBot/"  # base_path
 
         # 2. variables
-        self.config_path = "/home/pi/Desktop/PinoBot/PinoConfig.ini" # self.base_path+"/config.ini"
+        self.config_path = (
+            "/home/pi/Desktop/PinoBot/PinoConfig.ini"  # self.base_path+"/config.ini"
+        )
         self.net_connected = False
-        self.error_msg =""
+        self.error_msg = ""
 
         # 3. Objects
         self.log = None
@@ -30,7 +35,7 @@ class Pino_Init:
         # 4. Init Functions
 
     def __del__(self):
-        try :
+        try:
             self.log_file.close()
             self.log.removeHandler(self.log_file)
             self.log_consol.close()
@@ -48,10 +53,11 @@ class Pino_Init:
         # if boot Failed,
         if self.__main_boot == -1:
             import sys
+
             sys.exit()
 
         # boot success
-        return self.hardware , self.cloud , self.config
+        return self.hardware, self.cloud, self.config
 
     """
     C. Private , Loading Functions
@@ -67,11 +73,11 @@ class Pino_Init:
             try:
                 from modules.Hardware.I2C.pino_oled import Pino_OLED
                 import board
+
                 i2c = board.I2C()
-                oled = Pino_OLED(i2c,
-                                 self.base_path,
-                            'NanumSquareEB.ttf',
-                            'NanumSquareEB.ttf')
+                oled = Pino_OLED(
+                    i2c, self.base_path, "NanumSquareEB.ttf", "NanumSquareEB.ttf"
+                )
                 oled.send_loading_console(step=1, msgs=self.error_msg)
                 with open(self.config_path, "w") as configfile:
                     self.config.write(configfile)
@@ -124,12 +130,14 @@ class Pino_Init:
         path = self.base_path + "log/Boot.log"
         self.log = logging.getLogger("Boot")
         self.log.setLevel(logging.DEBUG)
-        formatter = logging.Formatter('[%(levelname)s] (%(asctime)s : %(filename)s:%(lineno)d) > %(message)s')
+        formatter = logging.Formatter(
+            "[%(levelname)s] (%(asctime)s : %(filename)s:%(lineno)d) > %(message)s"
+        )
 
         # 2 set file logger
-        self.log_file = RotatingFileHandler(filename=path, maxBytes=5 * 1024 * 1024,
-                                            mode='w',
-                                            encoding='utf-8')
+        self.log_file = RotatingFileHandler(
+            filename=path, maxBytes=5 * 1024 * 1024, mode="w", encoding="utf-8"
+        )
         self.log_file.setFormatter(formatter)
         self.log.addHandler(self.log_file)
 
@@ -146,14 +154,15 @@ class Pino_Init:
     def __load_config(self):
         # 1. config not exist, write default config.
         import os
+
         default_config = self.__config_default()
-        #if not os.path.isdir("/home/pi/Desktop/PinoBot"):
+        # if not os.path.isdir("/home/pi/Desktop/PinoBot"):
         #    self.error_msg = "no PinoBot \nfolder \n on /home/pi/Desktop/"
         #    self.log.error("no PinoBot \nfolder \n on /home/pi/Desktop/")
         #    return -1
 
         if not os.path.isfile(self.config_path):
-            with open(self.config_path,"w") as configfile:
+            with open(self.config_path, "w") as configfile:
                 default_config.write(configfile)
 
         # 2. try to read config
@@ -168,28 +177,31 @@ class Pino_Init:
             return -1
 
         #  3. check config value is VALID
-        check_list= [['int', 'GCloud', 'time_out'],
-                     ['int', 'MOTOR', 'num_motor'],
-                     ['list', 'MOTOR', 'motor_enable'],
-                     ['list', 'MOTOR', 'motor_min_angle'],
-                     ['list', 'MOTOR', 'motor_max_angle'],
-                     ['list', 'MOTOR', 'motor_default_angle'],
-                     ['bool', 'LED', 'ON'],
-                     ['int', 'GPIO', 'sonic_distance'],
-                     ['int', 'GPIO', 'sensor_timeout'],
-                     ['int', 'UART', 'baud_rate'],
-                     ['bool', 'SleepMode', "state"],
-                     ['int', 'SleepMode', "enter_limit_time"],
-                     ['float', 'SleepMode', "task_probability"],
-                     ['int', 'SleepMode', "task_min_time"],
-                     ['int', 'Detect', "distance"],
-                     ['float', 'WaitMode', "adaptive_loop_d"],
-                     ['float', 'WaitMode', "adaptive_loop_limit"],
-                     ['float', 'WaitMode', "task_probability"],
-                     ['int', 'WaitMode', "task_min_time"]]
+        check_list = [
+            ["int", "GCloud", "time_out"],
+            ["int", "MOTOR", "num_motor"],
+            ["list", "MOTOR", "motor_enable"],
+            ["list", "MOTOR", "motor_min_angle"],
+            ["list", "MOTOR", "motor_max_angle"],
+            ["list", "MOTOR", "motor_default_angle"],
+            ["bool", "LED", "ON"],
+            ["int", "GPIO", "sonic_distance"],
+            ["int", "GPIO", "sensor_timeout"],
+            ["int", "UART", "baud_rate"],
+            ["bool", "SleepMode", "state"],
+            ["int", "SleepMode", "enter_limit_time"],
+            ["float", "SleepMode", "task_probability"],
+            ["int", "SleepMode", "task_min_time"],
+            ["int", "Detect", "distance"],
+            ["float", "WaitMode", "adaptive_loop_d"],
+            ["float", "WaitMode", "adaptive_loop_limit"],
+            ["float", "WaitMode", "task_probability"],
+            ["int", "WaitMode", "task_min_time"],
+        ]
 
         for check in check_list:
             import ast
+
             failed = 0
             # 3.1 check Form exists.
             if check[1] not in self.config.keys():
@@ -204,36 +216,38 @@ class Pino_Init:
             # 3.3 check value valid
             if failed == 0:
                 try:
-                    if check[0] == 'int':
+                    if check[0] == "int":
                         int(self.config[check[1]][check[2]])
-                    elif check[0] == 'float':
+                    elif check[0] == "float":
                         float(self.config[check[1]][check[2]])
-                    elif check[0] == 'list':
+                    elif check[0] == "list":
                         r = ast.literal_eval(self.config[check[1]][check[2]])
                         if type(r) is not list:
                             raise ValueError
-                    elif check[0] == 'bool':
+                    elif check[0] == "bool":
                         r = ast.literal_eval(self.config[check[1]][check[2]])
                         if type(r) is not bool:
                             raise ValueError
                 except Exception as E:
-                    self.error_msg = "config error \n"+  check[1] +"  \n" + check[2]
-                    self.log.error("config error3 "+  check[1] +"  " + check[2] + repr(E))
+                    self.error_msg = "config error \n" + check[1] + "  \n" + check[2]
+                    self.log.error(
+                        "config error3 " + check[1] + "  " + check[2] + repr(E)
+                    )
                     failed = 3
 
             # 3.4 if Form not exist
-            if failed == 1 :
-                self.log.error("config error 1 " + check[1] )
+            if failed == 1:
+                self.log.error("config error 1 " + check[1])
                 self.config[check[1]] = {}
                 self.config[check[1]][check[2]] = default_config[check[1]][check[2]]
 
             # 3.5 if value not exist [2]
-            elif failed == 2 :
+            elif failed == 2:
                 self.log.error("config error 2 " + check[1] + "  " + check[2])
                 self.config[check[1]][check[2]] = default_config[check[1]][check[2]]
 
             # 3.6 if value not valid
-            elif failed == 3 :
+            elif failed == 3:
                 self.log.error("config error 2 " + check[1] + "  " + check[2])
                 self.config[check[1]][check[2]] = default_config[check[1]][check[2]]
 
@@ -245,7 +259,8 @@ class Pino_Init:
             return -1
         try:
             from modules.Hardware import v1
-            self.hardware = v1.HardwareV1(self.config,self.base_path)
+
+            self.hardware = v1.HardwareV1(self.config, self.base_path)
         except Exception as E:
             self.log.error("boot_utils.__load_hardware(), " + repr(E))
             return -1
@@ -257,17 +272,19 @@ class Pino_Init:
         self.net_connected = False
         self.hardware.OLED.send_loading_console(step=2, msgs="check network..")
         a = time.time()
-        http = PoolManager(timeout=Timeout(connect=1.0, read=2.0),retries=Retry(0, redirect=0))
+        http = PoolManager(
+            timeout=Timeout(connect=1.0, read=2.0), retries=Retry(0, redirect=0)
+        )
         try:
-            response = http.request("HEAD",'https://status.cloud.google.com/')
-            msg  = "Internet.. "+str(response.status)+".."
+            response = http.request("HEAD", "https://status.cloud.google.com/")
+            msg = "Internet.. " + str(response.status) + ".."
             self.hardware.OLED.send_loading_console(step=2, msgs=msg)
             if response.status == 200:  # if internet ok.
                 self.log.warning("Internet Not Connected")
                 self.net_connected = True
                 return 0
         except Exception as E:
-            print(time.time()-a)
+            print(time.time() - a)
             self.log.error("boot_utils.__load_internet(), " + repr(E))
             return -1
         else:
@@ -275,7 +292,7 @@ class Pino_Init:
 
     # [C.5] reset wifi, and try to re-connect 5 times
     def __reset_internet(self):
-        #self.hardware.OLED.send_loading_console(step=3, msgs="\n Re connect..")
+        # self.hardware.OLED.send_loading_console(step=3, msgs="\n Re connect..")
 
         # 1. try to reconnect max 10 times
         for i in range(11):
@@ -313,12 +330,11 @@ class Pino_Init:
                 time.sleep(1)
                 cnt += 1
                 if cnt % 2 == 0:
-                    lcd_msg = "WiFi Re-connect. \n %d - %d times.."%(i,j)
+                    lcd_msg = "WiFi Re-connect. \n %d - %d times.." % (i, j)
                     self.hardware.OLED.send_loading_text(step=6, msg=lcd_msg)
                 else:
-                    lcd_msg = "WiFi Re-connect..\n %d - %d times.." %(i,j)
+                    lcd_msg = "WiFi Re-connect..\n %d - %d times.." % (i, j)
                     self.hardware.OLED.send_loading_text(step=7, msg=lcd_msg)
-
 
             self.__load_internet()
             # 5. if internet connected , close loop
@@ -327,10 +343,12 @@ class Pino_Init:
                 return 0
             # 6. if re connecti on failed over 11 times.
             elif i > 10:
-                self.log.warning("boot_utils.__load_internet(), Wifi  not     found.. " )
-                self.hardware.write(text= "wifi \n not found \n Shutdown",led=[255, 0, 100])  # PURPLE LED ON
+                self.log.warning("boot_utils.__load_internet(), Wifi  not     found.. ")
+                self.hardware.write(
+                    text="wifi \n not found \n Shutdown", led=[255, 0, 100]
+                )  # PURPLE LED ON
                 return -1
-            else :
+            else:
                 continue
 
     # [C.6] Cloud connect & check Function
@@ -341,33 +359,37 @@ class Pino_Init:
         try:
             self.hardware.OLED.send_loading_console(step=9, msgs=".")
             from modules.Cloud.Google import pino_dialogflow
+
             self.cloud = pino_dialogflow.PinoDialogFlow(
-                self.config['GCloud']['google_project'],
-                self.config['GCloud']['language'],
-                self.config['GCloud']['google_key'],
-                int(self.config['GCloud']['time_out'])
+                self.config["GCloud"]["google_project"],
+                self.config["GCloud"]["language"],
+                "/home/pi/Desktop/PinoBot/keys/" + self.config["GCloud"]["google_key"],
+                int(self.config["GCloud"]["time_out"]),
             )
             self.hardware.OLED.send_loading_console(step=10, msgs=".")
             self.cloud.open_session()
             print("\n\n TEST Start!")
             self.hardware.OLED.send_loading_console(step=11, msgs=".")
             text_response = self.cloud.send_text("안녕하세요")
-            self.log.info("Cloud test response %s" % text_response.query_result.query_text)
+            self.log.info(
+                "Cloud test response %s" % text_response.query_result.query_text
+            )
 
         except Exception as E:
             self.log.error("boot_utils.__load_diaglogflow(), " + repr(E))
             return -1
-        else :
+        else:
             return 0
 
     # [C.7] Copy Media files from /home/pi/Desktop/ dir
     def __media_copy(self):
-        import os , shutil
+        import os, shutil
+
         # 1. check media folder exist.
-        if not os.path.isdir(self.base_path+"/media"):  # if media folder not exist.
+        if not os.path.isdir(self.base_path + "/media"):  # if media folder not exist.
             try:
-                os.mkdir(self.base_path+"/media")  # try to make media folder.
-            except Exception as E: # if fail, write media message
+                os.mkdir(self.base_path + "/media")  # try to make media folder.
+            except Exception as E:  # if fail, write media message
                 self.log.error(str(E))
                 self.log.error("make media folder error")
                 return -1
@@ -375,70 +397,92 @@ class Pino_Init:
         # 2. copy media file.
         # TODO check works on wav and jpg/png files
         if os.path.isdir("/home/pi/Desktop/media"):
-            files = [ f for f in os.listdir('/home/pi/Desktop/media/') if os.path.isfile(f) ]
+            files = [
+                f for f in os.listdir("/home/pi/Desktop/media/") if os.path.isfile(f)
+            ]
             self.log.info("start copy media file")
             for file_name in files:
-                if os.path.isfile(self.base_path+"/media/"+file_name):  # if file exist,
+                if os.path.isfile(
+                    self.base_path + "/media/" + file_name
+                ):  # if file exist,
                     try:
-                        os.remove(self.base_path+"/media/" + file_name) #  remove old file
-                        shutil.copyfile("/home/pi/Desktop/media/" + file_name, self.base_path + "/media/" + file_name)  # try copy
+                        os.remove(
+                            self.base_path + "/media/" + file_name
+                        )  #  remove old file
+                        shutil.copyfile(
+                            "/home/pi/Desktop/media/" + file_name,
+                            self.base_path + "/media/" + file_name,
+                        )  # try copy
                     except Exception as E:
-                        self.log.warning("boot_utils.__media_copy(), ( /home/pi/Desktop/media/"
-                                         + file_name + self.base_path + "/media/" + file_name + ") "+repr(E))
-                else :
-                    try :
-                        shutil.copyfile("/home/pi/Desktop/media/"+file_name,self.base_path+"/media/"+file_name) # try copy
+                        self.log.warning(
+                            "boot_utils.__media_copy(), ( /home/pi/Desktop/media/"
+                            + file_name
+                            + self.base_path
+                            + "/media/"
+                            + file_name
+                            + ") "
+                            + repr(E)
+                        )
+                else:
+                    try:
+                        shutil.copyfile(
+                            "/home/pi/Desktop/media/" + file_name,
+                            self.base_path + "/media/" + file_name,
+                        )  # try copy
                     except Exception as E:
-                        self.log.warning("boot_utils.__media_copy(), copy fail " + file_name + ") " + repr(E))
+                        self.log.warning(
+                            "boot_utils.__media_copy(), copy fail "
+                            + file_name
+                            + ") "
+                            + repr(E)
+                        )
 
-        else :  # if no media file, pass
+        else:  # if no media file, pass
             self.log.info("skip copy media file")
             return 0
 
-    #D.2 config file reset fuction
+    # D.2 config file reset fuction
     def __config_default(self):
         config = configparser.ConfigParser()
-        config['GCloud'] = {
-                                'google_key':'/home/pi/Desktop/PinoBot/keys/squarebot01-yauqxo-8d211b1f1a85.json',
-                                'google_project':'squarebot01-yauqxo',
-                                'language': 'ko',
-                                'time_out': '7'
-                            }
-        config['MOTOR'] ={
-                                'num_motor':'5',
-                                'motor_enable' : '[1, 1, 1, 1, 1, 1, 1, 1]',
-                                'motor_min_angle' : '[0, 0, 0, 0, 0, 0, 0, 0]',
-                                'motor_max_angle' : '[170, 170, 170, 170, 170, 170, 170, 170]',
-                                'motor_default_angle' :  '[0, 0, 0, 0, 0, 0, 0, 0]',
+        config["GCloud"] = {
+            "google_key": "squarebot01-yauqxo-8d211b1f1a85.json",
+            "google_project": "squarebot01-yauqxo",
+            "language": "ko",
+            "time_out": "7",
         }
-        config['LED'] = {
-                                'ON' : 'True'
+        config["MOTOR"] = {
+            "num_motor": "5",
+            "motor_enable": "[1, 1, 1, 1, 1, 1, 1, 1]",
+            "motor_min_angle": "[0, 0, 0, 0, 0, 0, 0, 0]",
+            "motor_max_angle": "[170, 170, 170, 170, 170, 170, 170, 170]",
+            "motor_default_angle": "[0, 0, 0, 0, 0, 0, 0, 0]",
         }
-        config['OLED'] ={
-                                "console_font":'NanumSquareEB.ttf',
-                                'main_font':'NanumSquareEB.ttf'
+        config["LED"] = {"ON": "True"}
+        config["OLED"] = {
+            "console_font": "NanumSquareEB.ttf",
+            "main_font": "NanumSquareEB.ttf",
         }
-        config['GPIO'] = {
-                            'sonic_distance': '20',
-                            'sensor_timeout': '50'
-        }
-        config['UART'] = {
-                            'baud_rate': '115200'
-        }
+        config["GPIO"] = {"sonic_distance": "20", "sensor_timeout": "50"}
+        config["UART"] = {"baud_rate": "115200"}
 
-        config['SleepMode'] = {"state": 'False',      #            # "Sleep_Mode" state, True or False
-                      "enter_limit_time": '60',       # sec        # how much time sensor detect object, change to "Sleep_Mode"
-                      "task_probability": '0.01',     #            # "Sleep_Mode_Task" in this random probability
-                      "task_min_time": '30'}          # sec        # minimum "Sleep_Mode_Task" duration
+        config["SleepMode"] = {
+            "state": "False",  #            # "Sleep_Mode" state, True or False
+            "enter_limit_time": "60",  # sec        # how much time sensor detect object, change to "Sleep_Mode"
+            "task_probability": "0.01",  #            # "Sleep_Mode_Task" in this random probability
+            "task_min_time": "30",
+        }  # sec        # minimum "Sleep_Mode_Task" duration
 
-        config['Detect'] = {"distance": '30'}         # cm         # sonic sensor threshold to between 1 to 0
+        config["Detect"] = {
+            "distance": "30"
+        }  # cm         # sonic sensor threshold to between 1 to 0
 
-        config['WaitMode'] = {
-                     "adaptive_loop_d": '0.05',       # sec        # system loop wait time is adaptive, by this value
-                     "adaptive_loop_limit": '0.5',    # sec        # system loop wait time limit
-                     "task_probability": '0.01',      #            # "Wait_Mode_Task" in this random probability
-                     "task_min_time": '30'}           # sec        # minimum "Wait_Mode_Task" duration
+        config["WaitMode"] = {
+            "adaptive_loop_d": "0.05",  # sec        # system loop wait time is adaptive, by this value
+            "adaptive_loop_limit": "0.5",  # sec        # system loop wait time limit
+            "task_probability": "0.01",  #            # "Wait_Mode_Task" in this random probability
+            "task_min_time": "30",
+        }  # sec        # minimum "Wait_Mode_Task" duration
 
-        config['Boot'] = {"AutoBoot":"False"}
+        config["Boot"] = {"AutoBoot": "False"}
 
         return config

@@ -2,7 +2,9 @@ dialogflow==1.1.0
 pyaudio==0.2.11
 Pillow==8.0.1
 RPi.GPIO==0.7.0
+adafruit-blinka
 adafruit-circuitpython-busdevice==5.0.1
 adafruit-circuitpython-SSD1306==2.9.2
 adafruit-circuitpython-pca9685==3.3.2
 adafruit-circuitpython-motor==3.2.3
+google-api-python-client

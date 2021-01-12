@@ -12,21 +12,22 @@ def custom_function():
     # 1. init test
     from modules.Hardware.SPI import pino_led
     import time
+
     led = pino_led.Pino_LED()
 
     # 2. working test
     time.sleep(1)
     led.write([100])
     time.sleep(1)
-    led.write([100,100])
+    led.write([100, 100])
     time.sleep(1)
-    led.write([100,100,100])
+    led.write([100, 100, 100])
     time.sleep(1)
-    led.write([100,100,100,100])
+    led.write([100, 100, 100, 100])
     time.sleep(1)
-    led.write([100,100,100,100,100])
+    led.write([100, 100, 100, 100, 100])
     time.sleep(1)
-    led.write([100,100,100,100,100,100])
+    led.write([100, 100, 100, 100, 100, 100])
     print("E:", led.last_exception)
 
     # 3. reset test
@@ -36,19 +37,20 @@ def custom_function():
     time.sleep(1)
     led.write([100])
     time.sleep(1)
-    led.write([100,100])
+    led.write([100, 100])
     time.sleep(1)
-    led.write([100,100,100])
+    led.write([100, 100, 100])
     time.sleep(1)
-    led.write([100,100,100,100])
+    led.write([100, 100, 100, 100])
     time.sleep(1)
-    led.write([100,100,100,100,100])
+    led.write([100, 100, 100, 100, 100])
     time.sleep(1)
-    led.write([100,100,100,100,100,100])
+    led.write([100, 100, 100, 100, 100, 100])
     print("E:", led.last_exception)
 
     # del test
     del led
+
 
 class CustomTests(unittest.TestCase):
     def setUp(self):
@@ -63,8 +65,6 @@ class CustomTests(unittest.TestCase):
         """ 실 테스트 코드 """
         custom_function()
 
-if __name__ == '__main__':
+
+if __name__ == "__main__":
     unittest.main()
-
-
-

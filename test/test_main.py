@@ -9,18 +9,20 @@ import tracemalloc
 import psutil
 import os
 
+
 def event_test():
     tracemalloc.start()
     from pino_main import PinoBot
+
     # 1. test talk
     bot = PinoBot()
-    cnt =0
+    cnt = 0
     snap = tracemalloc.take_snapshot()
     snap_0 = snap
     while True:
         # Do try , Except on in here
         try:
-            cnt +=1
+            cnt += 1
             bot.main_loop_once()
 
             if cnt % 3 == 0:
@@ -39,11 +41,16 @@ def event_test():
                 """
                 pid = os.getpid()
                 current_process = psutil.Process(pid)
-                current_process_memory_usage_as_KB = current_process.memory_info()[0] / 2. ** 20
-                print(f" Current memory KB   : {current_process_memory_usage_as_KB: 9.3f} KB")
+                current_process_memory_usage_as_KB = (
+                    current_process.memory_info()[0] / 2.0 ** 20
+                )
+                print(
+                    f" Current memory KB   : {current_process_memory_usage_as_KB: 9.3f} KB"
+                )
 
         except Exception as E:
             bot.log.error(repr(E))
+
 
 class CustomTests(unittest.TestCase):
     def setUp(self):
@@ -58,7 +65,6 @@ class CustomTests(unittest.TestCase):
         """ 실 테스트 코드 """
         event_test()
 
-if __name__ == '__main__':
+
+if __name__ == "__main__":
     unittest.main()
-
-
