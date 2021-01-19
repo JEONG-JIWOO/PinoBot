@@ -25,7 +25,7 @@ class Pino_SERVO:
         motor_enable=(1, 1, 1, 1, 1, 1, 1, 1),
         motor_min_angle=(0, 0, 50, 0, 0, 0, 0, 0),
         motor_max_angle=(150, 150, 140, 60, 60, 0, 0, 0),
-        motor_default_angle=(0, 0, 40, 0, 0, 0, 0, 0),
+        motor_default_angle=(100, 100, 90, 30, 30, 0, 0, 0),
     ):
 
         # 0. arguments
@@ -46,12 +46,12 @@ class Pino_SERVO:
 
         # 2. variables
         self.servos = []
-        self.cur_angles = [30, 30, 50, 30, 30, 0, 0, 0]
+        self.cur_angles = self.motor_default_angle
         self.last_reset_time = 0
         self.last_exception = ""
         self.force_stop_flag = False
         self.sleep_mode_register = None
-        self.operation_mode_register = None
+        self.operation_mode_register = 33
 
         # 3. Objects
         self.pca = None
@@ -88,7 +88,6 @@ class Pino_SERVO:
         # 4. re open Serial
         try:
             self.pca = PCA9685(self.i2c)
-            self.operation_mode_register = self.pca.mode1_reg
             self.sleep_mode_register = (self.operation_mode_register & 0x7F) | 0x10
             self.pca.frequency = 50
             self.servos = []
@@ -108,9 +107,11 @@ class Pino_SERVO:
 
     def sleep(self):  # set pca9685 to sleep mode
         self.pca.mode1_reg = self.sleep_mode_register
+        return 0
 
     def wake_up(self):  # set pca9685 to opteration mode
         self.pca.mode1_reg = self.operation_mode_register
+        return 0
 
     """
     C. Public Functions
@@ -177,14 +178,10 @@ class Pino_SERVO:
                         self.cur_angles[motor_n] != new_angle
                     ):  # if motor angle is same as before, skip i2c comm
                         if self.motor_direction[motor_n] == 1:
-                            self.servos[motor_n].angle = (
-                                new_angle + self.motor_default_angle[motor_n]
-                            )
+                            self.servos[motor_n].angle = int(new_angle)
                             self.cur_angles[motor_n] = new_angle
                         elif self.motor_direction[motor_n] == -1:
-                            self.servos[motor_n].angle = (
-                                180 - new_angle + self.motor_default_angle[motor_n]
-                            )
+                            self.servos[motor_n].angle = int( 180 - new_angle)
                             self.cur_angles[motor_n] = new_angle
                 # 5.3 calculate wait time
                 wait_time = self.control_time - (time.time() - start_time)
@@ -196,6 +193,7 @@ class Pino_SERVO:
                 if self.force_stop_flag:
                     self.sleep()
                     return 0
+
 
         except Exception as E:
             self.last_exception = (
