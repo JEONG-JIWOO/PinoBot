@@ -6,3 +6,7 @@
 Install/seed-voicecard
 keys
 .idea/
+build/
+doctrees/
+Makefile
+make.bat
