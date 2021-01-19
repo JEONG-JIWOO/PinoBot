@@ -9,8 +9,9 @@ Welcome to PinoBot's documentation!
 .. toctree::
    :maxdepth: 2
    :caption: Contents:
-   
-   manual/피노봇 쉬운설치 07ff911ace544a0297b7a6e02694a431
+
+
+
 Indices and tables
 ==================
 
@@ -18,4 +19,3 @@ Indices and tables
 * :ref:`modindex`
 * :ref:`search`
 
-.. mdinclude:: ../readme.md
