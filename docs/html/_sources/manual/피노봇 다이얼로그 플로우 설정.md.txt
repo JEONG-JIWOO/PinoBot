@@ -1,13 +1,13 @@
 # A. 구글 DialogFlow 프로젝트 만들기
 
-###### 1. 다이얼로그 플로우 홈페이지 접속 
+#### 1. 다이얼로그 플로우 홈페이지 접속 
 ![](/_static/manual/GCP/1_dialogflow_enter.gif)
 먼저 구글 다이얼로그 플로우 웹페이지로 이동합니다.
 
 https://dialogflow.cloud.google.com/
 
 
-###### 2. 로그인
+#### 2. 로그인
 ![](/_static/manual/GCP/2_make_Google_ID.gif)
 다이얼로그 플로우 사용을 위해서는 구글 ID로 로그인이 필요합니다. 
 
@@ -16,7 +16,7 @@ https://dialogflow.cloud.google.com/
 ----
 
 
-###### 3. 다이얼로그 플로우 활성화 ,챗봇 생성 
+#### 3. 다이얼로그 플로우 활성화 ,챗봇 생성 
 ![](/_static/manual/GCP/3_make_Agent.gif)
 구글 다이얼로그플로우에 접속했다면, 
 
@@ -36,7 +36,7 @@ https://dialogflow.cloud.google.com/
 ------
 
 
-###### 4. 챗봇 음성합성 설정 
+#### 4. 챗봇 음성합성 설정 
 
 ![](/_static/manual/GCP/4_set_tts.gif)
 
@@ -48,7 +48,7 @@ https://dialogflow.cloud.google.com/
 
 ------
 
-###### 5. 구글 클라우드 플랫폼 [GCP] 이동 
+#### 5. 구글 클라우드 플랫폼 [GCP] 이동 
 
 ![](/_static/manual/GCP/6_GCP_ENTER.gif)
 
@@ -60,7 +60,7 @@ https://dialogflow.cloud.google.com/
 
 ![](/_static/manual/GCP/6_GCP_ENTER.png)
 
-###### 6. 인증을 위한 서비스계정 생성 
+#### 6. 인증을 위한 서비스계정 생성 
 
 ![](/_static/manual/GCP/7_Make_service_Agent.gif)
 
@@ -86,7 +86,7 @@ https://dialogflow.cloud.google.com/
 
 --------------
 
-###### 7. 키파일 다운로드 
+#### 7. 키파일 다운로드 
 
 마지막으로 키파일을 다운로드하면됩니다. 
 

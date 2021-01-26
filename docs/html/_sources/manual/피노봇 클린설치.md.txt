@@ -1,1 +1,162 @@
 # 피노봇 클린설치 
+
+이 문서는 라즈베리파이OS 공식롬에 처음부터 피노봇 프로젝트를 설치할때 설치할 방법을 정리한 문서입니다. 
+
+라즈베리파이 OS를 기준으로 작성이 되었으며, 
+
+라즈베리파이 OS 버전 및 Respeaker사의 seeed-voicecard 드라이버 버전에 따라 설치에 오류가 발생 할 수 있습니다. 
+
+
+#### 1. 피노봇 하드웨어 가조립.
+
+
+
+#### 2. 라즈베리파이 공식 OS 설치, 
+
+
+![](/_static/manual/Clean_Install/1_install_raspbian.gif)
+
+
+[win32diskmanager](https://sourceforge.net/projects/win32diskimager/) 
+, [Raspberry Pi imager](https://www.raspberrypi.org/software/)
+, [BalenaEtcher](https://www.balena.io/etcher/)
+
+등의 프로그램으로 sd카드에 OS를 설치합니다.
+
+
+#### 3. 부팅 
+
+키보드 및 마우스, HDMI케이블을 연결하고 라즈베리파이를 부팅합니다. 
+
+
+#### 4. 라즈베리파이 초기설정 
+
+이제 피노봇 SW를 설치하기위해 라즈베리파이를 설정해주는 단계입니다. 
+
+###### 4.1 라즈베리파이 와이파이 설정 
+
+![](/_static/manual/Clean_Install/2_rpi_wifi.gif)
+
+라즈베리파이에서 다음과 같이 무선랜(와이파이)를 연결해주거나 혹은 유선 네트워크를 라즈베리파이에 연결합니다. 
+
+> 와이파이 연결이 잘 안될경우 
+> Preference -> Raspberry Pi Configuration -> Localization -> WiFi Country 메뉴에서  
+> 국가를 미국(US), 영국(UK)등으로 변경해 줍니다, 
+> 라즈베리파이 자체의 버그로 한국은 네트워크 설정관련 문제가 존재합니다.
+
+###### 4.2 라즈베리파이 인터페이스 설정 
+
+![](/_static/manual/Clean_Install/3_rpi_set.gif)
+
+라즈베리파이에서 마이크 스피커모듈, 미니 LCD와 센서등을 사용하기위한 통신 인터페이스를 설정합니다, 
+원격으로 제어하고 싶을경우 SSH와 VNC는 선택적으로 설정하면 됩니다. 
+
+
+###### 4.3 라즈베리파이 암호변경 
+
+![](/_static/manual/Clean_Install/4_change_password.gif)
+
+마지막으로 보안을 위해서 라즈베리파이의 암호를 변경해줍니다. 
+그후 변경한 설정 적용을위해 재부팅합니다.
+
+#### 5. 피노봇 설치 
+
+이제 피노봇 소스코드 설치를 진행합니다.
+
+###### 5.1 소스코드 다운로드
+
+![](/_static/manual/Clean_Install/5_git_clone.gif)
+
+명령창을 열고, "Desktop" 폴더로 이동한다음. 
+
+다음 명령어를 통해서 피노봇 소스코드를 다운로드합니다. 
+
+``` shell
+
+git clone https://github.com/JEONG-JIWOO/PinoBot
+
+```
+
+
+###### 5.2 소스코드 설치
+
+![](/_static/manual/Clean_Install/6_start_install.gif)
+
+PinoBot 폴더로 이동한다음, 소스코드 설치를 진행합니다 
+
+``` shell
+
+sudo bash ./Install.sh
+
+```
+
+설치가 완료되면 재부팅 되고 피노봇 프로그램이 실행됩니다. 
+
+
+#### 6. 피노봇 설정파일 및 키 설정 
+
+먼저 피노봇과 다이얼로그플로우의 연결을 위해서 
+
+[피노봇_다이얼로그_플로우_설정](./피노봇_다이얼로그_플로우_설정.html) 을 진행해서 
+json 포멧의 키 파일을 받은후에 진행해야합니다. 
+
+###### 6.1 키파일 복사 
+
+![](/_static/manual/Clean_Install/7-키파일복사.gif)
+
+라즈베리파이의 sd카드를 제거하고 윈도우 데스크탑에 연결한다음 
+
+라즈베리파이 sd카드의 boot 파티션에 들어가서 boot/PinoSet/keys 폴더안에 삽입하고 부팅하게되면
+
+피노봇 서비스가 자동으로 json 파일을 복사합니다. 
+
+
+###### 6.2 설정파일 수정 
+
+![](/_static/manual/Clean_Install/7_키이름_설정파일에_적어넣기.gif)
+
+/boot/PinoSet/PinoConfig.ini 파일을 메모장으로 열어서 
+
+키 파일이름을 변경하고 
+ 
+![](/_static/manual/Clean_Install/8_프로젝트_이름.gif)
+ 
+다이얼로그 프로젝트 이름을 설정해주면 기본 설정은 완료됩니다. 
+
+이후 라즈베리파이에 다시 sd카드를 연결하고 부팅하면 피노봇 프로그램이 자동으로 실행됩니다. 
+
+
+#### 7 피노봇 프로그램 실행
+
+피노봇 프로그램은 서비스로 등록되어, 부팅시 자동으로 실행되게 되어있습니다.
+
+실행중인 프로그램 중단을 위해서는 다음 명령어를 입력합니다. 
+
+``` shell
+
+sudo systemctl stop PinoBot.service # 피노봇 중단코드
+
+```
+
+서비스 실행을 위해서는 다음 명령어를 입력합니다.
+
+``` shell
+
+sudo systemctl start PinoBot.service # 피노봇 서비스 실행코드
+
+```
+
+수동 코드 작동을 위해서는 다음 명령어를 입력합니다.
+
+``` shell
+
+# 두 명령어중 한가지 선택해서 피노봇 실행가능.
+
+sudo PinoRun.sh # 피노봇 수동실행방법 (1)
+sudo python3 pino_main.py # 피노봇 수동실행방법 (2)
+
+```
+
+로 실행하면 됩니다. 
+
+
