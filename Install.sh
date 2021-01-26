@@ -28,8 +28,8 @@ printf "\n\n [step 6], Copy PinoSet to /boot"
 
 cp -r ./PinoSet /boot
 
-printf "\n\n [step 7] change passwd"
-echo "pi:pinobot01" | chpasswd
+#printf "\n\n [step 7] change passwd"
+#echo "pi:pinobot01" | chpasswd
 
 for i in {10..0}
 do
