@@ -24,7 +24,6 @@ class PinoBoot:
         self.error_msg = ""
 
         # 3. Objects
-        self.log = None
         self.config = None
         self.hardware = None
         self.cloud = None
@@ -94,18 +93,6 @@ class PinoBoot:
             return -1
         self.hardware.OLED.send_loading_console(step=13, msgs="OK. \n")
 
-        # 6. copy media from /home/pi/Desktop/ to media folder
-        self.hardware.OLED.send_loading_console(step=14, msgs="Copy Media..pass")
-
-        """
-        not used for now.
-        if self.__media_copy() == -1:
-            self.hardware.OLED.send_loading_console(step=14, msgs="Fail. \n System Error!")
-            time.sleep(1)
-            self.hardware.OLED.send_loading_console(step=14, msgs="Shutdown Robot.. \n")
-        """
-        self.hardware.OLED.send_loading_console(step=15, msgs="OK. \n")
-
         # 7. Finally all Check ok.
         self.hardware.OLED.send_loading_console(step=16, msgs="Boot OK!")
         return 0
@@ -116,10 +103,6 @@ class PinoBoot:
         import os
 
         default_config = self.__config_default()
-        # if not os.path.isdir("/home/pi/Desktop/PinoBot"):
-        #    self.error_msg = "no PinoBot \nfolder \n on /home/pi/Desktop/"
-        #    print("no PinoBot \nfolder \n on /home/pi/Desktop/")
-        #    return -1
 
         if not os.path.isfile(self.config_path):
             with open(self.config_path, "w") as configfile:
@@ -256,35 +239,7 @@ class PinoBoot:
 
         # 1. try to reconnect max 10 times
         for i in range(11):
-            msg = ""
-
-            # 2. check wpa_supplicant.conf error
-            """
-            self.hardware.OLED.send_loading_console(step=4, msgs="WiFi Reset.. \n")
-            try:
-                print("Checking WIFI..")
-                msg = subprocess.check_output('sh ' + self.base_path + '/Core/Utils/wifiCheck.sh', shell=True).decode(
-                    'utf-8')
-            except Exception as E:
-                #  wpa_supplicant.conf error
-                print("pino_init.__load_internet(), Fail.. " + repr(E)+" "+ msg)
-                self.hardware.write(text = "Fail Internet \n [E21],check wpa_supplicant \n Shutdown",led=[255, 0, 0])
-                return -1  # Exit Program
-
-            self.hardware.OLED.send_loading_console(step=5, msg="WiFi Reset.. OK \n WiFi re-connect..")
-            # 3. wpa_supplicant.conf is fine,   re-set wifi
-            try:  # Run WIFI reset scripts
-                subprocess.check_output('sh ' + self.base_path + '/Core/Utils/wifiReset.sh', shell=True).decode('utf-8')
-            except Exception as E:
-                print("pino_init.__load_internet(), Fail.. " + repr(E)+" "+ msg)
-                self.hardware.write(text = "Fail Internet \n [E22],Linux Error \n Shutdown ",led=[255, 0, 0])
-                return -1  # Exit Program
-
-            print("pino_init.__Reset_internet(), reset wifi....")
-            """
-            self.hardware.write(led=[205, 140, 0])  # Orange LED on
-
-            # 4. wait 20 seconds to reconnect
+            # 2. wait 20 seconds to reconnect
             cnt = 0
             for j in range(20):
                 time.sleep(1)
@@ -331,9 +286,6 @@ class PinoBoot:
             print("\n\n TEST Start!")
             self.hardware.OLED.send_loading_console(step=11, msgs=".")
             text_response = self.cloud.send_text("안녕하세요")
-            self.log.info(
-                "Cloud test response %s" % text_response.query_result.query_text
-            )
 
         except Exception as E:
             print("pino_init.__load_diaglogflow(), " + repr(E))
@@ -341,67 +293,7 @@ class PinoBoot:
         else:
             return 0
 
-    # [C.7] Copy Media files from /home/pi/Desktop/ dir
-    def __media_copy(self):
-        import os, shutil
-
-        # 1. check media folder exist.
-        if not os.path.isdir(self.base_path + "/media"):  # if media folder not exist.
-            try:
-                os.mkdir(self.base_path + "/media")  # try to make media folder.
-            except Exception as E:  # if fail, write media message
-                print(str(E))
-                print("make media folder error")
-                return -1
-
-        # 2. copy media file.
-        # TODO check works on wav and jpg/png files
-        if os.path.isdir("/home/pi/Desktop/media"):
-            files = [
-                f for f in os.listdir("/home/pi/Desktop/media/") if os.path.isfile(f)
-            ]
-            self.log.info("start copy media file")
-            for file_name in files:
-                if os.path.isfile(
-                    self.base_path + "/media/" + file_name
-                ):  # if file exist,
-                    try:
-                        os.remove(
-                            self.base_path + "/media/" + file_name
-                        )  #  remove old file
-                        shutil.copyfile(
-                            "/home/pi/Desktop/media/" + file_name,
-                            self.base_path + "/media/" + file_name,
-                        )  # try copy
-                    except Exception as E:
-                        print(
-                            "pino_init.__media_copy(), ( /home/pi/Desktop/media/"
-                            + file_name
-                            + self.base_path
-                            + "/media/"
-                            + file_name
-                            + ") "
-                            + repr(E)
-                        )
-                else:
-                    try:
-                        shutil.copyfile(
-                            "/home/pi/Desktop/media/" + file_name,
-                            self.base_path + "/media/" + file_name,
-                        )  # try copy
-                    except Exception as E:
-                        print(
-                            "pino_init.__media_copy(), copy fail "
-                            + file_name
-                            + ") "
-                            + repr(E)
-                        )
-
-        else:  # if no media file, pass
-            self.log.info("skip copy media file")
-            return 0
-
-    # D.2 config file reset fuction
+    # D.1 config file reset fuction
     def __config_default(self):
         config = configparser.ConfigParser()
         config["GCloud"] = {
