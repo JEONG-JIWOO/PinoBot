@@ -7,7 +7,7 @@
   
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   
-  <title>피노봇 클린설치 &mdash; PinoBot 1.0.00 문서</title>
+  <title>피노봇_설치중_문제_해결 &mdash; PinoBot 1.0.00 문서</title>
   
 
   
@@ -92,13 +92,22 @@
 </ul>
 <p class="caption"><span class="caption-text">피노봇 활용</span></p>
 <ul>
-<li class="toctree-l1"><a class="reference internal" href="%ED%94%BC%EB%85%B8%EB%B4%87_%EB%8C%80%ED%99%94%EB%AC%B8_%EB%A7%8C%EB%93%A4%EA%B8%B0.html">피노봇 클린설치</a></li>
+<li class="toctree-l1"><a class="reference internal" href="%ED%94%BC%EB%85%B8%EB%B4%87_%EB%8C%80%ED%99%94%EB%AC%B8_%EB%A7%8C%EB%93%A4%EA%B8%B0.html">A. 피노봇 기초 대화문 만들기</a></li>
+<li class="toctree-l1"><a class="reference internal" href="%ED%94%BC%EB%85%B8%EB%B4%87_Entity_%EB%8C%80%ED%99%94%EB%AC%B8_%EB%A7%8C%EB%93%A4%EA%B8%B0.html">동의어(Entity)를 이용한 챗봇 만들기</a></li>
+<li class="toctree-l1"><a class="reference internal" href="%ED%94%BC%EB%85%B8%EB%B4%87_%EB%AA%85%EB%A0%B9%EC%96%B4_%EB%B3%B4%EB%82%B4%EA%B8%B0.html">C. 피노봇 명령어 보내기</a></li>
 </ul>
 <p class="caption"><span class="caption-text">피노봇 기타 문서</span></p>
 <ul class="current">
 <li class="toctree-l1"><a class="reference internal" href="%ED%94%BC%EB%85%B8%EB%B4%87_%ED%81%B4%EB%A6%B0%EC%84%A4%EC%B9%98.html">피노봇 클린설치</a></li>
 <li class="toctree-l1"><a class="reference internal" href="%ED%94%BC%EB%85%B8%EB%B4%87_%EA%B0%9C%EB%B0%9C%EB%AC%B8%EC%84%9C.html">피노봇 개발문서</a></li>
-<li class="toctree-l1 current"><a class="current reference internal" href="#">피노봇 클린설치</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">피노봇_설치중_문제_해결</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#id2">1. 네트워크 확인</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#id3">1.1 네트워크 관련 문제해결</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#id4">2. 마이크 및 스피커 오동작</a></li>
+</ul>
+</li>
 </ul>
 
             
@@ -147,7 +156,7 @@
     
       <li><a href="../index.html" class="icon icon-home"></a> &raquo;</li>
         
-      <li>피노봇 클린설치</li>
+      <li>피노봇_설치중_문제_해결</li>
     
     
       <li class="wy-breadcrumbs-aside">
@@ -167,7 +176,31 @@
            <div itemprop="articleBody">
             
   <div class="section" id="id1">
-<h1>피노봇 클린설치<a class="headerlink" href="#id1" title="제목 주소">¶</a></h1>
+<h1>피노봇_설치중_문제_해결<a class="headerlink" href="#id1" title="제목 주소">¶</a></h1>
+<div class="section" id="id2">
+<h2>1. 네트워크 확인<a class="headerlink" href="#id2" title="제목 주소">¶</a></h2>
+<p>피노봇 설치및 동작에서 주 문제는 네트워크에서 발생이 됩니다.</p>
+<p>라즈베리파이에서는 GUI에서 네트워크를 연결하는것이 가장 안전하고 잘 작동합니다.</p>
+<div class="section" id="id3">
+<h3>1.1 네트워크 관련 문제해결<a class="headerlink" href="#id3" title="제목 주소">¶</a></h3>
+<ul class="simple">
+<li><p>무선 네트워크가 비활성화 된 경우</p></li>
+</ul>
+<p>라즈베리파이 OS 재 설치를 권장합니다.</p>
+</div>
+</div>
+<div class="section" id="id4">
+<h2>2. 마이크 및 스피커 오동작<a class="headerlink" href="#id4" title="제목 주소">¶</a></h2>
+<ul class="simple">
+<li><p>인터페이스 (I2C, SPI ) 활성화 여부 체크</p></li>
+<li><p>사운드 드라이버 확인 명령어 입력</p></li>
+</ul>
+<div class="highlight-shell notranslate"><div class="highlight"><pre><span></span>alsamixer
+</pre></div>
+</div>
+<p>Respeaker 2-mic hat 검색 안된경우,</p>
+<p>os 재설치 혹은 클린 재설치 권장</p>
+</div>
 </div>
 
 
