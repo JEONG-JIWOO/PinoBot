@@ -8,7 +8,6 @@ import logging
 from logging.handlers import RotatingFileHandler
 from urllib3 import PoolManager, Timeout, Retry
 
-
 class Pino_Init:
     """
     A. con & deconstruct
