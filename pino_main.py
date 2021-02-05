@@ -129,7 +129,7 @@ class PinoBot:
     """
 
     def reset(self):
-        # TODO: Add reset function
+        # TODO: Remove all Reset Function
         pass
 
     """
@@ -149,12 +149,13 @@ class PinoBot:
 
         # 3. set volume by switch
         if volume != self.cur_volume:
-            # TODO : change volume
+            # TODO : Remove
             pass
         if self.detect["distance"] > distance > 4:
             cur_sensor_state = 1
 
         # 4. do actions by sensor state.
+        # TODO: 1줄로 만들기
         if self.detect["pre_state"] == 0 and cur_sensor_state == 1:
             # 4.1 object [ 0 -> 1 ] , new object, add talk task
             self.detect["first_time"] = time.time()
@@ -221,6 +222,7 @@ class PinoBot:
         # to do that. change value self.wait["adaptive_loop_d"] : as 0.2sec(min) ~ 1sec(max)
         time.sleep(self.wait["adaptive_loop_d"])
 
+    # TODO: task 개념 삭제
     def add_task(
         self, task_type, event_name=None, event_parameter=None, fail_handler=True
     ):
@@ -249,6 +251,7 @@ class PinoBot:
         else:
             self.task_q.put([task_type, event_name, None, fail_handler])
 
+    # TODO: 피노 다이얼로그 플로우 모듈안으로 넣기
     def __run_task(self, task):
         # 1. parse parameter
         task_type = task[0]
@@ -590,10 +593,12 @@ class PinoBot:
 
         return 0
 
+    # TODO: 피노 다이얼로그 플로우 모듈안으로 넣기
     def __execute_pino_commands(self, intent_name, pino_commands):
         for pino_cmd in pino_commands:
             self.__run_pino_command(intent_name, pino_cmd)
 
+    # TODO: 피노 하드웨어 모듈안으로 넣기
     def __run_pino_command(self, intent_name, cmd):
         cmd_name = cmd[1]
         cmd_args = cmd[2]
