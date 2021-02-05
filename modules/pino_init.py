@@ -4,9 +4,6 @@ import configparser
 
 # import requests
 import subprocess, time
-import logging
-from logging.handlers import RotatingFileHandler
-from urllib3 import PoolManager, Timeout, Retry
 
 class Pino_Init:
     """
@@ -34,15 +31,7 @@ class Pino_Init:
         # 4. Init Functions
 
     def __del__(self):
-        try:
-            self.log_file.close()
-            self.log.removeHandler(self.log_file)
-            self.log_consol.close()
-            self.log.removeHandler(self.log_consol)
-            del self.log
-
-        except:
-            pass
+        pass
 
     """
     B. Public Functions
@@ -52,7 +41,6 @@ class Pino_Init:
         # if boot Failed,
         if self.__main_boot == -1:
             import sys
-
             sys.exit()
 
         # boot success
@@ -64,9 +52,7 @@ class Pino_Init:
     # [C.0] main boot Sequence
     @property
     def __main_boot(self):
-        # 1. set logger
-        self.__load_logger()
-
+        
         # 2. load ini
         if self.__load_config() == -1:
             try:
@@ -123,32 +109,6 @@ class Pino_Init:
         self.hardware.OLED.send_loading_console(step=16, msgs="Boot OK!")
         return 0
 
-    # [C.1] log File load & check
-    def __load_logger(self):
-        # 1 set logger and formatter
-        path = self.base_path + "log/Boot.log"
-        self.log = logging.getLogger("Boot")
-        self.log.setLevel(logging.DEBUG)
-        formatter = logging.Formatter(
-            "[%(levelname)s] (%(asctime)s : %(filename)s:%(lineno)d) > %(message)s"
-        )
-
-        # 2 set file logger
-        self.log_file = RotatingFileHandler(
-            filename=path, maxBytes=5 * 1024 * 1024, mode="w", encoding="utf-8"
-        )
-        self.log_file.setFormatter(formatter)
-        self.log.addHandler(self.log_file)
-
-        # 3 set consol logger
-        self.log_consol = logging.StreamHandler()
-        self.log_consol.setFormatter(formatter)
-        self.log.addHandler(self.log_consol)
-
-        # 4 logger OK.
-        self.log.info("Start BootLoader")
-        return 0
-
     # [C.2] Config File load & check
     def __load_config(self):
         # 1. config not exist, write default config.
@@ -157,7 +117,7 @@ class Pino_Init:
         default_config = self.__config_default()
         # if not os.path.isdir("/home/pi/Desktop/PinoBot"):
         #    self.error_msg = "no PinoBot \nfolder \n on /home/pi/Desktop/"
-        #    self.log.error("no PinoBot \nfolder \n on /home/pi/Desktop/")
+        #    print("no PinoBot \nfolder \n on /home/pi/Desktop/")
         #    return -1
 
         if not os.path.isfile(self.config_path):
@@ -172,7 +132,7 @@ class Pino_Init:
         except Exception as E:
             self.__config_default()
             self.error_msg = "can't read \n config file"
-            self.log.error("boot_utils.__load_config(), " + repr(E))
+            print("boot_utils.__load_config(), " + repr(E))
             return -1
 
         #  3. check config value is VALID
@@ -229,25 +189,25 @@ class Pino_Init:
                             raise ValueError
                 except Exception as E:
                     self.error_msg = "config error \n" + check[1] + "  \n" + check[2]
-                    self.log.error(
+                    print(
                         "config error3 " + check[1] + "  " + check[2] + repr(E)
                     )
                     failed = 3
 
             # 3.4 if Form not exist
             if failed == 1:
-                self.log.error("config error 1 " + check[1])
+                print("config error 1 " + check[1])
                 self.config[check[1]] = {}
                 self.config[check[1]][check[2]] = default_config[check[1]][check[2]]
 
             # 3.5 if value not exist [2]
             elif failed == 2:
-                self.log.error("config error 2 " + check[1] + "  " + check[2])
+                print("config error 2 " + check[1] + "  " + check[2])
                 self.config[check[1]][check[2]] = default_config[check[1]][check[2]]
 
             # 3.6 if value not valid
             elif failed == 3:
-                self.log.error("config error 2 " + check[1] + "  " + check[2])
+                print("config error 2 " + check[1] + "  " + check[2])
                 self.config[check[1]][check[2]] = default_config[check[1]][check[2]]
 
         return 0
@@ -261,7 +221,7 @@ class Pino_Init:
 
             self.hardware = v1.HardwareV1(self.config, self.base_path)
         except Exception as E:
-            self.log.error("boot_utils.__load_hardware(), " + repr(E))
+            print("boot_utils.__load_hardware(), " + repr(E))
             return -1
         else:
             return 0
@@ -279,12 +239,12 @@ class Pino_Init:
             msg = "Internet.. " + str(response.status) + ".."
             self.hardware.OLED.send_loading_console(step=2, msgs=msg)
             if response.status == 200:  # if internet ok.
-                self.log.warning("Internet Not Connected")
+                print("Internet Not Connected")
                 self.net_connected = True
                 return 0
         except Exception as E:
             print(time.time() - a)
-            self.log.error("boot_utils.__load_internet(), " + repr(E))
+            print("boot_utils.__load_internet(), " + repr(E))
             return -1
         else:
             return 0
@@ -301,12 +261,12 @@ class Pino_Init:
             """
             self.hardware.OLED.send_loading_console(step=4, msgs="WiFi Reset.. \n")
             try:
-                self.log.warning("Checking WIFI..")
+                print("Checking WIFI..")
                 msg = subprocess.check_output('sh ' + self.base_path + '/Core/Utils/wifiCheck.sh', shell=True).decode(
                     'utf-8')
             except Exception as E:
                 #  wpa_supplicant.conf error
-                self.log.error("boot_utils.__load_internet(), Fail.. " + repr(E)+" "+ msg)
+                print("boot_utils.__load_internet(), Fail.. " + repr(E)+" "+ msg)
                 self.hardware.write(text = "Fail Internet \n [E21],check wpa_supplicant \n Shutdown",led=[255, 0, 0])
                 return -1  # Exit Program
 
@@ -315,11 +275,11 @@ class Pino_Init:
             try:  # Run WIFI reset scripts
                 subprocess.check_output('sh ' + self.base_path + '/Core/Utils/wifiReset.sh', shell=True).decode('utf-8')
             except Exception as E:
-                self.log.error("boot_utils.__load_internet(), Fail.. " + repr(E)+" "+ msg)
+                print("boot_utils.__load_internet(), Fail.. " + repr(E)+" "+ msg)
                 self.hardware.write(text = "Fail Internet \n [E22],Linux Error \n Shutdown ",led=[255, 0, 0])
                 return -1  # Exit Program
 
-            self.log.warning("boot_utils.__Reset_internet(), reset wifi....")
+            print("boot_utils.__Reset_internet(), reset wifi....")
             """
             self.hardware.write(led=[205, 140, 0])  # Orange LED on
 
@@ -342,7 +302,7 @@ class Pino_Init:
                 return 0
             # 6. if re connecti on failed over 11 times.
             elif i > 10:
-                self.log.warning("boot_utils.__load_internet(), Wifi  not     found.. ")
+                print("boot_utils.__load_internet(), Wifi  not     found.. ")
                 self.hardware.write(
                     text="wifi \n not found \n Shutdown", led=[255, 0, 100]
                 )  # PURPLE LED ON
@@ -375,7 +335,7 @@ class Pino_Init:
             )
 
         except Exception as E:
-            self.log.error("boot_utils.__load_diaglogflow(), " + repr(E))
+            print("boot_utils.__load_diaglogflow(), " + repr(E))
             return -1
         else:
             return 0
@@ -389,8 +349,8 @@ class Pino_Init:
             try:
                 os.mkdir(self.base_path + "/media")  # try to make media folder.
             except Exception as E:  # if fail, write media message
-                self.log.error(str(E))
-                self.log.error("make media folder error")
+                print(str(E))
+                print("make media folder error")
                 return -1
 
         # 2. copy media file.
@@ -413,7 +373,7 @@ class Pino_Init:
                             self.base_path + "/media/" + file_name,
                         )  # try copy
                     except Exception as E:
-                        self.log.warning(
+                        print(
                             "boot_utils.__media_copy(), ( /home/pi/Desktop/media/"
                             + file_name
                             + self.base_path
@@ -429,7 +389,7 @@ class Pino_Init:
                             self.base_path + "/media/" + file_name,
                         )  # try copy
                     except Exception as E:
-                        self.log.warning(
+                        print(
                             "boot_utils.__media_copy(), copy fail "
                             + file_name
                             + ") "
