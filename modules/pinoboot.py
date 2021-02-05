@@ -6,7 +6,7 @@ import configparser
 import subprocess, time
 from urllib3 import PoolManager ,Timeout
 
-class Pino_Init:
+class PinoBoot:
     """
     A. con & deconstruct
     """
