@@ -133,7 +133,7 @@ class Pino_Init:
         except Exception as E:
             self.__config_default()
             self.error_msg = "can't read \n config file"
-            print("boot_utils.__load_config(), " + repr(E))
+            print("pino_init.__load_config(), " + repr(E))
             return -1
 
         #  3. check config value is VALID
@@ -222,7 +222,7 @@ class Pino_Init:
 
             self.hardware = v1.HardwareV1(self.config, self.base_path)
         except Exception as E:
-            print("boot_utils.__load_hardware(), " + repr(E))
+            print("pino_init.__load_hardware(), " + repr(E))
             return -1
         else:
             return 0
@@ -245,7 +245,7 @@ class Pino_Init:
                 return 0
         except Exception as E:
             print(time.time() - a)
-            print("boot_utils.__load_internet(), " + repr(E))
+            print("pino_init.__load_internet(), " + repr(E))
             return -1
         else:
             return 0
@@ -267,7 +267,7 @@ class Pino_Init:
                     'utf-8')
             except Exception as E:
                 #  wpa_supplicant.conf error
-                print("boot_utils.__load_internet(), Fail.. " + repr(E)+" "+ msg)
+                print("pino_init.__load_internet(), Fail.. " + repr(E)+" "+ msg)
                 self.hardware.write(text = "Fail Internet \n [E21],check wpa_supplicant \n Shutdown",led=[255, 0, 0])
                 return -1  # Exit Program
 
@@ -276,11 +276,11 @@ class Pino_Init:
             try:  # Run WIFI reset scripts
                 subprocess.check_output('sh ' + self.base_path + '/Core/Utils/wifiReset.sh', shell=True).decode('utf-8')
             except Exception as E:
-                print("boot_utils.__load_internet(), Fail.. " + repr(E)+" "+ msg)
+                print("pino_init.__load_internet(), Fail.. " + repr(E)+" "+ msg)
                 self.hardware.write(text = "Fail Internet \n [E22],Linux Error \n Shutdown ",led=[255, 0, 0])
                 return -1  # Exit Program
 
-            print("boot_utils.__Reset_internet(), reset wifi....")
+            print("pino_init.__Reset_internet(), reset wifi....")
             """
             self.hardware.write(led=[205, 140, 0])  # Orange LED on
 
@@ -303,7 +303,7 @@ class Pino_Init:
                 return 0
             # 6. if re connecti on failed over 11 times.
             elif i > 10:
-                print("boot_utils.__load_internet(), Wifi  not     found.. ")
+                print("pino_init.__load_internet(), Wifi  not     found.. ")
                 self.hardware.write(
                     text="wifi \n not found \n Shutdown", led=[255, 0, 100]
                 )  # PURPLE LED ON
@@ -336,7 +336,7 @@ class Pino_Init:
             )
 
         except Exception as E:
-            print("boot_utils.__load_diaglogflow(), " + repr(E))
+            print("pino_init.__load_diaglogflow(), " + repr(E))
             return -1
         else:
             return 0
@@ -375,7 +375,7 @@ class Pino_Init:
                         )  # try copy
                     except Exception as E:
                         print(
-                            "boot_utils.__media_copy(), ( /home/pi/Desktop/media/"
+                            "pino_init.__media_copy(), ( /home/pi/Desktop/media/"
                             + file_name
                             + self.base_path
                             + "/media/"
@@ -391,7 +391,7 @@ class Pino_Init:
                         )  # try copy
                     except Exception as E:
                         print(
-                            "boot_utils.__media_copy(), copy fail "
+                            "pino_init.__media_copy(), copy fail "
                             + file_name
                             + ") "
                             + repr(E)
