@@ -1,8 +1,6 @@
 #!/usr/bin/python3
 
 import configparser
-
-# import requests
 import subprocess, time
 from urllib3 import PoolManager ,Timeout
 
@@ -17,8 +15,7 @@ class PinoBoot:
         self.base_path = "/home/pi/Desktop/PinoBot/"  # base_path
 
         # 2. variables
-        self.config_path = (
-            "/home/pi/Desktop/PinoBot/PinoConfig.ini"  # self.base_path+"/config.ini"
+        self.config_path = self.base_path +"PinoConfig.ini"  # self.base_path+"/config.ini
         )
         self.net_connected = False
         self.error_msg = ""
@@ -28,15 +25,13 @@ class PinoBoot:
         self.hardware = None
         self.cloud = None
 
-        # 4. Init Functions
-
     def __del__(self):
         pass
 
     """
     B. Public Functions
     """
-    # [B.1] Actual Function called from Outside.
+    # [B.1] Actual Function called from outside.
     def boot(self):
         # if boot Failed,
         if self.__main_boot == -1:
@@ -49,7 +44,7 @@ class PinoBoot:
     """
     C. Private , Loading Functions
     """
-    # [C.0] main boot Sequence
+    # [C.1] main boot sequence
     @property
     def __main_boot(self):
         
@@ -196,7 +191,7 @@ class PinoBoot:
 
         return 0
 
-    # [C.3] load hardware
+    # [C.3] load hardware module
     def __load_hardware(self):
         if self.config is None:  # if config is not Loaded, cancel boot.
             return -1
@@ -233,7 +228,7 @@ class PinoBoot:
         else:
             return 0
 
-    # [C.5] reset wifi, and try to re-connect 5 times
+    # [C.5] reset wifi, and try to re-connect 11 times
     def __reset_internet(self):
         # self.hardware.OLED.send_loading_console(step=3, msgs="\n Re connect..")
 
@@ -266,7 +261,7 @@ class PinoBoot:
             else:
                 continue
 
-    # [C.6] Cloud connect & check Function
+    # [C.6] Cloud connect & check
     def __load_diaglogflow(self):
         # 1. if config is not Loaded, cancel boot.
         if self.config is None:
@@ -293,7 +288,7 @@ class PinoBoot:
         else:
             return 0
 
-    # D.1 config file reset fuction
+    # [D.1] config file reset
     def __config_default(self):
         config = configparser.ConfigParser()
         config["GCloud"] = {
