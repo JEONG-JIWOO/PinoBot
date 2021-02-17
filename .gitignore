@@ -4,6 +4,3 @@
 Install/seed-voicecard
 keys
 .idea
-*.xml
-Makefile
-make.bat
