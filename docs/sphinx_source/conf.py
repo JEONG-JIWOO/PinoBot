@@ -29,9 +29,13 @@ release = '1.0.00'
 # extensions coming with Sphinx (named 'sphinx.ext.*') or your custom
 # ones.
 extensions = [
-    "m2r2"
+    "m2r2",
+    "sphinxcontrib.images"
 ]
 source_suffix = ['.rst', '.md']
+images_config = {
+    'override_image_directive': False
+}
 
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ['_templates']
