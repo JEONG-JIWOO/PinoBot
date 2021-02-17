@@ -10,7 +10,7 @@ import tracemalloc
 
 def event_test():
     tracemalloc.start()
-    from pino_main import PinoBot
+    from pinobot import PinoBot
 
     a = PinoBot()
 

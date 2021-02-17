@@ -8,9 +8,9 @@ import unittest
 
 
 def custom_function():
-    from modules.pino_init import Pino_Init
+    from modules.pinoboot import PinoBoot
 
-    d = Pino_Init("~/Desktop/Desktop/PinoBot/")
+    d = PinoBoot("~/Desktop/Desktop/PinoBot/")
     d.boot()
     print("tested")
 

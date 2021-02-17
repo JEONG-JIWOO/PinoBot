@@ -1,7 +1,7 @@
 #!/usr/bin/python3
 
 import time, random, queue
-from modules.pino_init import Pino_Init
+from modules.pinoboot import PinoBoot
 from modules.pino_custom_cmd import run_pino_custom_cmd
 import ast, datetime
 
@@ -79,7 +79,7 @@ class PinoBot:
         self.task_q = queue.Queue()
 
         # 4. Init Functions
-        boot = Pino_Init(self.base_path)
+        boot = PinoBoot(self.base_path)
         self.hardware, self.cloud, self.config = boot.boot()
         del boot
 

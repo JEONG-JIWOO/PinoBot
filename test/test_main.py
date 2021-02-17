@@ -12,7 +12,7 @@ import os
 
 def event_test():
     tracemalloc.start()
-    from pino_main import PinoBot
+    from pinobot import PinoBot
 
     # 1. test talk
     bot = PinoBot()
