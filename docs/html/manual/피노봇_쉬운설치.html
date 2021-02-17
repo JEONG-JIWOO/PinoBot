@@ -1,0 +1,405 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="ko" >
+<head>
+  <meta charset="utf-8" />
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  
+  <title>B. 피노봇 설치 &mdash; PinoBot 1.0.00 문서</title>
+  
+
+  
+  <link rel="stylesheet" href="../_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+
+  
+  
+
+  
+  
+
+  
+
+  
+  <!--[if lt IE 9]>
+    <script src="../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+    
+      <script type="text/javascript" id="documentation_options" data-url_root="../" src="../_static/documentation_options.js"></script>
+        <script src="../_static/jquery.js"></script>
+        <script src="../_static/underscore.js"></script>
+        <script src="../_static/doctools.js"></script>
+        <script src="../_static/translations.js"></script>
+    
+    <script type="text/javascript" src="../_static/js/theme.js"></script>
+
+    
+    <link rel="index" title="색인" href="../genindex.html" />
+    <link rel="search" title="검색" href="../search.html" />
+    <link rel="next" title="C. 피노봇 조립메뉴얼" href="%ED%94%BC%EB%85%B8%EB%B4%87_%EC%A1%B0%EB%A6%BD.html" />
+    <link rel="prev" title="A. 구글 DialogFlow 프로젝트 만들기" href="%ED%94%BC%EB%85%B8%EB%B4%87_%EB%8B%A4%EC%9D%B4%EC%96%BC%EB%A1%9C%EA%B7%B8_%ED%94%8C%EB%A1%9C%EC%9A%B0_%EC%84%A4%EC%A0%95.html" /> 
+</head>
+
+<body class="wy-body-for-nav">
+
+   
+  <div class="wy-grid-for-nav">
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+          
+
+          
+            <a href="../index.html" class="icon icon-home"> PinoBot
+          
+
+          
+          </a>
+
+          
+            
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+              
+            
+            
+              <p class="caption"><span class="caption-text">피노봇 설치</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="%ED%94%BC%EB%85%B8%EB%B4%87_%EB%8B%A4%EC%9D%B4%EC%96%BC%EB%A1%9C%EA%B7%B8_%ED%94%8C%EB%A1%9C%EC%9A%B0_%EC%84%A4%EC%A0%95.html">A. 구글 DialogFlow 프로젝트 만들기</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">B. 피노봇 설치</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#id1">1. 준비물</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#os">2. 피노봇 전용 os 다운로드</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#id2">3. OS설치</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#id3">4. 회로 가조립</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#id4">5. 부팅</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#id5">6. 네트워크 및 암호 설정</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#id6">6.1 네트워크 연결</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#id7">6.2 라즈베리파이 암호변경</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#id8">7. 피노봇 설정파일 및 키 설정</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#id10">7.1 키파일 복사</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#id11">7.2 설정파일 수정</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#id12">8. 피노봇 프로그램 실행</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#id13">8.1 부팅확인</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#id14">8.2 네트워크 재 연결</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#id15">8.3 피노봇 수동실행</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="%ED%94%BC%EB%85%B8%EB%B4%87_%EC%A1%B0%EB%A6%BD.html">C. 피노봇 조립메뉴얼</a></li>
+</ul>
+<p class="caption"><span class="caption-text">피노봇 활용</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="%ED%94%BC%EB%85%B8%EB%B4%87_%EB%8C%80%ED%99%94%EB%AC%B8_%EB%A7%8C%EB%93%A4%EA%B8%B0.html">A. 피노봇 기초 대화문 만들기</a></li>
+<li class="toctree-l1"><a class="reference internal" href="%ED%94%BC%EB%85%B8%EB%B4%87_Entity_%EB%8C%80%ED%99%94%EB%AC%B8_%EB%A7%8C%EB%93%A4%EA%B8%B0.html">동의어(Entity)를 이용한 챗봇 만들기</a></li>
+<li class="toctree-l1"><a class="reference internal" href="%ED%94%BC%EB%85%B8%EB%B4%87_%EB%AA%85%EB%A0%B9%EC%96%B4_%EB%B3%B4%EB%82%B4%EA%B8%B0.html">C. 피노봇 명령어 보내기</a></li>
+</ul>
+<p class="caption"><span class="caption-text">피노봇 기타 문서</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="%ED%94%BC%EB%85%B8%EB%B4%87_%ED%81%B4%EB%A6%B0%EC%84%A4%EC%B9%98.html">피노봇 클린설치</a></li>
+<li class="toctree-l1"><a class="reference internal" href="%ED%94%BC%EB%85%B8%EB%B4%87_%EA%B0%9C%EB%B0%9C%EB%AC%B8%EC%84%9C.html">피노봇 개발문서</a></li>
+<li class="toctree-l1"><a class="reference internal" href="%ED%94%BC%EB%85%B8%EB%B4%87_%EC%84%A4%EC%B9%98%EC%A4%91_%EB%AC%B8%EC%A0%9C_%ED%95%B4%EA%B2%B0.html">피노봇_설치중_문제_해결</a></li>
+</ul>
+
+            
+          
+        </div>
+        
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" aria-label="top navigation">
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">PinoBot</a>
+        
+      </nav>
+
+
+      <div class="wy-nav-content">
+        
+        <div class="rst-content">
+        
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="wy-breadcrumbs">
+    
+      <li><a href="../index.html" class="icon icon-home"></a> &raquo;</li>
+        
+      <li>B. 피노봇 설치</li>
+    
+    
+      <li class="wy-breadcrumbs-aside">
+        
+          
+            <a href="../_sources/manual/피노봇_쉬운설치.md.txt" rel="nofollow"> View page source</a>
+          
+        
+      </li>
+    
+  </ul>
+
+  
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <div class="section" id="b">
+<h1>B. 피노봇 설치<a class="headerlink" href="#b" title="제목 주소">¶</a></h1>
+<div class="section" id="id1">
+<h2>1. 준비물<a class="headerlink" href="#id1" title="제목 주소">¶</a></h2>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="o">-</span> <span class="n">라즈베리파이</span> <span class="n">및</span> <span class="n">sd카드</span>
+<span class="o">-</span> <span class="n">SD카드</span> <span class="n">리더기</span>
+<span class="o">-</span> <span class="n">키보드</span> <span class="n">마우스</span>
+<span class="o">-</span> <span class="n">모니터</span>
+<span class="o">-</span> <span class="n">모니터</span> <span class="n">연결</span> <span class="n">케이블</span> <span class="n">및</span> <span class="n">젠더</span>
+    <span class="o">-</span> <span class="n">Raspberry</span> <span class="n">Pi</span> <span class="mi">3</span><span class="n">B</span><span class="o">+</span>   <span class="p">:</span> <span class="n">일반</span> <span class="n">HDMI</span> <span class="n">케이블</span> <span class="n">사용가능</span>
+    <span class="o">-</span> <span class="n">Raspberry</span> <span class="n">Pi</span> <span class="n">ZeroW</span> <span class="p">:</span> <span class="n">미니</span> <span class="n">HDMI</span> <span class="n">젠더</span> <span class="n">혹은</span> <span class="n">케이블</span> <span class="n">필요</span>
+    <span class="o">-</span> <span class="n">Raspberry</span> <span class="n">Pi</span> <span class="mi">4</span><span class="n">B</span>    <span class="p">:</span> <span class="n">마이크로</span> <span class="n">HDMI</span> <span class="n">젠더</span> <span class="n">혹은</span> <span class="n">케이블</span> <span class="n">필요</span>
+<span class="o">-</span> <span class="n">무선</span><span class="p">,</span> <span class="n">유선</span> <span class="n">네트워크</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="os">
+<h2>2. 피노봇 전용 os 다운로드<a class="headerlink" href="#os" title="제목 주소">¶</a></h2>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">먼저</span> <span class="n">아래</span> <span class="n">링크에서</span> <span class="n">해당</span> <span class="n">보드에</span> <span class="n">맞는</span> <span class="n">전용</span> <span class="n">OS를</span> <span class="n">다운로드합니다</span><span class="o">.</span>
+
+<span class="o">-</span> <span class="n">Raspberry</span> <span class="n">Pi</span> <span class="n">Zero</span>
+
+<span class="o">-</span> <span class="n">Raspberry</span> <span class="n">Pi</span> <span class="mi">3</span><span class="n">B</span><span class="o">+</span>
+
+<span class="o">-</span> <span class="n">Raspberry</span> <span class="n">Pi</span> <span class="mi">4</span><span class="n">B</span>
+</pre></div>
+</div>
+<blockquote>
+<div><p><span class="raw-html-m2r"><i class="fa fa-exclamation-triangle" aria-hidden="true"></i></span> <strong>주의</strong>: 해당 보드와 다른 OS를 설치할경우 부팅이 불가능할수 있습니다.</p>
+<p>이 증상은 <strong>연두색 불이 주기적으로 점등</strong>하면서 <strong>부팅이 안되는</strong> 현상으로 확인이 가능합니다.</p>
+</div></blockquote>
+</div>
+<div class="section" id="id2">
+<h2>3. OS설치<a class="headerlink" href="#id2" title="제목 주소">¶</a></h2>
+<p><a class="reference external" href="https://sourceforge.net/projects/win32diskimager/">win32diskmanager</a></p>
+<p><a class="reference external" href="https://www.raspberrypi.org/software/">Raspberry Pi imager</a></p>
+<p><a class="reference external" href="https://www.balena.io/etcher/">balena etcher</a></p>
+<p>등의 프로그램으로 sd카드에 OS를 설치합니다.</p>
+</div>
+<div class="section" id="id3">
+<h2>4. 회로 가조립<a class="headerlink" href="#id3" title="제목 주소">¶</a></h2>
+<p>소프트 웨어 작동확인 및 부품 작동 확인을 위해 회로를 가조립합니다.
+연결 방법은 다음과 같습니다.</p>
+<a class="reference external image-reference" href="/_static/manual/Clean_Install/가조립도.png"><img alt="" src="../_images/가조립도.png" /></a>
+<p>가조립은 다음과 같이 진행하며</p>
+<a class="reference external image-reference" href="/_static/manual/Clean_Install/가조립도_연결부_확대.png"><img alt="" src="../_images/가조립도_연결부_확대.png" /></a>
+<p>회로 연결은 다음과 같습니다.</p>
+<ol class="arabic simple">
+<li><p>인터페이스 보드 및 마이크-스피커 보드 연결</p></li>
+<li><p>초음파 센서 연결</p></li>
+<li><p>스피커 연결</p></li>
+<li><p>미니 LCD 연결</p></li>
+<li><p>서보모터 연결 (테스트를 위해서는 그림과 같이 1개만 연결해도 가능합니다.)</p></li>
+<li><p>전원 연결</p></li>
+</ol>
+</div>
+<div class="section" id="id4">
+<h2>5. 부팅<a class="headerlink" href="#id4" title="제목 주소">¶</a></h2>
+<p>가조립이 끝난 이후 부팅단계입니다.</p>
+<a class="reference external image-reference" href="/_static/manual/Clean_Install/pi_keyboard.jpg"><img alt="키보드 모니터 마우스 연결사진" src="../_images/pi_keyboard.jpg" /></a>
+<p>라즈베리파이에 모니터 및 키보드,마우스를 연결합니다.</p>
+<a class="reference external image-reference" href="/_static/manual/Clean_Install/pi_sdcard.jpg"><img alt="SD카드 장착사진" src="../_images/pi_sdcard.jpg" /></a>
+<p>그리고 SD카드를 피노봇의 라즈베리파이에 장착하고</p>
+<a class="reference external image-reference" href="/_static/manual/Clean_Install/pi_boot.jpg"><img alt="화면사진" src="../_images/pi_boot.jpg" /></a>
+<p>모니터에 화면이 들어오기를 기다립니다.</p>
+<blockquote>
+<div><p><span class="raw-html-m2r"><i class="fa fa-info-circle" aria-hidden="true"></i></span> <strong>정보</strong>: 부팅중 소형LCD에 다음과 같은 화면이 표시가 될것입니다.</p>
+<p>피노봇 프로그램은 기본적으로 설치이후에 <strong>자동으로 실행</strong>이 되기때문에,</p>
+<p>위 화면은 소프트웨어가 <strong>정상적으로 설치됬음</strong>을 알려주는 화면입니다.</p>
+</div></blockquote>
+</div>
+<div class="section" id="id5">
+<h2>6. 네트워크 및 암호 설정<a class="headerlink" href="#id5" title="제목 주소">¶</a></h2>
+<p>마지막 으로 네트워크 연결 및 암호설정입니다.</p>
+<div class="section" id="id6">
+<h3>6.1 네트워크 연결<a class="headerlink" href="#id6" title="제목 주소">¶</a></h3>
+<a class="reference external image-reference" href="/_static/manual/Clean_Install/2_rpi_wifi.gif"><img alt="" src="../_images/2_rpi_wifi.gif" /></a>
+<p>라즈베리파이에서 다음과 같이 무선랜(와이파이)를 연결해주거나 혹은 유선 네트워크를 라즈베리파이에 연결합니다.</p>
+<blockquote>
+<div><p>와이파이 연결이 잘 안될경우
+Preference -&gt; Raspberry Pi Configuration -&gt; Localization -&gt; WiFi Country 메뉴에서<span class="raw-html-m2r"><br></span>
+국가를 미국(US), 영국(UK)등으로 변경해 줍니다,
+라즈베리파이 자체의 버그로 한국은 네트워크 설정관련 문제가 존재합니다.</p>
+</div></blockquote>
+</div>
+<div class="section" id="id7">
+<h3>6.2 라즈베리파이 암호변경<a class="headerlink" href="#id7" title="제목 주소">¶</a></h3>
+<a class="reference external image-reference" href="/_static/manual/Clean_Install/4_change_password.gif"><img alt="" src="../_images/4_change_password.gif" /></a>
+<p>보안을 위해서 OS계정의 비밀번호를 변경합니다
+초기 비밀번호는 pinobot01입니다.</p>
+<p>이제 OS, 소프트웨어 설치 및 설정은 완료됬습니다.</p>
+<p>다음 과정을 위해
+라즈베리파이를 종료하고 SD카드를 다시 분리합니다.</p>
+</div>
+</div>
+<div class="section" id="id8">
+<h2>7. 피노봇 설정파일 및 키 설정<a class="headerlink" href="#id8" title="제목 주소">¶</a></h2>
+<p>먼저 피노봇과 다이얼로그플로우의 연결을 위해서</p>
+<p><a class="reference external" href="./피노봇_다이얼로그_플로우_설정.html">피노봇_다이얼로그_플로우_설정</a> 을 진행해서
+json 포멧의 키 파일을 받은후에 진행해야합니다.</p>
+<div class="section" id="id10">
+<h3>7.1 키파일 복사<a class="headerlink" href="#id10" title="제목 주소">¶</a></h3>
+<a class="reference external image-reference" href="/_static/manual/Clean_Install/7-키파일복사.gif"><img alt="" src="../_images/7-키파일복사.gif" /></a>
+<p>라즈베리파이의 sd카드를 제거하고 윈도우 데스크탑에 연결한다음</p>
+<p>라즈베리파이 sd카드의 boot 파티션에 들어가서 boot/PinoSet/keys 폴더안에 삽입하고 부팅하게되면</p>
+<p>피노봇 서비스가 자동으로 json 파일을 복사합니다.</p>
+</div>
+<div class="section" id="id11">
+<h3>7.2 설정파일 수정<a class="headerlink" href="#id11" title="제목 주소">¶</a></h3>
+<a class="reference external image-reference" href="/_static/manual/Clean_Install/7_키이름_설정파일에_적어넣기.gif"><img alt="" src="../_images/7_키이름_설정파일에_적어넣기.gif" /></a>
+<p>/boot/PinoSet/PinoConfig.ini 파일을 메모장으로 열어서</p>
+<p>키 파일이름을 변경하고</p>
+<a class="reference external image-reference" href="/_static/manual/Clean_Install/8_프로젝트_이름.gif"><img alt="" src="../_images/8_프로젝트_이름.gif" /></a>
+<p>다이얼로그 프로젝트 이름을 설정해주면 기본 설정은 완료됩니다.</p>
+<p>이후 라즈베리파이에 다시 sd카드를 연결하고 부팅하면 피노봇 프로그램이 자동으로 실행됩니다.</p>
+</div>
+</div>
+<div class="section" id="id12">
+<h2>8. 피노봇 프로그램 실행<a class="headerlink" href="#id12" title="제목 주소">¶</a></h2>
+<div class="section" id="id13">
+<h3>8.1 부팅확인<a class="headerlink" href="#id13" title="제목 주소">¶</a></h3>
+<p>피노봇 프로그램은 서비스로 등록되어, 부팅시 자동으로 실행되게 되어있습니다.</p>
+<a class="reference external image-reference" href="/_static/manual/Clean_Install/9.부팅완료.gif"><img alt="" src="../_images/9.부팅완료.gif" /></a>
+<p>부팅이 완료되면 다음과 같이 미니 LCD에 표시가 됩니다.</p>
+</div>
+<div class="section" id="id14">
+<h3>8.2 네트워크 재 연결<a class="headerlink" href="#id14" title="제목 주소">¶</a></h3>
+<a class="reference external image-reference" href="/_static/manual/Clean_Install/8._와이파이_재연결중.gif"><img alt="" src="../_images/8._와이파이_재연결중.gif" /></a>
+<p>다음과 같은 화면은 네트워크 재 연결을 시도하는 동작입니다.</p>
+<p>위 화면이 반복될경우 모니터를 연결해서 네트워크 상태를 확인해주시기를 바랍니다.</p>
+<p>네트워크가 연결되어있어도 같은 상황이라면, 프로그램 재설치를 권장합니다.</p>
+</div>
+<div class="section" id="id15">
+<h3>8.3 피노봇 수동실행<a class="headerlink" href="#id15" title="제목 주소">¶</a></h3>
+<p>피노봇 서비스를 중단하기위해서는 라즈베리파이의 터미널을 접속한다음.
+실행중인 프로그램 중단을 위해서는 다음 명령어를 입력합니다.</p>
+<div class="highlight-shell notranslate"><div class="highlight"><pre><span></span>sudo systemctl stop PinoBot.service <span class="c1"># 피노봇 중단코드</span>
+</pre></div>
+</div>
+<p>서비스 실행을 위해서는 다음 명령어를 입력합니다.</p>
+<div class="highlight-shell notranslate"><div class="highlight"><pre><span></span>sudo systemctl start PinoBot.service <span class="c1"># 피노봇 서비스 실행코드</span>
+</pre></div>
+</div>
+<p>서비스 중단이후 수동 코드 작동을 위해서는 다음 명령어를 입력합니다.</p>
+<div class="highlight-shell notranslate"><div class="highlight"><pre><span></span><span class="nb">cd</span> /home/pi/Desktop/PinoBot <span class="c1"># 피노봇 설치폴더 이동</span>
+
+
+<span class="c1"># 두 명령어중 한가지 선택해서 피노봇 실행가능.</span>
+
+sudo PinoRun.sh <span class="c1"># 피노봇 수동실행방법 (1)</span>
+sudo python3 pino_main.py <span class="c1"># 피노봇 수동실행방법 (2)</span>
+</pre></div>
+</div>
+<p>피노봇 자동실행을 중단하려면 다음 명령어를 입력하면 됩니다.</p>
+<div class="highlight-shell notranslate"><div class="highlight"><pre><span></span>sudo systemctl stop PinoBot.service <span class="c1"># 피노봇 중단코드</span>
+sudo systemctl disable PinoBot.service <span class="c1"># 피노봇 서비스 자동실행 비활성화</span>
+</pre></div>
+</div>
+</div>
+</div>
+</div>
+
+
+           </div>
+           
+          </div>
+          <footer>
+    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
+        <a href="%ED%94%BC%EB%85%B8%EB%B4%87_%EC%A1%B0%EB%A6%BD.html" class="btn btn-neutral float-right" title="C. 피노봇 조립메뉴얼" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+        <a href="%ED%94%BC%EB%85%B8%EB%B4%87_%EB%8B%A4%EC%9D%B4%EC%96%BC%EB%A1%9C%EA%B7%B8_%ED%94%8C%EB%A1%9C%EC%9A%B0_%EC%84%A4%EC%A0%95.html" class="btn btn-neutral float-left" title="A. 구글 DialogFlow 프로젝트 만들기" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &#169; Copyright 2021, Jiwoo-Jeong.
+
+    </p>
+  </div>
+    
+    
+    
+    Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    
+    provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script>
+
+  
+  
+    
+   
+
+</body>
+</html>
