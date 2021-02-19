@@ -1,0 +1,218 @@
+# B. 피노봇 설치
+
+#### 1. 준비물 
+    - 라즈베리파이 및 sd카드 
+    - SD카드 리더기 
+    - 키보드 마우스 
+    - 모니터 
+    - 모니터 연결 케이블 및 젠더 
+        - Raspberry Pi 3B+   : 일반 HDMI 케이블 사용가능
+        - Raspberry Pi ZeroW : 미니 HDMI 젠더 혹은 케이블 필요 
+        - Raspberry Pi 4B    : 마이크로 HDMI 젠더 혹은 케이블 필요
+    - 무선, 유선 네트워크 
+  
+   
+#### 2. 피노봇 전용 os 다운로드 
+
+    먼저 아래 링크에서 해당 보드에 맞는 전용 OS를 다운로드합니다.
+
+    - Raspberry Pi Zero
+    
+    - Raspberry Pi 3B+
+    
+    - Raspberry Pi 4B
+
+> <i class="fa fa-exclamation-triangle" aria-hidden="true"></i> **주의**: 해당 보드와 다른 OS를 설치할경우 부팅이 불가능할수 있습니다.
+> 
+> 이 증상은 **연두색 불이 주기적으로 점등**하면서 **부팅이 안되는** 현상으로 확인이 가능합니다.
+
+#### 3. OS설치 
+
+[win32diskmanager](https://sourceforge.net/projects/win32diskimager/)
+
+[Raspberry Pi imager](https://www.raspberrypi.org/software/)
+
+[balena etcher](https://www.balena.io/etcher/)
+
+등의 프로그램으로 sd카드에 OS를 설치합니다.
+
+
+
+#### 4. 회로 가조립
+
+소프트 웨어 작동확인 및 부품 작동 확인을 위해 회로를 가조립합니다. 
+연결 방법은 다음과 같습니다. 
+
+![](/_static/manual/Clean_Install/가조립도.png)
+
+가조립은 다음과 같이 진행하며
+
+
+![](/_static/manual/Clean_Install/가조립도_연결부_확대.png)
+
+회로 연결은 다음과 같습니다.
+
+1. 인터페이스 보드 및 마이크-스피커 보드 연결 
+
+2. 초음파 센서 연결
+
+3. 스피커 연결 
+
+4. 미니 LCD 연결 
+
+5. 서보모터 연결 (테스트를 위해서는 그림과 같이 1개만 연결해도 가능합니다.)
+
+6. 전원 연결
+
+
+#### 5. 부팅 
+
+가조립이 끝난 이후 부팅단계입니다. 
+
+![키보드 모니터 마우스 연결사진](/_static/manual/Clean_Install/pi_keyboard.jpg)
+   
+라즈베리파이에 모니터 및 키보드,마우스를 연결합니다.
+   
+![ SD카드 장착사진 ](/_static/manual/Clean_Install/pi_sdcard.jpg)
+   
+그리고 SD카드를 피노봇의 라즈베리파이에 장착하고 
+   
+![ 화면사진 ](/_static/manual/Clean_Install/pi_boot.jpg)
+   
+모니터에 화면이 들어오기를 기다립니다. 
+  
+> <i class="fa fa-info-circle" aria-hidden="true"></i> **정보**: 부팅중 소형LCD에 다음과 같은 화면이 표시가 될것입니다.
+> 
+> 피노봇 프로그램은 기본적으로 설치이후에 **자동으로 실행**이 되기때문에,
+>
+> 위 화면은 소프트웨어가 **정상적으로 설치됬음**을 알려주는 화면입니다. 
+  
+#### 6. 네트워크 및 암호 설정 
+마지막 으로 네트워크 연결 및 암호설정입니다. 
+
+
+###### 6.1 네트워크 연결 
+
+![](/_static/manual/Clean_Install/2_rpi_wifi.gif)
+
+라즈베리파이에서 다음과 같이 무선랜(와이파이)를 연결해주거나 혹은 유선 네트워크를 라즈베리파이에 연결합니다. 
+
+> 와이파이 연결이 잘 안될경우 
+> Preference -> Raspberry Pi Configuration -> Localization -> WiFi Country 메뉴에서  
+> 국가를 미국(US), 영국(UK)등으로 변경해 줍니다, 
+> 라즈베리파이 자체의 버그로 한국은 네트워크 설정관련 문제가 존재합니다.
+
+
+###### 6.2 라즈베리파이 암호변경 
+
+![](/_static/manual/Clean_Install/4_change_password.gif)
+
+
+보안을 위해서 OS계정의 비밀번호를 변경합니다
+초기 비밀번호는 pinobot01입니다.
+
+이제 OS, 소프트웨어 설치 및 설정은 완료됬습니다. 
+
+다음 과정을 위해 
+라즈베리파이를 종료하고 SD카드를 다시 분리합니다. 
+
+
+#### 7. 피노봇 설정파일 및 키 설정 
+
+먼저 피노봇과 다이얼로그플로우의 연결을 위해서 
+
+[피노봇_다이얼로그_플로우_설정](./피노봇_다이얼로그_플로우_설정.html) 을 진행해서 
+json 포멧의 키 파일을 받은후에 진행해야합니다. 
+
+###### 7.1 키파일 복사 
+
+![](/_static/manual/Clean_Install/7-키파일복사.gif)
+
+라즈베리파이의 sd카드를 제거하고 윈도우 데스크탑에 연결한다음 
+
+라즈베리파이 sd카드의 boot 파티션에 들어가서 boot/PinoSet/keys 폴더안에 삽입하고 부팅하게되면
+
+피노봇 서비스가 자동으로 json 파일을 복사합니다. 
+
+
+###### 7.2 설정파일 수정 
+
+![](/_static/manual/Clean_Install/7_키이름_설정파일에_적어넣기.gif)
+
+/boot/PinoSet/PinoConfig.ini 파일을 메모장으로 열어서 
+
+키 파일이름을 변경하고 
+ 
+![](/_static/manual/Clean_Install/8_프로젝트_이름.gif)
+ 
+다이얼로그 프로젝트 이름을 설정해주면 기본 설정은 완료됩니다. 
+
+이후 라즈베리파이에 다시 sd카드를 연결하고 부팅하면 피노봇 프로그램이 자동으로 실행됩니다. 
+
+
+#### 8. 피노봇 프로그램 실행
+
+
+###### 8.1 부팅확인 
+
+피노봇 프로그램은 서비스로 등록되어, 부팅시 자동으로 실행되게 되어있습니다.
+
+![](/_static/manual/Clean_Install/9.부팅완료.gif)
+
+부팅이 완료되면 다음과 같이 미니 LCD에 표시가 됩니다. 
+
+
+###### 8.2 네트워크 재 연결
+
+![](/_static/manual/Clean_Install/8._와이파이_재연결중.gif)
+
+다음과 같은 화면은 네트워크 재 연결을 시도하는 동작입니다. 
+
+위 화면이 반복될경우 모니터를 연결해서 네트워크 상태를 확인해주시기를 바랍니다. 
+
+네트워크가 연결되어있어도 같은 상황이라면, 프로그램 재설치를 권장합니다. 
+
+
+
+
+###### 8.3 피노봇 수동실행 
+
+피노봇 서비스를 중단하기위해서는 라즈베리파이의 터미널을 접속한다음. 
+실행중인 프로그램 중단을 위해서는 다음 명령어를 입력합니다. 
+
+``` shell
+
+sudo systemctl stop PinoBot.service # 피노봇 중단코드
+
+```
+
+서비스 실행을 위해서는 다음 명령어를 입력합니다.
+
+``` shell
+
+sudo systemctl start PinoBot.service # 피노봇 서비스 실행코드
+
+```
+
+서비스 중단이후 수동 코드 작동을 위해서는 다음 명령어를 입력합니다.
+
+``` shell
+
+cd /home/pi/Desktop/PinoBot # 피노봇 설치폴더 이동
+
+
+# 두 명령어중 한가지 선택해서 피노봇 실행가능.
+
+sudo PinoRun.sh # 피노봇 수동실행방법 (1)
+sudo python3 pino_main.py # 피노봇 수동실행방법 (2)
+
+```
+
+피노봇 자동실행을 중단하려면 다음 명령어를 입력하면 됩니다. 
+
+``` shell
+
+sudo systemctl stop PinoBot.service # 피노봇 중단코드
+sudo systemctl disable PinoBot.service # 피노봇 서비스 자동실행 비활성화 
+
+```
