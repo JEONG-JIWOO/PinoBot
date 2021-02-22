@@ -98,8 +98,8 @@ class Pino_OLED:
     # [C.2] convert "text" to image, and send to OLED
     # NOTE : Progress bar : NO,    text : variable size
     def send_text(self, msgs):
-        self.__text_2_image(msgs)
-        self.oled.image(self.im)
+        image = self.__text_2_image(msgs)
+        self.oled.image(image)
         self.oled.show()
         return 0
 
@@ -156,8 +156,8 @@ class Pino_OLED:
                 self.__draw_line(draw, i)
 
         if msg != "":
-            self.__text_2_image(msg, resize=(110, 64))
-            progress_im.paste(self.im, (18, 0))
+            image = self.__text_2_image(msg, resize=(110, 64))
+            progress_im.paste(image, (18, 0))
 
         self.im = progress_im.convert("1")
         self.oled.image(self.im)
@@ -220,21 +220,20 @@ class Pino_OLED:
         split_text = unicode_text.split("\n")
 
         # 2. calculate text area
-        max_text_weight = 0  # find MAX weight of lines
-        max_text_height = 0  # find MAX height of lines
+        # find max width and height of lines
+        widths = []
+        heights = []
         for line in split_text:
-            size = self.main_font.getsize(line)
-            if size[0] > max_text_weight:
-                max_text_weight = size[0]
-            if size[1] > max_text_height:
-                max_text_height = size[1]
-        space = 10
-        new_line_cnt = unicode_text.count("\n") + 1
-        image_size = [max_text_weight, max_text_height + space]
+            width, height = self.main_font.getsize(line)
+            widths.append(width)
+            heights.append(height)
+
+        max_width, max_height = (max(widths), max(heights))
 
         # 3. make new image by font size
-        im = Image.new("L", (image_size[0], image_size[1] * new_line_cnt), 0)
-        draw = ImageDraw.Draw(im)
+        SPACING = 10
+        image = Image.new("L", (max_width, max_height * len(split_text) + SPACING * (len(split_text) - 1)))
+        draw = ImageDraw.Draw(image)
 
         # 4. draw text to image
         draw.text(
@@ -242,14 +241,12 @@ class Pino_OLED:
             unicode_text,
             font=self.main_font,
             fill=255,
-            spacing=space,
+            spacing=SPACING,
             align="center",
         )
 
-        # 5. change to binary image and save it.
-        im = im.resize(resize, resample=Image.LANCZOS)
-        self.im = im.convert("1")
-        return 0
+        # 5. change to binary image and return it.
+        return image.resize(resize, resample=Image.LANCZOS).convert("1")
 
     # [D.4] Draw progress line to image
     @staticmethod
