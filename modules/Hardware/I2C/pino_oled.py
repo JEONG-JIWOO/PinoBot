@@ -216,6 +216,8 @@ class Pino_OLED:
 
     # [D.3] convert text as binary image using PIL,
     def __text_2_image(self, unicode_text, resize=(128, 64)):
+        SPACING = 10
+
         # 1. split text by newline
         split_text = unicode_text.split("\n")
 
@@ -228,11 +230,11 @@ class Pino_OLED:
             widths.append(width)
             heights.append(height)
 
-        max_width, max_height = (max(widths), max(heights))
+        max_width = max(widths)
+        max_height = sum(heights) + SPACING * (len(split_text) - 1)
 
         # 3. make new image by font size
-        SPACING = 10
-        image = Image.new("L", (max_width, max_height * len(split_text) + SPACING * (len(split_text) - 1)))
+        image = Image.new("L", (max_width, max_height))
         draw = ImageDraw.Draw(image)
 
         # 4. draw text to image
