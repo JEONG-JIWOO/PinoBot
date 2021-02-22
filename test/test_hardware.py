@@ -35,7 +35,7 @@ def run_pyaudio():
 
     stream.close()
 
-    wav_data = wave.open("/home/pi/Desktop/Arduino_Dialogflow/1.wav", "rb")
+    wav_data = wave.open("/home/pi/Desktop/PinoBot/1.wav", "rb")
     # Open play stream. Formats are fixed,
     stream = audio.open(format=pyaudio.paInt16, channels=1, rate=16000, output=True,output_device_index=sound_card )
 
@@ -58,7 +58,7 @@ class MyTestCase(unittest.TestCase):
         run_pyaudio()
 
         config = configparser.ConfigParser()
-        with open("/home/pi/Desktop/Arduino_Dialogflow/PinoConfig.ini") as fp:
+        with open("/home/pi/Desktop/PinoBot/PinoConfig.ini") as fp:
             config.read_file(fp)
 
         log = logging.getLogger("Main")
@@ -69,7 +69,7 @@ class MyTestCase(unittest.TestCase):
         log_console.setFormatter(formatter)
         log.addHandler(log_console)
 
-        hardware = Hardware(config=config, base_path="/home/pi/Desktop/Arduino_Dialogflow/",log = log)
+        hardware = Hardware(config=config, base_path="/home/pi/Desktop/PinoBot/",log = log)
         hardware.reset()
         hardware.write(
             text="앞으로", led=[0, 0, 100], servo_angle=[45, 45, 90, 29, 60], servo_time=2
@@ -125,7 +125,7 @@ class MyTestCase(unittest.TestCase):
         try :
             i2c = board.I2C()
             oled_board = pino_oled.Pino_OLED(
-                i2c, "/home/pi/Desktop/Arduino_Dialogflow/", "NanumSquareEB.ttf", "NanumSquareEB.ttf")
+                i2c, "/home/pi/Desktop/PinoBot/", "NanumSquareEB.ttf", "NanumSquareEB.ttf")
         except ValueError:
             print(" check i2c oled connection")
             return 0

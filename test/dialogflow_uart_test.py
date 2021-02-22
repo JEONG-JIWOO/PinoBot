@@ -19,7 +19,7 @@ class MyTestCase(unittest.TestCase):
         DIALOGFLOW_PROJECT_ID = "squarebot01-yauqxo"
         DIALOGFLOW_LANGUAGE_CODE = "ko"
         GOOGLE_APPLICATION_CREDENTIALS = (
-            "/home/pi/Desktop/Arduino_Dialogflow/keys/squarebot01-yauqxo-27c0bd80da2b.json"
+            "/home/pi/Desktop/PinoBot/keys/squarebot01-yauqxo-27c0bd80da2b.json"
         )
         TIME_OUT = 7
 
