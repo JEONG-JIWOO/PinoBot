@@ -6,11 +6,11 @@ apt-get upgrade -y
 yes | pip3 install --upgrade setuptools
 
 printf   "\n\n [step 2], Install Driver"
-git clone https://github.com/PinoBot/seeed-voicecard_2020_1223
-cd ./seeed-voicecard_2020_1223 || { prirntf "cd seeed-voicecard_2020_1223 fail "; exit 127;}
-sudo ./install.sh
+git clone https://github.com/HinTak/seeed-voicecard #HinTak's repository is more stable than official
+cd ./seeed-voicecard || { prirntf "cd seeed-voicecard fail "; exit 127;}
+sudo ./install.sh || { prirntf "\n\n cd seeed-voicecard install fail , try install use --compat-kernel" ; sudo bash ./install.sh --compat-kernel ;}
 cd ..
-rm -rf ./seeed-voicecard_2020_1223 || { prirntf "remove seeed-voicecard_2020_1223 fail "; exit 127;}
+rm -rf ./seeed-voicecard || { prirntf "remove seeed-voicecard fail "; exit 127;}
 
 printf   "\n\n [step 3], install apt packages \n\n"
 apt-get -y install portaudio19-dev
@@ -29,11 +29,14 @@ printf "\n\n [step 6], Copy PinoSet to /boot"
 cp -r ./PinoSet /boot
 
 printf "\n\n [step 7] change passwd"
-echo "pi:pinobot01" | chpasswd
+#echo "pi:pinobot01" | chpasswd
+
+printf "\n\n [step 8] copy .asoundrc file "
+#cp .asoundrc /home/pi/.asoundrc
 
 for i in {10..0}
 do
-  printf   "\n [step 7], reboot in $i seconds"
+  printf   "\n [step 9], reboot in $i seconds"
   sleep 1
 done
 
