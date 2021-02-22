@@ -52,7 +52,7 @@ class PinoBot:
         5. call_intent(self,text = "" ,event_name="", event_parameter=None):
             call dialogflow manually by dict or text, and get responses
     """
-    def __init__(self):
+    def __init__(self,base_path ="/home/pi/Desktop/PinoBot/"):
         # 0. Argument
         # 1. Static Variables
 
@@ -63,7 +63,7 @@ class PinoBot:
             "distance": 30,  # cm                 # sonic sensor threshold to between 1 to 0
             "first_time": time.time(),
         }  # sec   # first time sonic sensor detect object
-        self.base_path = "/home/pi/Desktop/Arduino_Dialogflow/"
+        self.base_path = base_path
         self.state = PinoState.IDLE
 
         # 3. Objects
