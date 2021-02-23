@@ -25,8 +25,8 @@ if __name__ == "__main__":
             # listen failed
             else :
                 bot.hardware.write(text="음성인식 실패 ㅠㅠ")
+                time.sleep(3)
                 bot.return_idle()
-                time.sleep(0.5)
 
         # case 2, uart[serial] communication on
         elif bot.state == pinobot.PinoState.UART_ON:
