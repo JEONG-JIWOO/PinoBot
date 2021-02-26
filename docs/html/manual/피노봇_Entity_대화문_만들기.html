@@ -96,10 +96,30 @@
 <li class="toctree-l1"><a class="reference internal" href="%ED%94%BC%EB%85%B8%EB%B4%87_%EB%8C%80%ED%99%94%EB%AC%B8_%EB%A7%8C%EB%93%A4%EA%B8%B0.html">A. 피노봇 기초 대화문 만들기</a></li>
 <li class="toctree-l1 current"><a class="current reference internal" href="#">동의어(Entity)를 이용한 챗봇 만들기</a><ul>
 <li class="toctree-l2"><a class="reference internal" href="#id1">1. 커피 메뉴판</a></li>
-<li class="toctree-l2"><a class="reference internal" href="#id2">2. 동의어 만들기</a></li>
-<li class="toctree-l2"><a class="reference internal" href="#training-phrases">3.  [Training phrases] 에서 동의어 연결</a></li>
-<li class="toctree-l2"><a class="reference internal" href="#response">4.  [Response] 에서 동의어 활용</a></li>
-<li class="toctree-l2"><a class="reference internal" href="#context">5.  [Context] 활용</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#id2">2 엔티티 생성 및 작성</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#id3">2.1 엔티티 작성 1</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#id4">2.2 엔티티 작성 2</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#id5">2.3 엔티티 작성 3</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#intent-entity">3.  intent 에서 entity 사용</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#id6">3.1 인텐트 작성</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#id7">3.2 인텐트 테스트</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#id8">4. 답변에서 entity출력</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#id9">5.  2개의 entity 활용</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#id10">5.1 엔티티 작성</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#id11">5.2 인텐트 작성</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#id12">5.3 테스트 결과</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#id13">7.  최종 4개의 entity 활용</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#id14">엔티티</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#id15">인텐트</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#id16">결과</a></li>
+</ul>
+</li>
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="%ED%94%BC%EB%85%B8%EB%B4%87_%EB%AA%85%EB%A0%B9%EC%96%B4_%EB%B3%B4%EB%82%B4%EA%B8%B0.html">C. 피노봇 명령어 보내기</a></li>
@@ -179,25 +199,148 @@
   <div class="section" id="entity">
 <h1>동의어(Entity)를 이용한 챗봇 만들기<a class="headerlink" href="#entity" title="제목 주소">¶</a></h1>
 <p>좀더 복잡하고 다양한 상황에서 작동하는 챗봇을 위해서</p>
-<p>동의어 (Entity) 기능을 활용할수 있습니다.</p>
+<p>개체 (Entity) 기능을 활용할수 있습니다.</p>
 <div class="section" id="id1">
 <h2>1. 커피 메뉴판<a class="headerlink" href="#id1" title="제목 주소">¶</a></h2>
 <a class="reference external image-reference" href="/_static/manual/Dialogflow/6_메뉴판.png"><img alt="" src="../_images/6_메뉴판.png" /></a>
 <p>다음과 같은 커피 메뉴판을 예시로 들어보겠습니다.</p>
-<p>이 모든 경우에대해 챗봇을 동의어없이 제작하면 4X2X3X4 = 96가지의 대화의 경우가 나오게됩니다.</p>
-<p>이를 모두 만들수는 없음으로 이를 동의어 (Entity)를 통해서 처리할 수 있습니다.</p>
+<p>이 모든 경우에대해 챗봇을 개별로 제작하면 4X2X3X4 = 96가지의 대화의 경우가 나오게됩니다.</p>
+<p>이를 모두 만들수는 없음으로 이를 엔티티 (개체 Entity)를 통해서 처리할 수 있습니다.</p>
+<p>개체 (Entity)는 문장에서 특정한 용도로 쓰이는 단어를 추출하기위해서 만드는 일종의 사전입니다.</p>
+<p>같은속성을 지닌 단어와 동의어들을 미리 정의를 해둠으로서 챗봇이 다양한 상황에서 단어를 이해할수 있게 해줍니다.</p>
 </div>
 <div class="section" id="id2">
-<h2>2. 동의어 만들기<a class="headerlink" href="#id2" title="제목 주소">¶</a></h2>
+<h2>2 엔티티 생성 및 작성<a class="headerlink" href="#id2" title="제목 주소">¶</a></h2>
+<a class="reference external image-reference" href="/_static/manual/2B_EntityIntent/02.png"><img alt="" src="../_images/021.png" /></a>
+<p>메인화면의 <strong>《Entity》</strong> 탭에 들어가서 <strong>《Create Entity》</strong> 버튼을 클릭, 새 엔티티를 생성합니다</p>
+<a class="reference external image-reference" href="/_static/manual/2B_EntityIntent/03.png"><img alt="" src="../_images/031.png" /></a>
+<p>엔티티 작성은 다음과 같이 이루어집니다.</p>
+<div class="section" id="id3">
+<h3>2.1 엔티티 작성 1<a class="headerlink" href="#id3" title="제목 주소">¶</a></h3>
+<a class="reference external image-reference" href="/_static/manual/2B_EntityIntent/04.png"><img alt="" src="../_images/041.png" /></a>
+<p>먼저 1번의 엔티티 이름에는 이 단어들을 어떤 범주의 단어로 부를지 이름을 정합니다.</p>
+<p>간단하게  pino_drink로 작성을 했습니다.</p>
 </div>
-<div class="section" id="training-phrases">
-<h2>3.  [Training phrases] 에서 동의어 연결<a class="headerlink" href="#training-phrases" title="제목 주소">¶</a></h2>
+<div class="section" id="id4">
+<h3>2.2 엔티티 작성 2<a class="headerlink" href="#id4" title="제목 주소">¶</a></h3>
+<a class="reference external image-reference" href="/_static/manual/2B_EntityIntent/05.png"><img alt="" src="../_images/051.png" /></a>
+<p>그다음 2번에 이 <strong>《pino_drink》</strong> 라는 키워드로 처리하고싶은 단어들의 표준어 표현을 넣어줍니다.</p>
+<p>이 키워드로 우리는 음료를 구분하고 싶음으로</p>
+<p><strong>《카페아메리카노》 , 《카페라떼》 , 《카페모카》 , 《카라멜마끼아또》</strong> 를 넣었습니다.</p>
+<p>그 다음에는 3번구역에 <strong>동의어</strong> 를 추가해줍니다,</p>
+<p>예를들면  <strong>《카페아메리카노》를 《아메리카노》 , 《까페 아메리카노》</strong> 라고도 많이 표현하고</p>
+<p>혹은 《그냥 커피》 라고 하시는 분이 있을수도 있음으로 이를 다이얼로그 플로우가 인식할 수 있게 동의어사전에 넣어줍니다.</p>
+<p><strong>동의어의 제일 첫 동의어는 표준어 표현이 자동으로 할당</strong> 이 됩니다.</p>
 </div>
-<div class="section" id="response">
-<h2>4.  [Response] 에서 동의어 활용<a class="headerlink" href="#response" title="제목 주소">¶</a></h2>
+<div class="section" id="id5">
+<h3>2.3 엔티티 작성 3<a class="headerlink" href="#id5" title="제목 주소">¶</a></h3>
+<a class="reference external image-reference" href="/_static/manual/2B_EntityIntent/06.png"><img alt="" src="../_images/061.png" /></a>
+<p>그리고 여기서 유연하게 <strong>비슷한 단어도 인식하기 위해서</strong> 3번 옵션을 체크하고</p>
+<p>4번의 <strong>《세이브버튼》</strong>을 누르면 엔티티가 저장이 됩니다.</p>
+<p><span class="raw-html-m2r"><br></span>
+<span class="raw-html-m2r"><br></span>
+<span class="raw-html-m2r"><br></span>
+<span class="raw-html-m2r"><br></span>
+<span class="raw-html-m2r"><br></span></p>
 </div>
-<div class="section" id="context">
-<h2>5.  [Context] 활용<a class="headerlink" href="#context" title="제목 주소">¶</a></h2>
+</div>
+<div class="section" id="intent-entity">
+<h2>3.  intent 에서 entity 사용<a class="headerlink" href="#intent-entity" title="제목 주소">¶</a></h2>
+<a class="reference external image-reference" href="/_static/manual/2B_EntityIntent/07.png"><img alt="" src="../_images/071.png" /></a>
+<p>자 그러면 이제 커피를 주문받는 인텐트를 만들어서 엔티티를 실제 사용해 보겠습니다.</p>
+<p>Q : 《아메리카노 주세요》</p>
+<p>A : 《네 아메리카노 드리겠습니다》</p>
+<p>엔티티 기능이 없다면 위의 메뉴판을 처리하려면 이런 인텐트를 수십개를 작성해야 하겠지만</p>
+<p>엔티티를 이용해서 이를 한가지로 통합할 수 있습니다.</p>
+<div class="section" id="id6">
+<h3>3.1 인텐트 작성<a class="headerlink" href="#id6" title="제목 주소">¶</a></h3>
+<a class="reference external image-reference" href="/_static/manual/2B_EntityIntent/08.gif"><img alt="" src="../_images/08.gif" /></a>
+<p>엔티티 인식을 위해서는 Training Phases에서 어떤부분에 주문할 음료수(아메리카노)의 정보가 담겨있는지 설정해야합니다.</p>
+<p>《아메리카노 주세요》 에서는 <strong>《아메리카노》</strong> 에 정보가 담겨있음으로 이 부분을 드래그 해줍니다.</p>
+<p>그러면 자동으로 다음과 같이 검색창이 뜨는데 여기서 아까전 만든 <strong>pino_drink</strong> 를 검색해서 클릭합니다</p>
+</div>
+<div class="section" id="id7">
+<h3>3.2 인텐트 테스트<a class="headerlink" href="#id7" title="제목 주소">¶</a></h3>
+<a class="reference external image-reference" href="/_static/manual/2B_EntityIntent/09.png"><img alt="" src="../_images/091.png" /></a>
+<p>그리고 저장버튼을 눌러서 테스트를 해보면 다음과 같이</p>
+<p><strong>pino_drink</strong>에 있던 모든 단어들을 《주세요》 하는 문장은 이 인텐트로 연결이 되게 됩니다.</p>
+<p><strong>주의</strong></p>
+<blockquote>
+<div><a class="reference external image-reference" href="/_static/manual/2B_EntityIntent/10.gif"><img alt="" src="../_images/10.gif" /></a>
+<p>entity 인식을 다이얼로그 플로우가 자동으로 진행하게 되면 종종 잘못된 entity로 인식이 됩니다</p>
+<p>이경우에는 다음과 같이 삭제를 해주시면 됩니다.</p>
+</div></blockquote>
+<p><span class="raw-html-m2r"><br></span>
+<span class="raw-html-m2r"><br></span>
+<span class="raw-html-m2r"><br></span>
+<span class="raw-html-m2r"><br></span>
+<span class="raw-html-m2r"><br></span></p>
+</div>
+</div>
+<div class="section" id="id8">
+<h2>4. 답변에서 entity출력<a class="headerlink" href="#id8" title="제목 주소">¶</a></h2>
+<p>다음은 인식된  엔티티의 값을 대답에서 활용해 보겠습니다.</p>
+<a class="reference external image-reference" href="/_static/manual/2B_EntityIntent/11.png"><img alt="" src="../_images/111.png" /></a>
+<p>인식된 엔티티 는 인텐트에서 사용되는 변수로 인식되며</p>
+<p>Action and parameters에 설정되어있고 $ 기호를 통해서 사용이 가능합니다.</p>
+<a class="reference external image-reference" href="/_static/manual/2B_EntityIntent/12.png"><img alt="" src="../_images/121.png" /></a>
+<p>다음과 같이 대화문을 작성하면</p>
+<p>$pino_drink 자리에는 다음과 같이 표준어 표현이 담겨서 처리되게 됩니다</p>
+<a class="reference external image-reference" href="/_static/manual/2B_EntityIntent/13.png"><img alt="" src="../_images/131.png" /></a>
+<p>표준어 표현이 아닌 입력단어 그대로 사용하려먼 $pino_drink.original 으로 사용하면 됩니다</p>
+<p><span class="raw-html-m2r"><br></span>
+<span class="raw-html-m2r"><br></span>
+<span class="raw-html-m2r"><br></span>
+<span class="raw-html-m2r"><br></span>
+<span class="raw-html-m2r"><br></span></p>
+</div>
+<div class="section" id="id9">
+<h2>5.  2개의 entity 활용<a class="headerlink" href="#id9" title="제목 주소">¶</a></h2>
+<p>entity는 한 인텐트에서 여러개를 활용하는것도 가능합니다.</p>
+<p>다시 이번에는 커피메뉴판으로 돌아가서 《따뜻한(핫)》, 《차가운(아이스)》 를 문장에서 추출해보도록하겟습니다.</p>
+<div class="section" id="id10">
+<h3>5.1 엔티티 작성<a class="headerlink" href="#id10" title="제목 주소">¶</a></h3>
+<a class="reference external image-reference" href="/_static/manual/2B_EntityIntent/14.png"><img alt="" src="../_images/141.png" /></a>
+<p>먼저 다음과 같이 음료의 온도에관한 엔티티를 작성 합니다.</p>
+</div>
+<div class="section" id="id11">
+<h3>5.2 인텐트 작성<a class="headerlink" href="#id11" title="제목 주소">¶</a></h3>
+<a class="reference external image-reference" href="/_static/manual/2B_EntityIntent/15.png"><img alt="" src="../_images/151.png" /></a>
+<p>training phases에서 예시문장에서 드래그해서 정의를 해줍니다.</p>
+<a class="reference external image-reference" href="/_static/manual/2B_EntityIntent/16.png"><img alt="" src="../_images/16.png" /></a>
+<p>그리고 대답에 출력하기위해서 responses에 작성합니다.</p>
+</div>
+<div class="section" id="id12">
+<h3>5.3 테스트 결과<a class="headerlink" href="#id12" title="제목 주소">¶</a></h3>
+<a class="reference external image-reference" href="/_static/manual/2B_EntityIntent/17.png"><img alt="" src="../_images/171.png" /></a>
+<p>이렇게 작성된  entity의 테스트 결과는 다음과 같습니다.</p>
+<hr class="docutils" />
+<p><strong>주의</strong></p>
+<a class="reference external image-reference" href="/_static/manual/2B_EntityIntent/18.png"><img alt="" src="../_images/181.png" /></a>
+<p>여러개의 엔티티를 사용해서 responses를 작성할경우,</p>
+<p>다음과 같이 일부 엔티티만 인식이 되면 답변이 생성되지않는 경우가 발생할 수 있습니다.</p>
+<a class="reference external image-reference" href="/_static/manual/2B_EntityIntent/19.png"><img alt="" src="../_images/191.png" /></a>
+<p>다음과 같이 여러가지 경우에 따른 responses를 추가해두면, 이 문제를 해결할 수 있습니다.</p>
+<p><span class="raw-html-m2r"><br></span>
+<span class="raw-html-m2r"><br></span>
+<span class="raw-html-m2r"><br></span>
+<span class="raw-html-m2r"><br></span>
+<span class="raw-html-m2r"><br></span></p>
+</div>
+</div>
+<div class="section" id="id13">
+<h2>7.  최종 4개의 entity 활용<a class="headerlink" href="#id13" title="제목 주소">¶</a></h2>
+<p>그리고 이제 5번을 반복해서 최종적으로 4개의 정보를 추출하는 인텐트를 만들어보면 다음과 같습니다.</p>
+<div class="section" id="id14">
+<h3>엔티티<a class="headerlink" href="#id14" title="제목 주소">¶</a></h3>
+</div>
+<div class="section" id="id15">
+<h3>인텐트<a class="headerlink" href="#id15" title="제목 주소">¶</a></h3>
+</div>
+<div class="section" id="id16">
+<h3>결과<a class="headerlink" href="#id16" title="제목 주소">¶</a></h3>
+<p>이제 피노봇은 최대 96가지의 경우가 나오는 복잡한 주문도 처리할수있습니다!</p>
+</div>
 </div>
 </div>
 
