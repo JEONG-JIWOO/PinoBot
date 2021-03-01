@@ -20,7 +20,8 @@
     :caption: 피노봇 활용
 
     manual/피노봇_대화문_만들기
-    manual/피노봇_Entity_대화문_만들기
+    manual/피노봇_Entity_대화문_만들기_1
+    manual/피노봇_Entity_대화문_만들기_2
     manual/피노봇_명령어_보내기
 
 ..  toctree::

@@ -7,7 +7,7 @@
   
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   
-  <title>동의어(Entity)를 이용한 챗봇 만들기 &mdash; PinoBot 1.0.00 문서</title>
+  <title>B. 객체(Entity)이용 챗봇 만들기 [1] &mdash; PinoBot 1.0.00 문서</title>
   
 
   
@@ -39,7 +39,7 @@
     
     <link rel="index" title="색인" href="../genindex.html" />
     <link rel="search" title="검색" href="../search.html" />
-    <link rel="next" title="C. 피노봇 명령어 보내기" href="%ED%94%BC%EB%85%B8%EB%B4%87_%EB%AA%85%EB%A0%B9%EC%96%B4_%EB%B3%B4%EB%82%B4%EA%B8%B0.html" />
+    <link rel="next" title="C. 객체(Entity)이용 챗봇 만들기 [2]" href="%ED%94%BC%EB%85%B8%EB%B4%87_Entity_%EB%8C%80%ED%99%94%EB%AC%B8_%EB%A7%8C%EB%93%A4%EA%B8%B0_2.html" />
     <link rel="prev" title="A. 피노봇 기초 대화문 만들기" href="%ED%94%BC%EB%85%B8%EB%B4%87_%EB%8C%80%ED%99%94%EB%AC%B8_%EB%A7%8C%EB%93%A4%EA%B8%B0.html" /> 
 </head>
 
@@ -94,7 +94,7 @@
 <p class="caption"><span class="caption-text">피노봇 활용</span></p>
 <ul class="current">
 <li class="toctree-l1"><a class="reference internal" href="%ED%94%BC%EB%85%B8%EB%B4%87_%EB%8C%80%ED%99%94%EB%AC%B8_%EB%A7%8C%EB%93%A4%EA%B8%B0.html">A. 피노봇 기초 대화문 만들기</a></li>
-<li class="toctree-l1 current"><a class="current reference internal" href="#">동의어(Entity)를 이용한 챗봇 만들기</a><ul>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">B. 객체(Entity)이용 챗봇 만들기 [1]</a><ul>
 <li class="toctree-l2"><a class="reference internal" href="#id1">1. 커피 메뉴판</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#id2">2 엔티티 생성 및 작성</a><ul>
 <li class="toctree-l3"><a class="reference internal" href="#id3">2.1 엔티티 작성 1</a></li>
@@ -107,21 +107,10 @@
 <li class="toctree-l3"><a class="reference internal" href="#id7">3.2 인텐트 테스트</a></li>
 </ul>
 </li>
-<li class="toctree-l2"><a class="reference internal" href="#id8">4. 답변에서 entity출력</a></li>
-<li class="toctree-l2"><a class="reference internal" href="#id9">5.  2개의 entity 활용</a><ul>
-<li class="toctree-l3"><a class="reference internal" href="#id10">5.1 엔티티 작성</a></li>
-<li class="toctree-l3"><a class="reference internal" href="#id11">5.2 인텐트 작성</a></li>
-<li class="toctree-l3"><a class="reference internal" href="#id12">5.3 테스트 결과</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#entity">4. 답변에서 entity출력</a></li>
 </ul>
 </li>
-<li class="toctree-l2"><a class="reference internal" href="#id13">7.  최종 4개의 entity 활용</a><ul>
-<li class="toctree-l3"><a class="reference internal" href="#id14">엔티티</a></li>
-<li class="toctree-l3"><a class="reference internal" href="#id15">인텐트</a></li>
-<li class="toctree-l3"><a class="reference internal" href="#id16">결과</a></li>
-</ul>
-</li>
-</ul>
-</li>
+<li class="toctree-l1"><a class="reference internal" href="%ED%94%BC%EB%85%B8%EB%B4%87_Entity_%EB%8C%80%ED%99%94%EB%AC%B8_%EB%A7%8C%EB%93%A4%EA%B8%B0_2.html">C. 객체(Entity)이용 챗봇 만들기 [2]</a></li>
 <li class="toctree-l1"><a class="reference internal" href="%ED%94%BC%EB%85%B8%EB%B4%87_%EB%AA%85%EB%A0%B9%EC%96%B4_%EB%B3%B4%EB%82%B4%EA%B8%B0.html">C. 피노봇 명령어 보내기</a></li>
 </ul>
 <p class="caption"><span class="caption-text">피노봇 기타 문서</span></p>
@@ -177,13 +166,13 @@
     
       <li><a href="../index.html" class="icon icon-home"></a> &raquo;</li>
         
-      <li>동의어(Entity)를 이용한 챗봇 만들기</li>
+      <li>B. 객체(Entity)이용 챗봇 만들기 [1]</li>
     
     
       <li class="wy-breadcrumbs-aside">
         
           
-            <a href="../_sources/manual/피노봇_Entity_대화문_만들기.md.txt" rel="nofollow"> View page source</a>
+            <a href="../_sources/manual/피노봇_Entity_대화문_만들기_1.md.txt" rel="nofollow"> View page source</a>
           
         
       </li>
@@ -196,15 +185,15 @@
           <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
            <div itemprop="articleBody">
             
-  <div class="section" id="entity">
-<h1>동의어(Entity)를 이용한 챗봇 만들기<a class="headerlink" href="#entity" title="제목 주소">¶</a></h1>
+  <div class="section" id="b-entity-1">
+<h1>B. 객체(Entity)이용 챗봇 만들기 [1]<a class="headerlink" href="#b-entity-1" title="제목 주소">¶</a></h1>
 <p>좀더 복잡하고 다양한 상황에서 작동하는 챗봇을 위해서</p>
-<p>개체 (Entity) 기능을 활용할수 있습니다.</p>
+<p>엔티티 (개체 Entity) 기능을 활용할수 있습니다.</p>
 <div class="section" id="id1">
 <h2>1. 커피 메뉴판<a class="headerlink" href="#id1" title="제목 주소">¶</a></h2>
-<a class="reference external image-reference" href="/_static/manual/Dialogflow/6_메뉴판.png"><img alt="" src="../_images/6_메뉴판.png" /></a>
+<a class="reference external image-reference" href="/_static/manual/2B_EntityIntent/01.png"><img alt="" src="../_images/011.png" /></a>
 <p>다음과 같은 커피 메뉴판을 예시로 들어보겠습니다.</p>
-<p>이 모든 경우에대해 챗봇을 개별로 제작하면 4X2X3X4 = 96가지의 대화의 경우가 나오게됩니다.</p>
+<p>이 모든 경우에대해 챗봇을 개별로 제작하면 4X2X4X4 = 128가지의 대화의 경우가 나오게됩니다.</p>
 <p>이를 모두 만들수는 없음으로 이를 엔티티 (개체 Entity)를 통해서 처리할 수 있습니다.</p>
 <p>개체 (Entity)는 문장에서 특정한 용도로 쓰이는 단어를 추출하기위해서 만드는 일종의 사전입니다.</p>
 <p>같은속성을 지닌 단어와 동의어들을 미리 정의를 해둠으로서 챗봇이 다양한 상황에서 단어를 이해할수 있게 해줍니다.</p>
@@ -277,8 +266,8 @@
 <span class="raw-html-m2r"><br></span></p>
 </div>
 </div>
-<div class="section" id="id8">
-<h2>4. 답변에서 entity출력<a class="headerlink" href="#id8" title="제목 주소">¶</a></h2>
+<div class="section" id="entity">
+<h2>4. 답변에서 entity출력<a class="headerlink" href="#entity" title="제목 주소">¶</a></h2>
 <p>다음은 인식된  엔티티의 값을 대답에서 활용해 보겠습니다.</p>
 <a class="reference external image-reference" href="/_static/manual/2B_EntityIntent/11.png"><img alt="" src="../_images/111.png" /></a>
 <p>인식된 엔티티 는 인텐트에서 사용되는 변수로 인식되며</p>
@@ -293,54 +282,7 @@
 <span class="raw-html-m2r"><br></span>
 <span class="raw-html-m2r"><br></span>
 <span class="raw-html-m2r"><br></span></p>
-</div>
-<div class="section" id="id9">
-<h2>5.  2개의 entity 활용<a class="headerlink" href="#id9" title="제목 주소">¶</a></h2>
-<p>entity는 한 인텐트에서 여러개를 활용하는것도 가능합니다.</p>
-<p>다시 이번에는 커피메뉴판으로 돌아가서 《따뜻한(핫)》, 《차가운(아이스)》 를 문장에서 추출해보도록하겟습니다.</p>
-<div class="section" id="id10">
-<h3>5.1 엔티티 작성<a class="headerlink" href="#id10" title="제목 주소">¶</a></h3>
-<a class="reference external image-reference" href="/_static/manual/2B_EntityIntent/14.png"><img alt="" src="../_images/141.png" /></a>
-<p>먼저 다음과 같이 음료의 온도에관한 엔티티를 작성 합니다.</p>
-</div>
-<div class="section" id="id11">
-<h3>5.2 인텐트 작성<a class="headerlink" href="#id11" title="제목 주소">¶</a></h3>
-<a class="reference external image-reference" href="/_static/manual/2B_EntityIntent/15.png"><img alt="" src="../_images/151.png" /></a>
-<p>training phases에서 예시문장에서 드래그해서 정의를 해줍니다.</p>
-<a class="reference external image-reference" href="/_static/manual/2B_EntityIntent/16.png"><img alt="" src="../_images/16.png" /></a>
-<p>그리고 대답에 출력하기위해서 responses에 작성합니다.</p>
-</div>
-<div class="section" id="id12">
-<h3>5.3 테스트 결과<a class="headerlink" href="#id12" title="제목 주소">¶</a></h3>
-<a class="reference external image-reference" href="/_static/manual/2B_EntityIntent/17.png"><img alt="" src="../_images/171.png" /></a>
-<p>이렇게 작성된  entity의 테스트 결과는 다음과 같습니다.</p>
-<hr class="docutils" />
-<p><strong>주의</strong></p>
-<a class="reference external image-reference" href="/_static/manual/2B_EntityIntent/18.png"><img alt="" src="../_images/181.png" /></a>
-<p>여러개의 엔티티를 사용해서 responses를 작성할경우,</p>
-<p>다음과 같이 일부 엔티티만 인식이 되면 답변이 생성되지않는 경우가 발생할 수 있습니다.</p>
-<a class="reference external image-reference" href="/_static/manual/2B_EntityIntent/19.png"><img alt="" src="../_images/191.png" /></a>
-<p>다음과 같이 여러가지 경우에 따른 responses를 추가해두면, 이 문제를 해결할 수 있습니다.</p>
-<p><span class="raw-html-m2r"><br></span>
-<span class="raw-html-m2r"><br></span>
-<span class="raw-html-m2r"><br></span>
-<span class="raw-html-m2r"><br></span>
-<span class="raw-html-m2r"><br></span></p>
-</div>
-</div>
-<div class="section" id="id13">
-<h2>7.  최종 4개의 entity 활용<a class="headerlink" href="#id13" title="제목 주소">¶</a></h2>
-<p>그리고 이제 5번을 반복해서 최종적으로 4개의 정보를 추출하는 인텐트를 만들어보면 다음과 같습니다.</p>
-<div class="section" id="id14">
-<h3>엔티티<a class="headerlink" href="#id14" title="제목 주소">¶</a></h3>
-</div>
-<div class="section" id="id15">
-<h3>인텐트<a class="headerlink" href="#id15" title="제목 주소">¶</a></h3>
-</div>
-<div class="section" id="id16">
-<h3>결과<a class="headerlink" href="#id16" title="제목 주소">¶</a></h3>
-<p>이제 피노봇은 최대 96가지의 경우가 나오는 복잡한 주문도 처리할수있습니다!</p>
-</div>
+<p>이제 다음장에서 여러개의 엔티티를 이용한 대화문을 작성하는법을 알아보겠습니다.</p>
 </div>
 </div>
 
@@ -350,7 +292,7 @@
           </div>
           <footer>
     <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
-        <a href="%ED%94%BC%EB%85%B8%EB%B4%87_%EB%AA%85%EB%A0%B9%EC%96%B4_%EB%B3%B4%EB%82%B4%EA%B8%B0.html" class="btn btn-neutral float-right" title="C. 피노봇 명령어 보내기" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+        <a href="%ED%94%BC%EB%85%B8%EB%B4%87_Entity_%EB%8C%80%ED%99%94%EB%AC%B8_%EB%A7%8C%EB%93%A4%EA%B8%B0_2.html" class="btn btn-neutral float-right" title="C. 객체(Entity)이용 챗봇 만들기 [2]" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
         <a href="%ED%94%BC%EB%85%B8%EB%B4%87_%EB%8C%80%ED%99%94%EB%AC%B8_%EB%A7%8C%EB%93%A4%EA%B8%B0.html" class="btn btn-neutral float-left" title="A. 피노봇 기초 대화문 만들기" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
     </div>
 
