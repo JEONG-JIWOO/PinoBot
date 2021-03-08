@@ -165,8 +165,8 @@ class PinoDialogFlow:
             if (audio.get_device_info_by_host_api_device_index(0, i).get("maxInputChannels")) > 0 and card_name in audio.get_device_info_by_host_api_device_index(0, i).get("name"):
                     self.sound_card = i
         self.log.info("pino_dialogflow.py: sound card index is : %d" % self.sound_card)
-        audio.terminate()
-        self.audio = pyaudio.PyAudio()
+        #audio.terminate()
+        self.audio = audio
 
 
     def play_audio_response(self, response):
@@ -194,18 +194,11 @@ class PinoDialogFlow:
                 f.write(response.tts_result)
             time.sleep(0.01)
             wav_data = wave.open("/home/pi/1.wav", "rb")
-
             # Open play stream. Formats are fixed,
-            stream = self.audio.open(
-                format=pyaudio.paInt16,
-                channels=1,
-                rate=self._SAMPLE_RATE,
-                output=True,
-                output_device_index=self.sound_card
-            )
-
-            # Play wav file.
             data = wav_data.readframes(self._CHUNK_SIZE)
+            stream = self.audio.open(format=self.audio.get_format_from_width(wav_data.getsampwidth()), channels=wav_data.getnchannels(), rate=wav_data.getframerate(), output=True,frames_per_buffer=self._CHUNK_SIZE,output_device_index=self.sound_card)
+            # Play wav file.
+
             while len(data) > 1:
                 stream.write(data)
                 data = wav_data.readframes(self._CHUNK_SIZE)
@@ -580,8 +573,8 @@ class PinoDialogFlow:
             channels=1,
             rate=self._SAMPLE_RATE,
             input=True,
-            frames_per_buffer=self._CHUNK_SIZE
-            #input_device_index=self.sound_card
+            frames_per_buffer=self._CHUNK_SIZE,
+            input_device_index=self.sound_card
         )
 
         # 6. start streaming,
