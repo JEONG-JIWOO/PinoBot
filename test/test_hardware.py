@@ -35,9 +35,11 @@ def run_pyaudio():
 
     stream.close()
 
-    wav_data = wave.open("/home/pi/Desktop/PinoBot/1.wav", "rb")
+    wav_data = wave.open("/home/pi/1.wav", "rb")
     # Open play stream. Formats are fixed,
-    stream = audio.open(format=pyaudio.paInt16, channels=1, rate=16000, output=True,output_device_index=sound_card )
+    stream = audio.open(format=audio.get_format_from_width(wav_data.getsampwidth()),
+                             channels=wav_data.getnchannels(), rate=wav_data.getframerate(), output=True,
+                             output_device_index=sound_card)
 
     # Play wav file.
     print("play")
@@ -47,6 +49,7 @@ def run_pyaudio():
         data = wav_data.readframes(2048)
     stream.stop_stream()
     stream.close()
+    wav_data.close()
     audio.terminate()  #aplay -D plughw:1,0
 
 class MyTestCase(unittest.TestCase):
