@@ -1,104 +1,95 @@
 #!/usr/bin/env python3.7
 
+"""
+Description : PinoBot Dialogflow handling module
+Author : Jiwoo Jeong
+Email  : Jiwoo@gepetto.io  / jjw951215@gmail.com
+
+V 1.0
+    - make module and test done
+
+V 1.0.1 [2021-02-16]
+    - add comment
+
+"""
+
 import dialogflow_v2 as dialogflow
 from dialogflow_v2 import enums
-from google.api_core.exceptions import InvalidArgument
-import time
-import logging
-
+from google.protobuf.json_format import MessageToDict
+from google.api_core.exceptions import InvalidArgument ,Unknown
 from ctypes import *
+
 import pyaudio
-import wave
+import time ,wave ,ast
 
 # PortAudio Error Message Handler
 def py_error_handler(filename, line, function, err, fmt):
     pass
 
+class PinoResponse:
+    def __init__(self):
+        self.stt_result = ""
+        self.tts_result = None
+        self.intent_name = ""
+        self.intent_response = ""
+        self.intent_parameter = {}
+        self.action_cmd = []
+        self.raw_result = {}
 
 class PinoDialogFlow:
     """
+    Description:
+    - dialogflow module for use in pinobot
+    - play pyaudio
+
     Summary of Class
 
-    A. Initializing parts.
+    A. Utility Functions
+        A.1 _init_pyaudio(self):
+            Remove alsa Warning message from console
+            find sound card index from alsamixer
+            init pyaudio object
 
-        A.1. Variables used in class
-            self._GOOGLE_APPLICATION_CREDENTIALS  --  path of GoogleCloud key json file
-            self._project_id                      --  DialogFlow Project ID
-            self._session_id                      --  session id of this class
-            self._session_path                    --  session object
-            self.lang_code                        --  language cod of DialogFlow Project, Default, ko
+        A.2 play_audio_response(self, response):
+            Play wave file in responses object
 
-            self._SAMPLE_RATE = 16000             --  Sampleing Rate in Hz
-            self._CHUNK_SIZE = 2048               --  Chuck size in byte
-            self._MAX_RECORD_SECONDS              --  STT timeout, in Seconds
-            self.gcloud_dict =                    --  GoogleCloud Error Code
-            {        1: 'nomal',
-                     0: 'fail prediction',
-                    -1: 'Internet Error',
-                    -2: 'google server error',
-                    -3: 'over use Error',
-                    -4: 'authorization Error',
-                    -5: 'code bug',
-                    -6: 'critical'
-            }
+        A.3 parsing_response(self,stt_response,dflow_response,tts_response):
+                Parse dialogflow grpc responses and return PinoResponse object
 
-            self.gcloud_state = 1                 --  Current GoogleCloud state
-            self.recording_state = False          --  used for interrupt and stop Recording
-            self.stt_response                     --  Final STT result
-            self.dflow_response                   --  Chatbot result [ not include audio file! ]
-            self.tts_response                     --  TTS result
-            self.audio                            --  Pyaudio Object
+        A.4 _find_error(self, GCLOUD_ERROR):
+                identify Google cloud Exception and save
 
-        A.2 Delete, free fuction
-            def __del__(self):
+    B.  DialogFlow Functions
+        B.1 open_session(self):
+            Open DialogFlow session
 
-        A.3 Initializing Logger
-            def _set_logger(self,path):
+        B.2 send_text(self, text_msg):
+            Send text to DialogFlow server,and return Paresed response
 
-    B. pyaudio handling
-        E.1 pyaudio init
-            def _init_pyaudio(self):
-        E.2 play audio                                                          --[WIP]
-            def play_audio(self):
-        E.3 set volume                                                          --[WIP]
-            def set_volume(self):
+        B.3 send_event(self, event_name, dialogflow_parameters=None):
+            Call DialogFlow event by event name and parameters
+            and return Parsed response
 
-    C. Open DialogFlow Session
-        def open_session(self):
+    C. DialogFlow Stream Functions
+        C.1 _request_generator(self):
+            make generator to request stream response
 
-    D. Send [TEXT] and return answer [Text]
-        def send_text(self, text_msg):
+        C.2 start_stream(self):
+            Start audio stream to DialogFlow server
 
-    E. Send [AUDIO STREAM] and return answer [AUDIO_BINARY]
-
-        E.1 Request Generator
-            def _request_generator(self):
-
-        E.2 Start STREAM
-            def start_stream(self):
-
-        E.3 KEEP stream AND wait For Response,
-            def get_response(self):
-
-
-    F. Send [EVENT] and return answer [AUDIO]
-        def send_event(self,event_name,parameters):
-
-    G. Google Error message handler
-        def _find_error(self,GCLOUD_ERROR):
-
-    """
-
-    """
-    A.1 Initializing DialogFlow Connection Module
+        C.3 get_stream_response(self, fail_handler=False):
+            get audio streaming responses from DialogFlow server
+            and if failed, call fail event
+            finally return parsed data
     """
 
     def __init__(
         self,
-        DFLOW_PROJECT_ID,
-        DFLOW_LANGUAGE_CODE,
-        GOOGLE_APPLICATION_CREDENTIALS,
-        TIME_OUT=5,
+        DFLOW_PROJECT_ID,                 # google dialogflow project id
+        DFLOW_LANGUAGE_CODE,              # language code  (ISO-639-1 Code)
+        GOOGLE_APPLICATION_CREDENTIALS,   # credential json file pull (path)
+        TIME_OUT=5,                       # stream recording timeout  (sec)
+        log = None                        # logging object
     ):
 
         # 1. store Cloud Connection Settings as Private
@@ -113,7 +104,7 @@ class PinoDialogFlow:
         self._CHUNK_SIZE = 2048
         self._MAX_RECORD_SECONDS = TIME_OUT
 
-        # 3. set nomal variables
+        # 3. google cloud state variable
         self.gcloud_dict = {
             1: "nomal",
             0: "fail prediction",
@@ -125,181 +116,249 @@ class PinoDialogFlow:
             -6: "critical",
         }
         self.gcloud_state = 1
-        self.recording_state = False
-        self.stt_response = None
-        self.dflow_response = None
-        self.tts_response = None
-        self.audio = None
-        self.sound_card = 2
 
-        # 4. set Logger, use Python Logging Module
-        self._set_logger(path="/home/pi/Desktop/PinoBot/log/DialogFlow.log")
+        # 4. class objects
+        self.stream_result = None               # iterable Raw dialogflow responses object
+        self.session_client = None              # google session client
+        self.p_response = PinoResponse()   # Response parsing result
+        self.audio = None                       # pyaudio object
+        self.log = log                          # logging
+
+        # 5. class variable
+        self.recording_state = False            # used to stop audio streaming
+        self.sound_card = 2                     # sound card index
+        self.flag_log_fail_case = True          # if True, log failed intent case
 
         # 5. init settings
-        self._find_soundcard()
         self._init_pyaudio()
 
     """
-    A.2 Delete and Free Object
-    
+    A. Utility Functions
     """
-
-    def __del__(self):
-        try:
-            self.log_file.close()
-            self.log.removeHandler(self.log_file)
-            self.log_console.close()
-            self.log.removeHandler(self.log_console)
-            del self.log
-        except:
-            pass
-        # if self.audio is not None:
-        # self.asound.snd_lib_error_set_handler(None) # set back handler as Default
-
-    def reset(self):
-        return self.open_session()
-
-    """
-    A.2 find Sound card index by name
-    """
-
-    def _find_soundcard(self):
-        # 1. Remove alsa messages
-
-        ERROR_HANDLER_FUNC = CFUNCTYPE(None, c_char_p, c_int, c_char_p, c_int, c_char_p)
-        c_error_handler = ERROR_HANDLER_FUNC(py_error_handler)
-        asound = cdll.LoadLibrary("libasound.so")
-        asound.snd_lib_error_set_handler(c_error_handler)
-
-        audio = pyaudio.PyAudio()
-        info = audio.get_host_api_info_by_index(0)
-        numdevices = info.get("deviceCount")
-
-        # 2. find self.sound_cardsound card from index
-        card_name = "2mic"  # "ac108" for 4-mic hat module
-        self.sound_card = 2  # usually, 2mic module index is 2
-        for i in range(0, numdevices):
-            if (
-                audio.get_device_info_by_host_api_device_index(0, i).get(
-                    "maxInputChannels"
-                )
-            ) > 0:
-                if card_name in audio.get_device_info_by_host_api_device_index(
-                    0, i
-                ).get("name"):
-                    self.sound_card = i
-        self.log.info("sound card index is : %d" % (self.sound_card))
-        audio.terminate()
-
-    """
-    A.3 Initializing Logger
-    """
-
-    def _set_logger(self, path):
-        # 2.1 set logger and formatter
-        self.log = logging.getLogger("DialogFlow")
-        self.log.setLevel(logging.DEBUG)
-        formatter = logging.Formatter(
-            "[%(levelname)s] (%(asctime)s : %(filename)s:%(lineno)d) > %(message)s"
-        )
-
-        # 2.2 set file logger
-        self.log_file = logging.FileHandler(filename=path, mode="w", encoding="utf-8")
-        self.log_file.setFormatter(formatter)
-        self.log.addHandler(self.log_file)
-
-        # 2.3 set console logger
-        self.log_console = logging.StreamHandler()
-        self.log_console.setFormatter(formatter)
-        self.log.addHandler(self.log_console)
-
-        # 2.4 logger Done.
-        self.log.info("Start DialogFlow Module")
-
-    """
-       B. pyaudio Handling
-    """
-
-    """
-    B.1 Initializing pyuadio
-    """
-
     def _init_pyaudio(self):
-        if self.audio is not None:
-            self.audio.terminate()
-            self.asound.snd_lib_error_set_handler(None)  # set back handler as Default
+        """
+        Description
+        -----------
+            Remove alsa Warning message from console
+            find sound card index from alsamixer
+            init pyaudio object
+
+        Notes
+        -----
+
+        """
 
         # 1. Remove alsa messages
-
         ERROR_HANDLER_FUNC = CFUNCTYPE(None, c_char_p, c_int, c_char_p, c_int, c_char_p)
         c_error_handler = ERROR_HANDLER_FUNC(py_error_handler)
         self.asound = cdll.LoadLibrary("libasound.so")
         self.asound.snd_lib_error_set_handler(c_error_handler)
 
-        # 2. init pyaudio
-        self.audio = pyaudio.PyAudio()
+        audio = pyaudio.PyAudio()
+        info = audio.get_host_api_info_by_index(0)
+        num_devices = info.get("deviceCount")
 
-    """
-        B.2 play audio
-    """
+        # 2. find  sound card from index
+        card_name = "2mic"   # "2mic" in sound card name
+        for i in range(0, num_devices):
+            #print(audio.get_device_info_by_host_api_device_index(0, i))
+            if (audio.get_device_info_by_host_api_device_index(0, i).get("maxInputChannels")) > 0 and card_name in audio.get_device_info_by_host_api_device_index(0, i).get("name"):
+                    self.sound_card = i
+        self.log.info("pino_dialogflow.py: sound card index is : %d" % self.sound_card)
+        #audio.terminate()
+        self.audio = audio
 
-    def play_audio_response(self, tts_response):
-        if tts_response is None:
+
+    def play_audio_response(self, response):
+        """
+        Description
+        -----------
+            Play wave file in responses object
+
+        Parameters
+        ----------
+            response : { Parsed DialogFlow response  , PinoResponse object}
+                PinoResponse.tts_result is audio binary file .wav format
+
+        Examples
+        --------
+            response = Pdf.send_text("HI")
+            Pdf.play_audio_response(response)
+
+        """
+        if response is None :
             return 0
-        if tts_response.output_audio is not None:
-
+        if response.tts_result is not None:
             # TODO [1.1] [WIP] find alternative solution without using file system
-            with open("./1.wav", "wb") as f:
-                f.write(self.tts_response.output_audio)
+            with open("/home/pi/1.wav", "wb") as f:
+                f.write(response.tts_result)
             time.sleep(0.01)
-            wav_data = wave.open("./1.wav", "rb")
-
+            wav_data = wave.open("/home/pi/1.wav", "rb")
             # Open play stream. Formats are fixed,
-            stream = self.audio.open(
-                format=pyaudio.paInt16,
-                channels=1,
-                rate=16000,  # self._SAMPLE_RATE,
-                output=True,
-            )
-
-            # Play wav file.
             data = wav_data.readframes(self._CHUNK_SIZE)
+            stream = self.audio.open(format=self.audio.get_format_from_width(wav_data.getsampwidth()), channels=wav_data.getnchannels(), rate=wav_data.getframerate(), output=True,frames_per_buffer=self._CHUNK_SIZE,output_device_index=self.sound_card)
+            # Play wav file.
+
             while len(data) > 1:
                 stream.write(data)
                 data = wav_data.readframes(self._CHUNK_SIZE)
             stream.stop_stream()
             stream.close()
 
-    """
-        B.3 set volume
-        [WIP] , VOLUME setting fuction, using amixer command
-    """
 
-    def set_volume(self, volume):
-        pass
-        #  TODO [1.1] add volume functions
-        # amixer -c 1 cset iface=MIXER,name="ADC1 PGA gain" 20
+    def parsing_response(self,stt_response,dflow_response,tts_response):
+        """
+        Description
+        -----------
+            Parse dialogflow grpc responses and return PinoResponse object
+
+        Parameters
+        ----------
+            stt_response: ( dialogflow response, dialogflow library object)
+                response from dialogflow server
+
+            tts_response: ( dialogflow response, dialogflow library object)
+                response from dialogflow server
+
+            dflow_response: ( dialogflow response, dialogflow library object)
+                response from dialogflow server
+
+        Notes
+        -----
+            send_text() and send_event() :  stt_response  = tts_response   =  dflow_response
+            get_stream_response()        :  stt_response =/= tts_response =/= dflow_response
+
+            **dialogflow parameter has two types:**
+            1. pinobot commands
+                used to actuate pinobot hardware
+            2. normal intent parameters
+                used to intent
+
+        Return
+        ------
+            self.parsed_response : { Parsed DialogFlow response  , PinoResponse object}
+
+        """
+
+        # 1. Reset PinoResponse
+        self.p_response.stt_result = ""
+        self.p_response.tts_result = None
+        self.p_response.intent_name = ""
+        self.p_response.intent_response = ""
+        self.p_response.intent_parameter = {}
+        self.p_response.action_cmd = []
+        self.p_response.raw_result = {}
+
+        # 2, if response in invalid, return Reset value
+        if stt_response is None or dflow_response is None or tts_response is None:
+            self.p_response.stt_result = "[Fail]"
+            return self.p_response
+
+        # 3. Extract simple values
+        elif hasattr(stt_response,"recognition_result"):
+            self.p_response.stt_result = stt_response.recognition_result.transcript
+
+        if hasattr(dflow_response,"query_result"):
+            self.p_response.intent_name =dflow_response.query_result.intent.display_name
+            self.p_response.intent_response =dflow_response.query_result.fulfillment_text
+
+        if tts_response .output_audio is not None:
+            self.p_response.tts_result = tts_response .output_audio
+
+        # 3. Extract parameters from query_result
+        self.p_response.raw_result = MessageToDict(dflow_response.query_result)
+
+        # 5. iter all dialogflow parameters and seperate
+        for key in self.p_response.raw_result["parameters"].keys():
+            # 5.1. if key -> dict, dict is not handled in this function
+            if not isinstance(key, str):
+                continue
+
+            # 5.2. key is pinobot command
+            elif 'pino'or 'Pino' or "PINO" or 'PiNo' in key:
+                self.p_response.action_cmd.append([key, self.p_response.raw_result['parameters'][key]])
+
+            # 5.3. key is Intent parameter
+            else:
+                self.p_response.intent_parameter[key] = self.p_response.raw_result["parameters"][key]
+
+        return self.p_response
+
+    def _find_error(self, gcloud_error):
+        """
+        Description
+        -----------
+            identify Google cloud Exception and save
+
+        Parameters
+        ----------
+            gcloud_error : {google.api_core.exceptions}
+
+        """
+        import google.api_core.exceptions as E
+
+        #  0: 'fail prediction',
+        if isinstance(gcloud_error, E.FailedPrecondition):
+            self.log.error("pino_dialogflow.py:"+ repr(gcloud_error))
+            self.gcloud_state = 0
+
+        # -1: 'Internet Error',
+        elif isinstance(gcloud_error, E.Forbidden) or isinstance(
+            gcloud_error, E.GatewayTimeout
+        ):
+            self.log.error("pino_dialogflow.py:"+ repr(gcloud_error))
+            self.gcloud_state = -1
+
+        # -3: 'over use Error',
+        elif isinstance(gcloud_error, E.TooManyRequests):
+            self.log.error("pino_dialogflow.py:"+ repr(gcloud_error))
+            self.gcloud_state = -3
+
+        # -4: 'authorization Error',
+        elif isinstance(gcloud_error, E.Unauthorized):
+            self.log.error("pino_dialogflow.py:"+ repr(gcloud_error))
+            self.gcloud_state = -4
+
+        # -5: 'code bug',
+        elif isinstance(gcloud_error, E.BadRequest):
+            self.log.error("pino_dialogflow.py:"+ repr(gcloud_error))
+            self.gcloud_state = -5
+
+        # -2: 'ETC Network client and Server Error',
+        elif isinstance(gcloud_error, E.ServerError) or isinstance(
+            gcloud_error, E.ClientError
+        ):
+            self.log.error("pino_dialogflow.py:"+ repr(gcloud_error))
+            self.gcloud_state = -2
+
+        else:
+            self.log.critical("pino_dialogflow.py:"+ repr(gcloud_error))
+            self.gcloud_state = -6
 
     """
-    C. Open DialogFlow Session
-
+    B.  DialogFlow Functions
+    
     Reference
     Dflow Docs: https://dialogflow-python-client-v2.readthedocs.io/en/latest/gapic/v2/api.html
-    logger : https://docs.python.org/ko/3/howto/logging.html
 
     """
-
     def open_session(self):
-        self.log.info("Start Open Session")
-        if self._session_path is not None:
-            self.log.warning(
-                "old_session %s exsists, Ignore and open New Session" % self._session_id
-            )
+        """
+        Description
+        -----------
+            Open DialogFlow session
 
-        # set session id as [timestamp + project id]
+        Notes
+        -----
+            1. load Google credential files from
+                "self._GOOGLE_APPLICATION_CREDENTIALS"  =  json file path
+
+            2. check Google cloud error
+
+        """
+        self.log.info("pino_dialogflow.py: Start Open Session")
         self._session_id = self._project_id + time.asctime()
         from google.oauth2 import service_account
-
         credentials = service_account.Credentials.from_service_account_file(
             self._GOOGLE_APPLICATION_CREDENTIALS
         )
@@ -312,21 +371,37 @@ class PinoDialogFlow:
         except Exception as GCLOUD_ERROR:
             self._find_error(GCLOUD_ERROR)
 
-        self.log.info("Open New Session, SID [%s]" % self._session_id)
+        self.log.info("pino_dialogflow.py: Open New Session, SID [%s]" % self._session_id)
         return self.gcloud_state
 
-    """
-    D. Send [TEXT] and return answer [Text]
-    
-    """
 
     def send_text(self, text_msg):
         """
-        Args: text_msg (str): Text message to Send
+        Description
+        -----------
+            Send text to DialogFlow server,
+            and return Parsed response
+
+        Parameters
+        ----------
+            text_msg : { str }
+                texts to send DialogFlow
+
+        Returns
+        -------
+            response : { Parsed DialogFlow response  , PinoResponse object}
+                extract necessary data form dialogflow responses
+
+        Example
+        -------
+            r = Pdf.send_text(hi)
+            >> print(r.intent_response)
+                "Hello"
+
         """
         # 1. check Session Exsist
-        if self._session_path is None:  # if not, exit fuction
-            self.log.error("Session is not opened ignore command")
+        if self._session_path is None:
+            self.open_session()
             return None
 
         # 2. make Quary
@@ -339,7 +414,7 @@ class PinoDialogFlow:
         )
         query_input = dialogflow.types.QueryInput(text=text_input)
 
-        # 3. send Quary
+        # 3. send Query
         try:
             response = self.session_client.detect_intent(
                 session=self._session_path,
@@ -348,46 +423,122 @@ class PinoDialogFlow:
             )
         # 4. check response
         except InvalidArgument:  # quary error
-            self.log.error("Invalid Argument Send")
+            self.log.error("pino_dialogflow.py: Invalid Argument Send")
             return None
         except Exception as GCLOUD_ERROR:  # Gcloud Error
             self._find_error(GCLOUD_ERROR)
             return None
 
-        # 5. save to class variable.
-        self.dflow_response = response
-        self.tts_response = response
-        return response
+        return self.parsing_response(response,response,response)
+
+    def send_event(self, event_name, dialogflow_parameters=None):
+        """
+        Description
+        -----------
+            Call DialogFlow event by event name and parameters
+            and return Parsed response
+
+
+        Parameters
+        ----------
+            event_name   : { str }
+                event name called in DialogFlow
+
+            dialogflow_parameters   : { dict, optional }
+                used in DialogFlow intent
+
+
+        Returns
+        -------
+            response : { Parsed DialogFlow response  , PinoResponse object}
+                extract necessary data form dialogflow responses
+
+
+        Example
+        -------
+            r = Pdf.send_event("say_room_temp",{temp:20, humidity: 20})
+            >> print(r.intent_response)
+                "Room temperature is 20c and humidity is 20 persent!"
+
+
+        """
+
+        stt_response = None
+        dflow_response = None
+        tts_response = None
+
+        # 1. check Session Exsist
+        if self._session_path is None:
+            self.open_session()
+            return None
+
+        # 2. make quary with parameter
+        if isinstance(dialogflow_parameters, dict):
+            from google.protobuf import struct_pb2
+
+            p = struct_pb2.Struct()
+            for key in dialogflow_parameters.keys():
+                p[key] = dialogflow_parameters[key]
+            event_input = dialogflow.types.EventInput(
+                name=event_name, language_code=self.lang_code, parameters=p
+            )
+        # 3. make quary without parameter
+        else:
+            event_input = dialogflow.types.EventInput(
+                name=event_name, language_code=self.lang_code
+            )
+
+        output_audio_config = dialogflow.types.OutputAudioConfig(
+            audio_encoding=dialogflow.enums.OutputAudioEncoding.OUTPUT_AUDIO_ENCODING_LINEAR_16,
+            sample_rate_hertz=self._SAMPLE_RATE,
+        )
+        query_input = dialogflow.types.QueryInput(event=event_input)
+
+        # 4. send Quary
+        try:
+            response = self.session_client.detect_intent(
+                session=self._session_path,
+                query_input=query_input,
+                output_audio_config=output_audio_config,
+            )
+
+        except InvalidArgument:  # quary error
+            self.log.error("pino_dialogflow.py: Invalid Argument Send")
+        except Exception as GCLOUD_ERROR:  # Gcloud Error
+            self._find_error(GCLOUD_ERROR)
+        else:
+            self.gcloud_state = 1
+            stt_response = response
+            dflow_response = response
+            tts_response = response
+
+        # 5. return parsed responses
+        return self.parsing_response(stt_response, dflow_response, tts_response)
 
     """
+    C. DialogFlow Stream Functions 
+
     Reference Source : 
         https://github.com/GoogleCloudPlatform/python-docs-samples/blob/3444bf44054965a523aafbf256dd597e265d0480/dialogflow/cloud-client/mic_stream_audio_response.py
         https://github.com/GoogleCloudPlatform/python-docs-samples/blob/master/dialogflow/cloud-client/detect_intent_stream.py
         https://cloud.google.com/dialogflow/docs/reference/rpc/google.cloud.dialogflow.v2
 
-
-    E. Send [AUDIO STREAM] and return answer [AUDIO_BINARY]
-
-    Main feature Fuctions, 
-
-    1. Start timeout-audio-stream with generator
-    2. Generator keep sending audio stream to Google Server.
-    3. If talking is end or, timeout happen, stop generator and wait for response.
-    4. Get respose and check is it valid
-    5. return two response
-        "stt_response" is [STT] result of talking,
-        "chatbot_response" is [DialogFlow chatbot] result.
-
-    E.1 Request Generator.
     """
 
     def _request_generator(self):
         """
-        Args: None
-            [deleted] # audio(Pyaudio object) : base pyaudio class for recording
+        Description
+        -----------
+            make generator to request stream response
+
+        Returns
+        -------
+            out : { generator }
+                request generator contain stream chuck
+
         """
 
-        # 1. Config request parametoers
+        # 1. Config request parameters
         input_audio_config = dialogflow.types.InputAudioConfig(
             audio_encoding=enums.AudioEncoding.AUDIO_ENCODING_LINEAR_16,
             language_code=self.lang_code,
@@ -423,7 +574,7 @@ class PinoDialogFlow:
             rate=self._SAMPLE_RATE,
             input=True,
             frames_per_buffer=self._CHUNK_SIZE,
-            input_device_index=self.sound_card,
+            input_device_index=self.sound_card
         )
 
         # 6. start streaming,
@@ -436,7 +587,7 @@ class PinoDialogFlow:
                 audio_chunk = stream.read(self._CHUNK_SIZE, exception_on_overflow=False)
                 # print(audio_chunk) debug, check chunks.
             except IOError as e:
-                self.log.error(e)
+                self.log.error("pino_dialogflow.py:"+repr(e))
                 break
             except Exception as GCLOUD_ERROR:  # Gcloud Error
                 self._find_error(GCLOUD_ERROR)
@@ -456,195 +607,178 @@ class PinoDialogFlow:
         stream.stop_stream()
         stream.close()
 
-    """
-    E.2 Start STREAM, 
-    [NOTE] This fuction ends, when Stream started!
-    """
-
     def start_stream(self):
-        # GOOGLE EXPERIMENTAL: This method interface might change in the future.
-        # https://github.com/GoogleCloudPlatform/python-docs-samples/blob/3444bf44054965a523aafbf256dd597e265d0480/dialogflow/cloud-client/mic_stream_audio_response.py
+        """
+        Description
+        -----------
+            Start audio stream to DialogFlow server
+
+        Returns
+        -------
+            out : {bool}
+                stream result Fail or Success
+
+        See Also
+        --------
+            self.get_response()
+
+        Notes
+        -----
+            iterable responses object is stored in self.stream_result
+
+
+        Example
+        -------
+            r = Pdf.start_stream()
+            print("streaming started, talk something in next 7 seconds)
+            Pdf.get_response()  # blocked in 7 sec
+
+        """
 
         # 1. check Session Exsist
-        if self._session_path is None:  # if not, exit fuction
-            self.log.error("Session is not opened ignore command")
+        if self._session_path is None:
+            self.open_session()
             return None
 
         # 2. init generator and start Recording
-        requests = self._request_generator()
-        self.responses = self.session_client.streaming_detect_intent(requests)
+        """
+         Google Unknown error could accur by alsamixer error, 
+         
+         therefor , try max 50 times to connect
+        """
+        for attempt in range(3):
+            try:
+                requests = self._request_generator()
+                self.stream_result = self.session_client.streaming_detect_intent(requests)
+            except Unknown:
+                self.stream_result = None
+            except Exception as E:
+                self.log.error("pino_dialogflow.py start_stream() : "+repr(E))
+                return -1
+            else :
+                return 0
+        return 0
 
-        # 3. return iterable responses object
-        return self.responses  # return iteratable response object,
+    def get_stream_response(self, fail_handler=False):
+        """
+        Description
+        -----------
+            get audio streaming responses from DialogFlow server
+            and if failed, call fail event
+            finally return parsed data
 
-    """
-    E.3 KEEP stream AND wait For Response, 
-    This fuction should called after start stream to get response. 
-    or you can write your owen response fuction 
-    """
 
-    def get_response(self):
-        # 1. check session
-        if self._session_path is None:  # if not, exit fuction
-            self.log.error("Session is not opened ignore command")
-            return None, None, None
+        Parameters
+        ----------
+            fail_handler : { bool, optional }
+                flag to call extra answer when fail to get answer from DialogFlow
+
+
+        Returns
+        -------
+            out : { Parsed DialogFlow response  , PinoResponse object}
+                extract necessary data form dialogflow responses
+
+
+        Notes
+        -----
+            this function is blocked in self._MAX_RECORD_SECONDS
+
+
+        Example
+        -------
+            r = Pdf.start_stream()
+            print("streaming started, talk something in next 7 seconds)
+            Pdf.get_response()  # blocked in 7 sec
+            >> print(r.intent_response)
+                "hi! i am pinobot!"
+
+        """
+
+        stt_response = None
+        dflow_response = None
+        tts_response = None
+
+
+        # 1. check Session Exsist
+        if self._session_path is None:
+            self.open_session()
+            return None
 
         # 2. Wait for response
         print("get Response", end="")
-        for item in self.responses:
+        for item in self.stream_result:
             try:
-                # 3. get response
-                # import google.api_core.exceptions as E
-                # raise E.TooManyRequests('as')
-                # self.log.info("get Response...")
                 print(".", end="")
-
+                #print(item.query_result.fulfillment_text)
+                #print(item.output_audio)
                 # 4. If STT Process is done
-                # this response not include chatbot result, just STT result(talkers question)
+                # this response not include chat bot intent result, just STT result(talkers question)
                 if item.recognition_result.is_final:
                     self.recording_state = False  # stop request generator
-                    self.stt_response = item  # save at "stt_response"
+                    stt_response = item  # save at "stt_response"
 
                 # 5. If Dialogflow send answer
-                # after stt is done, dialogflow send chatbot_result to response
-                # TODO [1.1] : find more good ways to varify response have chatbot result
-                elif len(item.query_result.fulfillment_text) > 0:  # if answer valid
-                    self.log.info("done! ")
-                    self.dflow_response = item  # save dialogflow response
+                # [TODO] fine more good ways to check responce
+                # after stt is done, dialogflow send chat bot intent result to response
+                elif len(item.query_result.fulfillment_text) > 0 or item.output_audio != b'':  # if answer valid
+                    print("done! ")
+                    dflow_response = item  # save dialogflow response
 
                     # 6. To get TTS response, we need to get 1 More response.
                     try:
-                        self.tts_response = next(self.responses)
+                        tts_response = next(self.stream_result)
                     except:
-                        self.log.error("no tts response,")
-                        self.tts_response = None
+                        print("no tts response,")
                     break
 
             # 7. check google cloud error.
             except Exception as GCLOUD_ERROR:  # Gcloud Error
                 self._find_error(GCLOUD_ERROR)
-                self.asound.snd_lib_error_set_handler(
-                    None
-                )  # set back handler as Default
                 break
 
-        # 8. return Result
-        print()
         time.sleep(0.05)  # wait for turn off Stream
-        if self.stt_response is not None and self.dflow_response is not None:
+
+        # 8. return Result
+        if stt_response is not None and dflow_response is not None:
             self.gcloud_state = 1
-            return self.stt_response, self.dflow_response, self.tts_response
+            return self.parsing_response(stt_response,dflow_response,tts_response)
 
-        return None, None, None
 
-    """
-    F. Send [EVENT] and return answer [AUDIO]
-    
-    [WIP] Send Specific Custom Event to Dialogflow server
-    and get response and save it.
+        # 9. Fail case
+        elif self.flag_log_fail_case : # log fail case
+            try:
+                with open("./fail_case.txt", "a") as fail_file:
+                    m = (
+                            time.asctime()
+                            + "    %s\n"
+                            % stt_response.recognition_result.transcript
+                    )
+                    fail_file.write(m)
+            except:
+                pass
 
-    """
+        # E1. streaming can't rec talking
+        if stt_response is None :
+            if fail_handler:
+                return self.send_event("Cant_Rec_Talk_Intent")
+            else :
+                return self.parsing_response(stt_response, dflow_response, tts_response)
 
-    def send_event(self, event_name, parameters=None):
-        """
-        Args: event_name (str): event name to call
-              parameters (dict): dialogflow parameter in dictionary
-        """
-        # 1. check Session Exist
-        if self._session_path is None:  # if not, exit function
-            self.log.error("Session is not opened ignore command")
-            return None
+        # E2. do not talk anything
+        elif len(stt_response.recognition_result.transcript) == 0:
+            if fail_handler:
+                return self.send_event("Dont_Talk_Intent")
+            else :
+                return self.parsing_response(stt_response, dflow_response, tts_response)
 
-        # 2. make quary with parameter
-        # TODO : NEED TEST
-        if isinstance(parameters, dict):
-            from google.protobuf import struct_pb2
+        # E3. no matched event
+        elif dflow_response.query_result.intent.display_name == "Default Fallback Intent" and fail_handler:
+            return self.send_event("Fail_No_Match_Intent")
 
-            p = struct_pb2.Struct()
-            for key in parameters.keys():
-                p[key] = parameters[key]
-            event_input = dialogflow.types.EventInput(
-                name=event_name, language_code=self.lang_code, parameters=p
-            )
-        # 3. make quary without parameter
-        else:
-            event_input = dialogflow.types.EventInput(
-                name=event_name, language_code=self.lang_code
-            )
 
-        output_audio_config = dialogflow.types.OutputAudioConfig(
-            audio_encoding=dialogflow.enums.OutputAudioEncoding.OUTPUT_AUDIO_ENCODING_LINEAR_16,
-            sample_rate_hertz=self._SAMPLE_RATE,
-        )
-        query_input = dialogflow.types.QueryInput(event=event_input)
+        return self.parsing_response(stt_response,dflow_response,tts_response)
 
-        # 4. send Quary
-        try:
-            response = self.session_client.detect_intent(
-                session=self._session_path,
-                query_input=query_input,
-                output_audio_config=output_audio_config,
-            )
-
-        except InvalidArgument:  # quary error
-            self.log.error("Invalid Argument Send")
-            return None
-        except Exception as GCLOUD_ERROR:  # Gcloud Error
-            self._find_error(GCLOUD_ERROR)
-            return None
-
-        # 5. SAVE result
-        self.gcloud_state = 1
-        self.dflow_response = response
-        self.tts_response = response
-        return response
-
-    """
-
-    G. Google Error message handler
-    """
-
-    def _find_error(self, GCLOUD_ERROR):
-        import google.api_core.exceptions as E
-
-        #  0: 'fail prediction',
-        if isinstance(GCLOUD_ERROR, E.FailedPrecondition):
-            self.log.error(GCLOUD_ERROR)
-            self.gcloud_state = 0
-
-        # -1: 'Internet Error',
-        elif isinstance(GCLOUD_ERROR, E.Forbidden) or isinstance(
-            GCLOUD_ERROR, E.GatewayTimeout
-        ):
-            self.log.error(GCLOUD_ERROR)
-            self.gcloud_state = -1
-
-        # -3: 'over use Error',
-        elif isinstance(GCLOUD_ERROR, E.TooManyRequests):
-            self.log.error(GCLOUD_ERROR)
-            self.gcloud_state = -3
-
-        # -4: 'authorization Error',
-        elif isinstance(GCLOUD_ERROR, E.Unauthorized):
-            self.log.error(GCLOUD_ERROR)
-            self.gcloud_state = -4
-
-        # -5: 'code bug',
-        elif isinstance(GCLOUD_ERROR, E.BadRequest):
-            self.log.error(GCLOUD_ERROR)
-            self.gcloud_state = -5
-
-        # -2: 'ETC Network client and Server Error',
-        elif isinstance(GCLOUD_ERROR, E.ServerError) or isinstance(
-            GCLOUD_ERROR, E.ClientError
-        ):
-            self.log.error(GCLOUD_ERROR)
-            self.gcloud_state = -2
-
-        else:
-            self.log.critical(GCLOUD_ERROR)
-            self.gcloud_state = -6
-        return
 
     """ [DEBUG error raise CODE]
     def raise_error(self,i):
