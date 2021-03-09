@@ -9,11 +9,13 @@
 
 ..  toctree::
     :maxdepth: 1
-    :caption: 피노봇 설치
+    :caption: 피노봇 조립 및 설치
 
     manual/피노봇_다이얼로그_플로우_설정
     manual/피노봇_쉬운설치
-    manual/피노봇_조립
+    manual/피노봇_조립_1
+    manual/피노봇_조립_2
+
 
 ..  toctree::
     :maxdepth: 1
