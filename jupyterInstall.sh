@@ -16,4 +16,12 @@ sudo pip3 install jupyter
 pip3 install --upgrade nbconvert ipython prompt_toolkit
 
 # copy setting
+cp ./settings/jupyter_notebook_config.py /home/pi/.jupyter/jupyter_notebook_config.py
 
+# grant execute permission to script
+chmod +x runJupyter.sh
+
+# add service
+cp ./jupyter.service /etc/systemd/system/jupyter.service
+systemctl enable jupyter.service
+systemctl start jupyter.service
