@@ -1,7 +1,9 @@
-from modules import pinobot
+import board
+from modules.Hardware.I2C.pino_oled import Pino_OLED
 import socket
 
 if __name__ == "__main__":
-    bot  = pinobot.PinoBot()
+    I2C_BUS = board.I2C()
+    oled = Pino_OLED(I2C_BUS, "/home/pi/Desktop/PinoBot/")
     hostname = socket.gethostname()
-    bot.hardware.write(text=f'{hostname}/')
+    oled.send_text(hostname + '/')
