@@ -18,8 +18,6 @@ then
   exit
 fi
 
-exit
-
 # Check if run default directory
 DEFAULT_DIR="/home/pi/Desktop/PinoBot"
 CURRENT_DIR=$(pwd)
