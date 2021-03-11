@@ -11,6 +11,15 @@ then
   exit
 fi
 
+# Check if username is pi
+if [ "$SUDO_USER" != "pi" ]
+then
+  echo "ERROR: Run in username 'pi'"
+  exit
+fi
+
+exit
+
 # Check if run default directory
 DEFAULT_DIR="/home/pi/Desktop/PinoBot"
 CURRENT_DIR=$(pwd)
