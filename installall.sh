@@ -80,6 +80,7 @@ sudo pip3 install jupyter
 pip3 install --upgrade nbconvert ipython prompt_toolkit
 
 # copy setting
+jupyter notebook --generate-config
 cp ./settings/jupyter_notebook_config.py /home/pi/.jupyter/jupyter_notebook_config.py
 
 # grant execute permission to script
