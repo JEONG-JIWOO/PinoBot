@@ -88,7 +88,16 @@ chown pi:pi "$DEFAULT_DIR" -R
 chown pi:pi /home/pi/.jupyter/jupyter_notebook_config.py
 chmod +x runJupyter.sh
 
+
 # add service
 cp ./jupyter.service /etc/systemd/system/jupyter.service
 systemctl enable jupyter.service
 systemctl start jupyter.service
+
+# reboot
+for i in {5..0}
+do
+  printf   "\n reboot in $i seconds"
+  sleep 1
+done
+reboot
