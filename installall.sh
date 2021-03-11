@@ -63,16 +63,17 @@ RANDOM_FRONT=$(printf %03d $(( $RANDOM % 1000 )))
 RANDOM_BACK=$(printf %04d $(( $RANDOM % 10000 )))
 NEW_HOST_NAME="p$RANDOM_FRONT$RANDOM_BACK"
 hostnamectl set-hostname $NEW_HOST_NAME
+sudo hostname $NEW_HOST_NAME
+
+# auto reload package install
+sudo apt-get install iptables-persistent
 
 # 80 port to 8080 port forward
 sudo iptables -A PREROUTING -t nat -i eth0 -p tcp --dport 80 -j REDIRECT --to-port 8080
 sudo iptables -A PREROUTING -t nat -i wlan0 -p tcp --dport 80 -j REDIRECT --to-port 8080
 
-# save forward setting
-sudo sh -c "iptables-save > /etc/iptables.rules"
-
-# auto reload setting when boot
-sudo apt-get install iptables-persistent
+# save forward setting to reload on boot
+sudo netfilter-persistent save
 
 # install jupyter notebook
 sudo apt-get install python3-matplotlib python3-scipy
@@ -80,14 +81,13 @@ sudo pip3 install jupyter
 pip3 install --upgrade nbconvert ipython prompt_toolkit
 
 # copy setting
-jupyter notebook --generate-config
+mkdir -p /home/pi/.jupyter/
 cp ./settings/jupyter_notebook_config.py /home/pi/.jupyter/jupyter_notebook_config.py
 
 # grant execute permissions
 chown pi:pi "$DEFAULT_DIR" -R
-chown pi:pi /home/pi/.jupyter/jupyter_notebook_config.py
+chown pi:pi /home/pi/.jupyter -R
 chmod +x runJupyter.sh
-
 
 # add service
 cp ./jupyter.service /etc/systemd/system/jupyter.service
