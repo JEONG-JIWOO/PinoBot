@@ -83,7 +83,9 @@ pip3 install --upgrade nbconvert ipython prompt_toolkit
 jupyter notebook --generate-config
 cp ./settings/jupyter_notebook_config.py /home/pi/.jupyter/jupyter_notebook_config.py
 
-# grant execute permission to script
+# grant execute permissions
+chown pi:pi "$DEFAULT_DIR" -R
+chown pi:pi /home/pi/.jupyter/jupyter_notebook_config.py
 chmod +x runJupyter.sh
 
 # add service
