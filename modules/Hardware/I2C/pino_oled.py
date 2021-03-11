@@ -39,7 +39,7 @@ class Pino_OLED:
 
     """
 
-    def __init__(self, i2c, base_path, console_font_name="", main_font_name=""):
+    def __init__(self, i2c, base_path, console_font_name="NanumSquareEB.ttf", main_font_name="NanumSquareEB.ttf"):
         # 0. Argument
         self.base_path = base_path
         self.console_font_name = console_font_name
