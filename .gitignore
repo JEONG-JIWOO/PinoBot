@@ -4,3 +4,6 @@
 Install/seed-voicecard
 keys
 .idea
+test/test_i2c.py
+docs/doctrees
+docs/html
