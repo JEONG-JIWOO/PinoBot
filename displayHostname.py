@@ -1,17 +1,19 @@
 import board
 from modules.Hardware.I2C.pino_oled import Pino_OLED
-import socket , time
-from subprocess import check_output
+import socket
+import time
+
+
 
 if __name__ == "__main__":
-
+    # OLED setup
     I2C_BUS = board.I2C()
     oled = Pino_OLED(I2C_BUS, "/home/pi/Desktop/PinoBot/")
 
-    connected = False
     for i in range(5):
+        # Check internet
         try:
-            oled.send_text("internet \n check"+i*".")
+            oled.send_text("Checking\ninternet"+i*".")
             time.sleep(0.5)
             from urllib3 import PoolManager, Timeout, Retry
 
@@ -20,18 +22,19 @@ if __name__ == "__main__":
             )
             response = http.request("HEAD", "https://status.cloud.google.com/")
 
+        # Failed
         except Exception as E:
             time.sleep(3)
-            oled.send_text("internet \n wait."+i*".")
+            # retry
 
-        else :
+        # Success
+        else:
             hostname = socket.gethostname()
-            ip = check_output(['hostname', '-I']).decode().strip()
-            print("internet on \nhostname :", hostname)
-            print("ip :", hostname)
-            oled.send_text(ip + "\n " + hostname)
-            connected = True
-            break
+            ip_addr = socket.gethostbyname(hostname)
+            print('hostname:', hostname)
+            print("ip address:", ip_addr)
+            oled.send_text(f'{ip_addr}\n{hostname}/')
+            exit(0)
 
-    if not connected :
-        oled.send_text("internet \n error "+i*".")
+    # Failed many times to connect url
+    oled.send_text('Internet\nerror')
