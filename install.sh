@@ -78,7 +78,7 @@ sudo netfilter-persistent save
 # install jupyter notebook
 sudo apt-get install python3-matplotlib python3-scipy
 sudo pip3 install jupyter
-pip3 install --upgrade nbconvert ipython prompt_toolkit
+yes | pip3 install --upgrade nbconvert ipython prompt_toolkit
 
 # copy setting
 mkdir -p /home/pi/.jupyter/
