@@ -7,3 +7,5 @@ keys
 test/test_i2c.py
 docs/doctrees
 docs/html
+.ipynb_checkpoints/pino_main-checkpoint.ipynb
+.ipynb_checkpoints/Untitled-checkpoint.ipynb
