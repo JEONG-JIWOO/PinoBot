@@ -17,7 +17,7 @@ class PinoBootLoader:
         self.base_path = base_path
 
         # 2. variables
-        self.config_path = self.base_path +"/PinoConfig.ini"
+        self.config_path = self.base_path +"/settings/pino_config.ini"
         self.net_connected = False
 
         # 3. Objects

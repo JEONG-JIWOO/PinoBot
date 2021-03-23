@@ -1,5 +1,5 @@
 import board
-from modules.Hardware.I2C.pino_oled import Pino_OLED
+from Hardware.I2C.pino_oled import Pino_OLED
 import socket
 import time
 
@@ -35,7 +35,7 @@ if __name__ == "__main__":
 
             print('hostname:', hostname)
             print("ip address:", ip_addr)
-            oled.send_text(f'{ip_addr}\n{hostname}/')
+            oled.send_text(f'{ip_addr}\n{hostname}')
             exit(0)
 
     # Failed many times to connect url

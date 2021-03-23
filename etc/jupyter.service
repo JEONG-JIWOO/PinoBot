@@ -3,7 +3,7 @@ Description=jupyter notebook service
 After=network.target
 
 [Service]
-ExecStart=/bin/bash /home/pi/Desktop/PinoBot/runJupyter.sh
+ExecStart=/bin/bash /home/pi/Desktop/PinoBot/etc/runJupyter.sh
 WorkingDirectory=/home/pi/Desktop/PinoBot
 StandardOutput=inherit
 StandardError=inherit
