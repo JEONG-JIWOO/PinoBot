@@ -51,34 +51,32 @@ rm -rf ./seeed-voicecard || { prirntf "remove seeed-voicecard fail "; exit 127;}
 printf   "\n\n [step 3], install apt packages \n\n"
 apt-get -y install portaudio19-dev
 apt-get -y install python3-dev
+sudo apt-get install iptables-persistent
+sudo apt-get install python3-matplotlib python3-scipy
 
 printf   "\n\n [step 4], install python modules \n\n"
-yes | pip3 install -r ./requirements.txt
+yes | pip3 install -r ./etc/requirements.txt
+yes | pip3 install --upgrade nbconvert ipython prompt_toolkit
 
 ###################################
 # Install jupyter notebook
 ###################################
 # Change host name
-RANDOM_FRONT=$(printf %03d $(( $RANDOM % 1000 )))
-RANDOM_BACK=$(printf %04d $(( $RANDOM % 10000 )))
-NEW_HOST_NAME="p$RANDOM_FRONT$RANDOM_BACK"
-hostnamectl set-hostname $NEW_HOST_NAME
-sudo hostname $NEW_HOST_NAME
+#RANDOM_FRONT=$(printf %03d $(( $RANDOM % 1000 )))
+#RANDOM_BACK=$(printf %04d $(( $RANDOM % 10000 )))
+#NEW_HOST_NAME="p$RANDOM_FRONT$RANDOM_BACK"
+#hostnamectl set-hostname $NEW_HOST_NAME
+#sudo hostname $NEW_HOST_NAME
 
 # auto reload package install
-sudo apt-get install iptables-persistent
 
+printf   "\n\n [step 5], setting jupyter \n\n"
 # 80 port to 8080 port forward
 sudo iptables -A PREROUTING -t nat -i eth0 -p tcp --dport 80 -j REDIRECT --to-port 8080
 sudo iptables -A PREROUTING -t nat -i wlan0 -p tcp --dport 80 -j REDIRECT --to-port 8080
 
 # save forward setting to reload on boot
 sudo netfilter-persistent save
-
-# install jupyter notebook
-sudo apt-get install python3-matplotlib python3-scipy
-sudo pip3 install jupyter
-yes | pip3 install --upgrade nbconvert ipython prompt_toolkit
 
 # copy setting
 mkdir -p /home/pi/.jupyter/
@@ -87,10 +85,10 @@ cp ./settings/jupyter_notebook_config.py /home/pi/.jupyter/jupyter_notebook_conf
 # grant execute permissions
 chown pi:pi "$DEFAULT_DIR" -R
 chown pi:pi /home/pi/.jupyter -R
-chmod +x runJupyter.sh
+chmod +x ./etc/runJupyter.sh
 
 # add service
-cp ./jupyter.service /etc/systemd/system/jupyter.service
+cp ./etc/jupyter.service /etc/systemd/system/jupyter.service
 systemctl enable jupyter.service
 systemctl start jupyter.service
 
