@@ -1,9 +1,7 @@
 import board
-from modules.Hardware.I2C.pino_oled import Pino_OLED
+from Hardware.I2C.pino_oled import Pino_OLED
 import socket
 import time
-
-
 
 if __name__ == "__main__":
     # OLED setup
@@ -30,7 +28,11 @@ if __name__ == "__main__":
         # Success
         else:
             hostname = socket.gethostname()
-            ip_addr = socket.gethostbyname(hostname)
+
+            s2 = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+            s2.connect(("8.8.8.8", 0))
+            ip_addr = s2.getsockname()[0]
+
             print('hostname:', hostname)
             print("ip address:", ip_addr)
             oled.send_text(f'{ip_addr}\n{hostname}/')

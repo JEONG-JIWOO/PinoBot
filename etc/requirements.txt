@@ -9,3 +9,4 @@ adafruit-circuitpython-pca9685==3.3.2
 adafruit-circuitpython-motor==3.2.3
 google-api-python-client
 pyserial~=3.4
+jupyter

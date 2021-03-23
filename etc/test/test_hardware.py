@@ -61,7 +61,7 @@ class MyTestCase(unittest.TestCase):
         run_pyaudio()
 
         config = configparser.ConfigParser()
-        with open("/home/pi/Desktop/PinoBot/PinoConfig.ini") as fp:
+        with open("/home/pi/Desktop/PinoBot/etc/pino_config.ini") as fp:
             config.read_file(fp)
 
         log = logging.getLogger("Main")
