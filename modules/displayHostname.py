@@ -35,7 +35,7 @@ if __name__ == "__main__":
 
             print('hostname:', hostname)
             print("ip address:", ip_addr)
-            oled.send_text(f'{ip_addr}\n{hostname}')
+            oled.send_text(f'{ip_addr}\n{hostname}/')
             exit(0)
 
     # Failed many times to connect url
