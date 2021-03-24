@@ -72,11 +72,16 @@ yes | pip3 install --upgrade nbconvert ipython prompt_toolkit
 
 printf   "\n\n [step 5], setting jupyter \n\n"
 # 80 port to 8080 port forward
-sudo iptables -A PREROUTING -t nat -i eth0 -p tcp --dport 80 -j REDIRECT --to-port 8080
-sudo iptables -A PREROUTING -t nat -i wlan0 -p tcp --dport 80 -j REDIRECT --to-port 8080
+#sudo iptables -A PREROUTING -t nat -i eth0 -p tcp --dport 80 -j REDIRECT --to-port 8080
+#sudo iptables -A PREROUTING -t nat -i wlan0 -p tcp --dport 80 -j REDIRECT --to-port 8080
 
 # save forward setting to reload on boot
-sudo netfilter-persistent save
+#sudo netfilter-persistent save
+
+# Install port redirect service
+cp ./etc/redirectPort.service /etc/systemd/system/redirectPort.service
+systemctl enable redirectPort.service
+systemctl start redirectPort.service
 
 # copy setting
 mkdir -p /home/pi/.jupyter/
