@@ -1,5 +1,5 @@
 [Unit]
-Description=redirect 8080 port to 80 port
+Description=redirect 80 port to 8080 port
 After=network.target
 
 [Service]
