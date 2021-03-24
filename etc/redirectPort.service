@@ -1,0 +1,10 @@
+[Unit]
+Description=redirect 80 port to 8080 port
+After=network.target
+
+[Service]
+ExecStart=/bin/bash /home/pi/Desktop/PinoBot/etc/redirectPort.sh
+WorkingDirectory=/home/pi/Desktop/PinoBot
+
+[Install]
+WantedBy=multi-user.target
