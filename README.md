@@ -13,13 +13,14 @@
 <br>
 
 # 🔨피노봇 설치 및 조립
-## [쉬운 설치 메뉴얼 바로가기](https://jiwoo.gitbook.io/pinobot/c.)
+## [쉬운 설치 메뉴얼 바로가기](https://jiwoo.gitbook.io/pinobot/install)
 
 <br>
 <br>
 
 # 🔊DialogFlow를 이용한 대화문 만들기
-## [피노봇 기초 대화문 만들기 바로가기](https://jiwoo.gitbook.io/pinobot/untitled-1)
+## [피노봇 실행을 위한 API 설정하기](https://jiwoo.gitbook.io/pinobot/setup-api)
+## [피노봇 기초 대화문 만들기 바로가기](https://jiwoo.gitbook.io/pinobot/dialogflow-tutorial)
 
 <br>
 <br>
