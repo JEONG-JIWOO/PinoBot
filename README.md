@@ -13,7 +13,8 @@
 <br>
 
 # 🔨피노봇 설치 및 조립
-## [쉬운 설치 메뉴얼 바로가기](https://jiwoo.gitbook.io/pinobot/install)
+<!-- ## [쉬운 설치 메뉴얼 바로가기](https://jiwoo.gitbook.io/pinobot/install) -->
+<h2><a href="https://jiwoo.gitbook.io/pinobot/install" target="_blank">쉬운 설치 메뉴얼 바로가기</a></h2>
 
 <br>
 <br>
@@ -32,8 +33,8 @@
 <br>
 
 # 🎁피노봇 구입
-> 여기에 한줄짜리 추가적인 설명
-## [구입 링크]()
+> 추가 예정입니다
+<!-- ## [구입 링크]() -->
 
 <br>
 <br>
