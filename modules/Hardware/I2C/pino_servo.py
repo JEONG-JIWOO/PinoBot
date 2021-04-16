@@ -188,10 +188,10 @@ class Pino_SERVO:
         for i in range(self.num_motor):
             if i == 0 or 1:
                 motion.append(
-                    random.randint(75 - 50, 75 + 50)
+                    random.randint(75 - 45, 75 + 45)
                 )  # [TODO], Change Hard Cording
             elif i == 2:
-                motion.append(random.randint(80 - 30, 80 + 30))
+                motion.append(random.randint(70 - 15, 70 + 14))
             elif i == 3 or 4:
                 motion.append(random.randint(15 - 12, 15 + 5))
         return motion
