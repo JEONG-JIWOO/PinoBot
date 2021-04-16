@@ -1,9 +1,10 @@
 from modules import pinobot
-import time
+import time ,requests
 
 if __name__ == "__main__":
     bot  = pinobot.PinoBot()
     bot.hardware.write(text="대기중..")
+    cnt = 0
     while True:
         bot.update()
 
@@ -11,16 +12,26 @@ if __name__ == "__main__":
         if bot.state == pinobot.PinoState.SENSOR_ON:
 
             # start listen
+            bot.start_act(None)
             response = bot.listen()
 
             # listen success,
             if response is not None:
                 bot.hardware.write(text="음성인식 완료!")
-                bot.start_say(response)
-                bot.start_act(response)
-                bot.wait_say_and_act()      # wait until say and act
-                print(response.stt_result,"  |  ", response.intent_name,response.intent_response)
-                bot.return_idle()           # return to idle state
+                if not "Fallback" in response.intent_name :
+                    bot.start_say(response)
+                    bot.start_act(response)
+                    bot.wait_say_and_act()      # wait until say and act
+                    print(response.stt_result,"  |  ", response.intent_name,response.intent_response)
+                    bot.return_idle()           # return to idle state
+                else :
+                    bot.start_act(None)
+                    response = bot.do_gpt(response)
+                    bot.start_say(response)
+                    bot.start_act(response)
+                    bot.wait_say_and_act()      # wait until say and act
+                    print(response.stt_result,"  |  ", response.intent_name,response.intent_response)
+                    bot.return_idle()           # return to idle state
 
             # listen failed
             else :
@@ -49,3 +60,7 @@ if __name__ == "__main__":
                 time.sleep(0.5)
 
         time.sleep(0.05) # sleep for 50ms to reduce cpu use
+        cnt +=1
+        if cnt > 200:
+            cnt = 0
+            bot.start_act(None)
