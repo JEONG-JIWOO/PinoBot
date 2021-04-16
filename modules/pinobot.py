@@ -257,14 +257,26 @@ class PinoBot:
         """
 
         if response is None:
-            self.log.warning('act.. nothing')
+            #self.log.warning('act.. nothing')
+            self.log.info("[PinoBot]  random motion ")
+            self.act_thread = threading.Thread(
+                target=self.hardware.ramdon_motion, args=(2,)
+            )
+            self.act_thread.start()
             return 0
 
         try:
-            self.act_thread = threading.Thread(
-                target=self.hardware.run_pinobot_cmd, args=(response,)
-            )
-            self.act_thread.start()
+            if "PinoMotor" in response.action_cmd:
+                self.act_thread = threading.Thread(
+                    target=self.hardware.run_pinobot_cmd, args=(response,)
+                )
+                self.act_thread.start()
+            else :
+                self.log.info("[PinoBot]  random motion ")
+                self.act_thread = threading.Thread(
+                    target=self.hardware.ramdon_motion, args=(1,)
+                )
+                self.act_thread.start()
         except Exception as E:
             self.log.error("[PinoBot] act Error : %s" % repr(E))
             return -1
@@ -383,3 +395,14 @@ z
         """
         self.hardware.write(text="대기중..")
         self.state = PinoState.IDLE
+
+    def do_gpt(self,pre_response):
+        self.hardware.write(text="영문 번역..")
+        stt_en = self.cloud.translate("en",pre_response.stt_result)
+        print(stt_en)
+        self.hardware.write(text="영문 번역..\n GPT-NEO ..")
+        gpt_en = self.cloud.get_gpt_neo(stt_en)
+        print(gpt_en)
+        gpt_kr =  self.cloud.translate("ko",gpt_en)
+        new_response = self.cloud.send_event("stt_event",{"stt_text":gpt_kr })
+        return new_response

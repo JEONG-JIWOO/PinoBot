@@ -426,3 +426,8 @@ class Hardware:
             elif cmd_name_lc == "PinoExpress".lower():
                 # TODO : actuate prebuild face emotion
                 pass
+
+    def ramdon_motion(self,t):
+        rm = self.SERVO.cal_random_motion(t)
+        self.SERVO.write(rm[1:], rm[0])
+        self.SERVO.write(self.SERVO.motor_default_angle, 1)
