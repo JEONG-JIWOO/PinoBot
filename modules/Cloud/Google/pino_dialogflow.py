@@ -20,7 +20,10 @@ from google.api_core.exceptions import InvalidArgument ,Unknown
 from ctypes import *
 
 import pyaudio
-import time ,wave ,ast
+import time ,wave
+
+import json
+import requests
 
 # PortAudio Error Message Handler
 def py_error_handler(filename, line, function, err, fmt):
@@ -103,6 +106,10 @@ class PinoDialogFlow:
         self._SAMPLE_RATE = 16000
         self._CHUNK_SIZE = 2048
         self._MAX_RECORD_SECONDS = TIME_OUT
+        #self.GPT_API_URL = "https://api-inference.huggingface.co/models/microsoft/DialoGPT-large"
+        #self.GPT_HEADERS = {"Authorization": f"Bearer api_ZHkKNOsEJHkHoETTtSyxxVbstQpgrfpbXK"}
+        self.GPT_API_URL = "https://api-inference.huggingface.co/models/EleutherAI/gpt-neo-2.7B"
+        self.GPT_HEADERS = {"Authorization": f"Bearer api_ZHkKNOsEJHkHoETTtSyxxVbstQpgrfpbXK"}
 
         # 3. google cloud state variable
         self.gcloud_dict = {
@@ -123,6 +130,7 @@ class PinoDialogFlow:
         self.p_response = PinoResponse()   # Response parsing result
         self.audio = None                       # pyaudio object
         self.log = log                          # logging
+        self.translator = None
 
         # 5. class variable
         self.recording_state = False            # used to stop audio streaming
@@ -131,6 +139,7 @@ class PinoDialogFlow:
 
         # 5. init settings
         self._init_pyaudio()
+
 
     """
     A. Utility Functions
@@ -372,6 +381,15 @@ class PinoDialogFlow:
             self._find_error(GCLOUD_ERROR)
 
         self.log.info("pino_dialogflow.py: Open New Session, SID [%s]" % self._session_id)
+
+        try:
+            from googletrans import Translator
+            self.translator = Translator()
+        except :
+            self.log.error("pino_dialogflow.py: google translate fail")
+        else :
+            self.log.info('pino_dialogflow.py:  google translate success')
+
         return self.gcloud_state
 
 
@@ -779,6 +797,25 @@ class PinoDialogFlow:
 
         return self.parsing_response(stt_response,dflow_response,tts_response)
 
+
+    def get_gpt_neo(self,payload):
+        data = json.dumps(payload)
+        response = requests.request("POST", self.GPT_API_URL, headers=self.GPT_HEADERS, data=data)
+        return_data = json.loads(response.content.decode("utf-8"))
+        try:
+            response = return_data[0]['generated_text'][len(payload):].split(".")
+            if len(response[0]) < 10 and len(response) > 1:
+                return response[0] + response[1]
+            else:
+                return response[0]
+        except:
+            return ""
+
+    def translate(self,target,text):
+        # Text can also be a sequence of strings, in which case this method
+        # will return a sequence of results for each text.
+        result = self.translator.translate(text, dest=target)
+        return result.text
 
     """ [DEBUG error raise CODE]
     def raise_error(self,i):
