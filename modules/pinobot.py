@@ -5,8 +5,7 @@ from modules.pino_boot_loader import PinoBootLoader
 import time , threading, logging
 from logging.handlers import RotatingFileHandler
 from enum import Enum
-from google.api_core.exceptions import Unknown
-
+import random
 
 class PinoState(Enum):
     IDLE = 0
@@ -65,6 +64,7 @@ class PinoBot:
         }  # sec   # first time sonic sensor detect object
         self.base_path = base_path
         self.state = PinoState.IDLE
+        self.idle_motion_cnt = 0
 
         # 3. Objects
         self.hardware = None
@@ -76,7 +76,7 @@ class PinoBot:
 
         # threads
         self.say_thread = None
-        self.act_thread = None
+        self.act_thread = threading.Thread()
 
         # 4. Run setup
         self.setup()
@@ -155,6 +155,12 @@ class PinoBot:
         elif self.detect["pre_state"] == 1 and cur_sensor_state == 0:
             # 4.3 object [ 1 -> 0 ] , object gone
             self.state = PinoState.SENSOR_OFF
+        else :
+            self.state = PinoState.IDLE
+            self.idle_motion_cnt += 1
+            if self.idle_motion_cnt > random.randint(100, 200):
+                self.idle_motion_cnt = 0
+                self.start_act(None)
 
         self.detect["pre_state"] = cur_sensor_state  # update sensor state
         return self.state
@@ -173,6 +179,11 @@ class PinoBot:
         """
 
         self.log.info("listen")
+
+        # 2.0 run random motion
+        if not self.act_thread.is_alive():
+            self.start_act(None)
+
         self.hardware.write(text="듣는중")
         # 2.1. streaming voice
         if self.cloud.start_stream() == -1:
@@ -258,7 +269,7 @@ class PinoBot:
 
         if response is None:
             #self.log.warning('act.. nothing')
-            self.log.info("[PinoBot]  random motion ")
+            #self.log.info("[PinoBot]  random motion ")
             self.act_thread = threading.Thread(
                 target=self.hardware.ramdon_motion, args=(2,)
             )
@@ -272,7 +283,7 @@ class PinoBot:
                 )
                 self.act_thread.start()
             else :
-                self.log.info("[PinoBot]  random motion ")
+                #self.log.info("[PinoBot]  random motion ")
                 self.act_thread = threading.Thread(
                     target=self.hardware.ramdon_motion, args=(1,)
                 )
@@ -399,10 +410,8 @@ z
     def do_gpt(self,pre_response):
         self.hardware.write(text="영문 번역..")
         stt_en = self.cloud.translate("en",pre_response.stt_result)
-        print(stt_en)
         self.hardware.write(text="영문 번역..\n GPT-NEO ..")
         gpt_en = self.cloud.get_gpt_neo(stt_en)
-        print(gpt_en)
         gpt_kr =  self.cloud.translate("ko",gpt_en)
         new_response = self.cloud.send_event("stt_event",{"stt_text":gpt_kr })
         return new_response

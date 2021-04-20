@@ -59,7 +59,7 @@ class Pino_SERVO:
 
         # 2. variables
         self.servos = []
-        self.cur_angles = self.motor_default_angle
+        self.cur_angles = self.motor_default_angle.copy()
         self.force_stop_flag = False
         self.sleep_mode_register = None
         self.operation_mode_register = 33
@@ -188,12 +188,12 @@ class Pino_SERVO:
         for i in range(self.num_motor):
             if i == 0 or 1:
                 motion.append(
-                    random.randint(75 - 45, 75 + 45)
+                    random.randint(self.motor_default_angle[0] - 45, self.motor_default_angle[0] + 45)
                 )  # [TODO], Change Hard Cording
             elif i == 2:
-                motion.append(random.randint(70 - 15, 70 + 14))
+                motion.append(random.randint(self.motor_default_angle[2] - 15, self.motor_default_angle[2] + 14))
             elif i == 3 or 4:
-                motion.append(random.randint(15 - 12, 15 + 5))
+                motion.append(random.randint(self.motor_default_angle[3] - 12, self.motor_default_angle[3] + 5))
         return motion
 
     """

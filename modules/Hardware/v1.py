@@ -429,5 +429,4 @@ class Hardware:
 
     def ramdon_motion(self,t):
         rm = self.SERVO.cal_random_motion(t)
-        self.SERVO.write(rm[1:], rm[0])
-        self.SERVO.write(self.SERVO.motor_default_angle, 1)
+        self.SERVO.write(rm[1:], t)

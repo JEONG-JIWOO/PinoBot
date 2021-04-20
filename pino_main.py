@@ -4,7 +4,6 @@ import time ,requests
 if __name__ == "__main__":
     bot  = pinobot.PinoBot()
     bot.hardware.write(text="대기중..")
-    cnt = 0
     while True:
         bot.update()
 
@@ -12,7 +11,6 @@ if __name__ == "__main__":
         if bot.state == pinobot.PinoState.SENSOR_ON:
 
             # start listen
-            bot.start_act(None)
             response = bot.listen()
 
             # listen success,
@@ -60,7 +58,3 @@ if __name__ == "__main__":
                 time.sleep(0.5)
 
         time.sleep(0.05) # sleep for 50ms to reduce cpu use
-        cnt +=1
-        if cnt > 200:
-            cnt = 0
-            bot.start_act(None)
