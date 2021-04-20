@@ -5,7 +5,6 @@ from modules.pino_boot_loader import PinoBootLoader
 import time , threading, logging
 from logging.handlers import RotatingFileHandler
 from enum import Enum
-import random
 
 class PinoState(Enum):
     IDLE = 0
@@ -73,6 +72,7 @@ class PinoBot:
         self.log = None
         self.response = None
         self.uart_cmd = None
+        self.gpt = None
 
         # threads
         self.say_thread = None
@@ -107,7 +107,7 @@ class PinoBot:
         boot = PinoBootLoader(self.base_path,self.log)
 
         # 2. run boot sequence
-        self.hardware, self.cloud, self.config = boot.boot()
+        self.hardware, self.cloud, self.gpt, self.config  = boot.boot()
         del boot
 
         self.log.info("[PinoBot] Boot Done..")
@@ -158,6 +158,7 @@ class PinoBot:
         else :
             self.state = PinoState.IDLE
             self.idle_motion_cnt += 1
+            import random
             if self.idle_motion_cnt > random.randint(100, 200):
                 self.idle_motion_cnt = 0
                 self.start_act(None)
@@ -268,10 +269,8 @@ class PinoBot:
         """
 
         if response is None:
-            #self.log.warning('act.. nothing')
-            #self.log.info("[PinoBot]  random motion ")
             self.act_thread = threading.Thread(
-                target=self.hardware.ramdon_motion, args=(2,)
+                target=self.hardware.ramdon_motion, args=(1,4)
             )
             self.act_thread.start()
             return 0
@@ -283,9 +282,8 @@ class PinoBot:
                 )
                 self.act_thread.start()
             else :
-                #self.log.info("[PinoBot]  random motion ")
                 self.act_thread = threading.Thread(
-                    target=self.hardware.ramdon_motion, args=(1,)
+                    target=self.hardware.ramdon_motion, args=(1,4)
                 )
                 self.act_thread.start()
         except Exception as E:
@@ -408,10 +406,24 @@ z
         self.state = PinoState.IDLE
 
     def do_gpt(self,pre_response):
+        if self.gpt is None :
+            return 0
+
         self.hardware.write(text="영문 번역..")
-        stt_en = self.cloud.translate("en",pre_response.stt_result)
+
+        stt_en = self.gpt.translate("en",pre_response.stt_result)
+        if stt_en is None:
+            self.hardware.write(text="번역 에러..")
+            time.sleep(0.5)
+            return 0
+
         self.hardware.write(text="영문 번역..\n GPT-NEO ..")
-        gpt_en = self.cloud.get_gpt_neo(stt_en)
-        gpt_kr =  self.cloud.translate("ko",gpt_en)
+        gpt_en = self.gpt.get_gpt_neo(stt_en)
+        if gpt_en is None:
+            self.hardware.write(text="GPT 에러..")
+            time.sleep(0.5)
+            return 0
+
+        gpt_kr = self.gpt.translate("ko", gpt_en)
         new_response = self.cloud.send_event("stt_event",{"stt_text":gpt_kr })
         return new_response

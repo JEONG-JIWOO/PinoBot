@@ -24,6 +24,7 @@ class PinoBootLoader:
         self.config = None
         self.hardware = None
         self.cloud = None
+        self.gpt = None
         self.log = log
 
     """
@@ -111,7 +112,7 @@ class PinoBootLoader:
             sys.exit()
 
         # boot success
-        return self.hardware, self.cloud, self.config
+        return self.hardware, self.cloud, self.gpt,self.config
 
     """
     C. Private , Loading Functions
@@ -162,11 +163,15 @@ class PinoBootLoader:
         # 5. check dialogflow connection
         self.hardware.display_console(12, 'Dialogflow')
         if self._load_diaglogflow() == -1:
-            self.hardware.display_console(1, 'Fail!')
+            self.hardware.display_console(1, 'Fail!\n')
             time.sleep(1)
             return -1
-        self.hardware.display_console(15, ' done\n')
+        self.hardware.display_console(13, ' done\n')
 
+        # 6. load gpt
+        self.hardware.display_console(14, ' GPT..')
+        self.gpt = self._load_huggingface()
+        self.hardware.display_console(15, ' done\n')
         return 0
 
     # [C.2]
@@ -434,7 +439,29 @@ class PinoBootLoader:
         else :
             return -1
 
+    def _load_huggingface(self):
+        """
+        Description
+        -----------
+            boot sequence 6.
+            Load GPT
 
+        Return
+        ------
+        result    PinoHuggingface Object or None
+        """
+        try:
+            from modules.Cloud.Hugging_Face.pino_huggingface import HuggingFace
+            GPT = HuggingFace(
+                self.log,
+                self.config["GPT"]["huggingface_url"],
+                self.config["GPT"]["huggingface_key"]
+            )
+            return GPT
+
+        except Exception as E:
+            self.log("pino_boot_loader.py: "+ repr(E))
+            return None
 
     @staticmethod
     def _config_default():
@@ -454,6 +481,10 @@ class PinoBootLoader:
             "google_project": "",
             "language": "ko",
             "time_out": "7",
+        }
+        config["GPT"] = {
+            "huggingface_url": "",
+            "huggingface_key": "",
         }
         config["MOTOR"] = {
             "num_motor": "5",
