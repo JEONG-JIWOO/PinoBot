@@ -20,7 +20,7 @@ from google.api_core.exceptions import InvalidArgument ,Unknown
 from ctypes import *
 
 import pyaudio
-import time ,wave ,ast
+import time ,wave
 
 # PortAudio Error Message Handler
 def py_error_handler(filename, line, function, err, fmt):
