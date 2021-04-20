@@ -148,6 +148,7 @@ class Pino_SERVO:
         for j in range(len(trjs[0])):
             # 4.2 start 50ms cycle
             start_time = time.time()
+            #print(trjs[0][j] , trjs[1][j] ,trjs[2][j] ,trjs[3][j] ,trjs[4][j] )
             for motor_n in range(len(actuate_motor_index_list)):
                 new_angle = trjs[motor_n][j]
                 if (
@@ -183,18 +184,18 @@ class Pino_SERVO:
         self.write(self.motor_default_angle, 1)
         return 0
 
-    def cal_random_motion(self, t):
-        motion = [t]
-        for i in range(self.num_motor):
-            if i == 0 or 1:
-                motion.append(
-                    random.randint(self.motor_default_angle[0] - 45, self.motor_default_angle[0] + 45)
-                )  # [TODO], Change Hard Cording
-            elif i == 2:
-                motion.append(random.randint(self.motor_default_angle[2] - 15, self.motor_default_angle[2] + 14))
-            elif i == 3 or 4:
-                motion.append(random.randint(self.motor_default_angle[3] - 12, self.motor_default_angle[3] + 5))
-        return motion
+    def random_motion(self,min,max):
+
+        random_target = [
+            random.randint(self.motor_default_angle[0] - 45, self.motor_default_angle[0] + 45),
+            random.randint(self.motor_default_angle[0] - 45, self.motor_default_angle[0] + 45),
+            random.randint(self.motor_default_angle[2] - 15, self.motor_default_angle[2] + 14),
+            random.randint(self.motor_default_angle[3] - 12, self.motor_default_angle[3] + 5),
+            random.randint(self.motor_default_angle[3] - 12, self.motor_default_angle[3] + 5)
+        ]
+
+        t = random.randint(min,max)
+        self.write(random_target, t)
 
     """
     D. Private Functions

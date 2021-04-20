@@ -427,6 +427,5 @@ class Hardware:
                 # TODO : actuate prebuild face emotion
                 pass
 
-    def ramdon_motion(self,t):
-        rm = self.SERVO.cal_random_motion(t)
-        self.SERVO.write(rm[1:], t)
+    def ramdon_motion(self, min, max):
+        self.SERVO.random_motion(min,max)
