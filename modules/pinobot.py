@@ -276,7 +276,12 @@ class PinoBot:
             return 0
 
         try:
-            if "PinoMotor" in response.action_cmd:
+            is_random_motion = True
+            for cmd in response.action_cmd:
+                if "PinoMotor".lower() in cmd[0].lower():
+                    is_random_motion = False
+
+            if not is_random_motion :
                 self.act_thread = threading.Thread(
                     target=self.hardware.run_pinobot_cmd, args=(response,)
                 )
