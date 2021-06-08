@@ -1,6 +1,6 @@
 dialogflow==1.1.0
 pyaudio==0.2.11
-Pillow==8.1.1
+Pillow==8.2.0
 RPi.GPIO==0.7.0
 adafruit-blinka
 adafruit-circuitpython-busdevice==5.0.1
